@@ -1,0 +1,139 @@
+var triggerClusterWindow = function() {
+	MyDesktop.postMessage('docker.dashboard.cluster.list', {});
+};
+
+clusterWindow = Ext.extend(AppWin.AbstractWindow, {
+	id : 'cluster-win',
+	label : 'Clusters',
+	bigIcon : 'unetbootin.png',
+	
+	register : function() {
+		userSpace.clusterWindow = this;
+	},
+
+	createEvent : function() {
+		triggerClusterWindow();
+	},
+	
+	prepareItems : function(obj) {
+		if (!obj.success)
+			return null;
+		
+		var openVNC = function() {
+			var record = Ext.getCmp('cluster-list-grid').getSelectionModel().getSelected();
+			if (record==null)
+				return MyDesktop.messageBox('You are supposed to select a portal.');
+			window.open('http://'+record.get('portal')+':1501/');
+		};
+		
+		var clusters = [];
+		for (var i=0;i<obj.clusters.length;i++) {
+			var prefix = '10.0.'+obj.clusters[i].id+'.';
+			var nat = prefix+'0/24; master: '+prefix+'254.';
+			/*var nat = prefix+'0/24; master: '+prefix+'254, slaves: ';
+			if (obj.clusters[i].size>1)
+				nat+=prefix+'1-'+prefix+(obj.clusters[i].size-1);
+			else
+				nat+='-';*/
+			clusters.push([obj.clusters[i].id, obj.clusters[i].user, obj.clusters[i].portal, obj.clusters[i].image, nat]);
+		}
+
+		var win=this.window, items = [{
+			layout: 'border',
+			title: 'My Runnning Clusters',
+			split:true, collapsible:true,
+			items: [ new Ext.grid.GridPanel({
+				id: 'cluster-list-grid',
+				region: 'center',
+				border : false,
+				ds : new Ext.data.Store({
+					autoLoad:true,
+					reader : new Ext.data.ArrayReader({}, [{ name : 'id' }, { name : 'user' }, { name : 'portal' }, { name : 'image' }, { name : 'nat' }]),
+					data : clusters
+				}),
+				cm : new Ext.grid.ColumnModel([
+					new Ext.grid.RowNumberer(),
+					{ header : "ID", width:40, sortable : true, dataIndex : 'id' },
+					{ header : "User", width:80, sortable : true, dataIndex : 'user' },
+					{ header : "Portal", width:100, sortable : true, dataIndex : 'portal' },
+					{ header : "Image", width:100, sortable : true, dataIndex : 'image' },
+					{ header : "NAT VMs", width:200, sortable : true, dataIndex : 'nat' },
+				]),
+				autoHeight: true,
+				monitorResize: true,
+				listeners : {
+					'rowdblclick' : openVNC
+				},
+			}), {
+				region: 'south',
+				buttons: [/*{
+					text: 'Create Cluster',
+					handler: function() {
+						win.handle.close();
+						MyDesktop.postMessage('docker.dashboard.source.entry', {});
+					}
+				},*/{
+					text: 'Open VNC',
+					handler: openVNC
+				},{
+					text: 'Reset My VNC Password',
+					handler: function() {
+						MyDesktop.confirmBox('This will reset vnc password of your clusters, are you sure to continue?', function(reply) {
+							if (reply=='yes')
+								MyDesktop.postMessage('docker.dashboard.resetVNC', { });
+						})
+					}
+				},{
+					text: 'Save Master as Image ..',
+					handler: function() {
+						var record = Ext.getCmp('cluster-list-grid').getSelectionModel().getSelected();
+						if (record==null)
+							return MyDesktop.messageBox('You are supposed to select a portal.');
+						var portal = record.get('portal');
+						if (record.get('user')!=MyDesktop.getGatewayUsername())
+							return MyDesktop.messageBox('This cluster is not owned by you.');
+
+						MyDesktop.promptBox('Please enter a name for image (only letters and digits are allowed):', function(reply, text) {
+							if (reply=='ok') {
+								for (var i=0;i<text.length;i++)
+									if (!(text[i]>='a' && text[i]<='z' || text[i]>='0' && text[i]<='9' || text[i]>='A' && text[i]<='Z')) {
+										text='';
+										break;
+									}
+								if (text.length==0 || text.length>20)
+									MyDesktop.messageBox('Failed, only letters and digits are allowed, word length should be in [1,20]!');
+								else {
+									win.handle.close();
+									MyDesktop.postMessage('docker.dashboard.cluster.save', { portal: portal, name: text });
+								}
+							}
+						})
+					}
+				},{
+					text: 'Delete Cluster',
+					handler: function() {
+						var record = Ext.getCmp('cluster-list-grid').getSelectionModel().getSelected();
+						if (record==null)
+							return MyDesktop.messageBox('You are supposed to select a portal.');
+						if (record.get('user')!=MyDesktop.getGatewayUsername())
+							return MyDesktop.messageBox('This cluster is not owned by you.');
+						MyDesktop.confirmBox('Please note that all files other than /root/* will be permanently removed and unrecoverable, are you sure to delete?', function(reply) {
+							if (reply=='yes') {
+								userSpace.afterRemoveCluster = triggerClusterWindow;
+								win.handle.close();
+								MyDesktop.postMessage('docker.dashboard.cluster.remove', { id: parseInt(record.get('id')) });
+							}
+						})
+					}
+				}]
+			}]
+		}];
+		return items;
+	}
+});
+
+AppWin.GenericWindows.push({
+	visible: [true, true],
+	window: clusterWindow
+});
+

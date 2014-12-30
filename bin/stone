@@ -1,0 +1,28 @@
+#!/bin/bash
+
+
+HOME_PREF=/home/docklet
+
+[[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
+
+[[ "${USER_NAME}" == "" ]] && echo "USER_NAME not specified!" && exit 1
+
+mkdir -p ${HOME_PREF}/${USER_NAME}/home/.ssh/
+mkdir -p ${HOME_PREF}/${USER_NAME}/home/.vnc/
+
+if [[ ! -e "${HOME_PREF}/${USER_NAME}/home/.vnc/passwd" ]] || [[ "$@" == "reset" ]]; then
+	echo '0000000: 4940 15f9 a35e 8b22' | xxd -r > "${HOME_PREF}/${USER_NAME}/home/.vnc/passwd"
+	chmod 0600 "${HOME_PREF}/${USER_NAME}/home/.vnc/passwd"
+fi
+
+rm -f "${HOME_PREF}/${USER_NAME}/home/.ssh/known_hosts"
+
+if [[ ! -e "${HOME_PREF}/${USER_NAME}/id_rsa" ]] || [[ "$@" == "update" ]]; then
+	rm -rf "${HOME_PREF}/${USER_NAME}/id_rsa" "${HOME_PREF}/${USER_NAME}/id_rsa.pub"
+	echo -e '\n' | ssh-keygen -t rsa -P '' -f "${HOME_PREF}/${USER_NAME}/id_rsa" >/dev/null 2>&1
+
+	cp ${HOME_PREF}/${USER_NAME}/id_rsa ${HOME_PREF}/${USER_NAME}/home/.ssh/id_rsa
+	cp ${HOME_PREF}/${USER_NAME}/id_rsa.pub ${HOME_PREF}/${USER_NAME}/home/.ssh/authorized_keys
+fi
+
+cat "${HOME_PREF}/${USER_NAME}/id_rsa"

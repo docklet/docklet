@@ -1,0 +1,34 @@
+#!/bin/bash
+
+HOME_PREF=/home/docklet
+
+[[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
+
+echo "=============================================="
+
+echo "[Docklet Physical Hosts]"
+echo -n "* "
+KEY="/pocket/glob/hosts" etcdemu get
+echo
+
+echo "[Portal Allocation]"
+for USER in `KEY="/pocket/floating" etcdemu ls | grep -v free`; do
+	for IP in `KEY=${USER} etcdemu ls`; do
+		STATUS="`KEY=${IP} etcdemu get`"
+		echo -e "* `basename ${USER}` `basename ${IP}` ${STATUS}" 
+	done
+done
+echo
+
+echo "[Clusters Status]"
+for NAT in `KEY="/pocket/freeNat" etcdemu ls | grep -v go`; do
+	echo -n "* "
+	KEY=${NAT} etcdemu get
+done
+echo
+
+echo "[User Images]"
+for ITEM in `USER_NAME=root ham list_3v`; do
+	echo "* ${ITEM}" | awk -F\: '{ print $1 }'
+done
+echo "=============================================="

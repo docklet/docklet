@@ -1,0 +1,33 @@
+#!/bin/bash
+
+HOME_PREF=/home/docklet
+
+[[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
+
+[[ "$@" == "" ]] && echo "Usage: $0 <MASTER-IP>" && exit 1
+
+apt-get install lxc ethtool python-pampy bridge-utils libapparmor1
+
+weave stop >/dev/null 2>&1 || true
+
+killall docker >/dev/null 2>&1
+
+umount -l /var/lib/docker/aufs/mnt/* >/dev/null 2>&1
+umount -l /var/lib/docker/aufs/diff/* >/dev/null 2>&1
+umount -l /var/lib/docker/aufs/ >/dev/null 2>&1
+
+rm -rf /var/lib/docker
+
+nohup docker -d -e lxc >/dev/null 2>&1 &
+
+sleep 2
+
+weave stop >/dev/null 2>&1 || true
+
+weave launch "$@"
+
+umount -l ${HOME_PREF} >/dev/null 2>&1 || true
+mkdir -p ${HOME_PREF}
+
+mountpoint -q ${HOME_PREF} || sshfs root@"$@":${HOME_PREF} ${HOME_PREF}
+

@@ -1,0 +1,148 @@
+<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+<head><title>Docklet Doc</title></head>
+
+<script>
+	function onload() {
+		var dash = document.getElementById('dash_host');
+		dash.href = dash.innerHTML = 'http://'+location.host+'/';
+	}
+</script>
+
+<body onload="onload()">
+<p>Contact us: unias@sei.pku.edu.cn</p>
+<hr/>
+
+<h2>Docklet 说明文档 - 2014/12/12</h2>
+
+<p>Docklet入口：<a id="dash_host"></a></p>
+
+<p>第一步：PAM登录</p>
+<p>第二步：点击"Sources"，选择unios镜像点击"Create"</p>
+<p>第三步：在弹出的"Clusters"中双击创建的条目，输入VNC密码登入集群系统；</p>
+
+<p>附加说明：VNC密码为123456；</p>
+
+<hr/>
+
+<h3>1、Nginx 示例：</h3>
+
+<p># service nginx start</p>
+<p># echo 'hello world' > /usr/share/nginx/html/index.html</p>
+<p></p>
+<p>此时内部访问：<a href="http://localhost/">http://localhost:80/</a>，可以显示首网页</p>
+<p>（外网可通过portal访问 - http://portal-ip:80/）</p>
+
+<hr/>
+
+<h3>2、Python 2.7 示例：</h3>
+
+<p>Python程序运行：</p>
+<p># echo 'print "Hello World"' > ~/test.py</p>
+<p># python2 ~/test.py</p>
+<p></p>
+<p>开启个人FTP主目录：</p>
+<p># python2 -m SimpleHTTPServer 81</p>
+<p>此时内部访问：<a href="http://localhost:81/">http://localhost:81/</a>，可以显示个人文件列表</p>
+<p>（外网可通过portal访问 - http://portal-ip:81/）</p>
+
+<hr/>
+
+<h3>3、Spark 1.1.1 示例：</h3>
+
+<p>多机交互模式1：菜单"Applications" -> "Programming" -> "Apache Spark"</p>
+<p>多机交互模式2：# spark-shell --master spark://nat-master:7077</p>
+<p>单机交互模式1：# spark-shell --master local</p>
+<p>源代码编译与提交模式：</p>
+<p># spark-compile /usr/local/examples/src/main/scala/org/apache/spark/examples/SparkPi.scala</p>
+<p># spark-submit --class org.apache.spark.examples.SparkPi ./SparkPi.jar</p>
+<p></p>
+<p>Spark 管理界面：<a href="http://localhost:8080/">http://localhost:8080/</a></p>
+
+<hr/>
+
+<h3>4、OpenJDK 7 示例：</h3>
+
+<p>保存如下内容至Main.java</p>
+<textarea style="width:700px;height:120px">
+public class Main {
+	public static void main(String []args) {
+		System.out.println("Hello World");
+	}
+}
+</textarea>
+<p>编译运行：</p>
+<p># javac Main.java && java Main</p>
+
+<hr/>
+
+<h3>5、Akka Actor 示例：</h3>
+
+<p>保存如下内容至Actor.scala</p>
+
+<textarea style="width:700px;height:280px">
+import akka.actor._
+
+class Hello extends Actor {
+	def receive = {
+		case msg: String => println("Hello, " + msg + "!")
+		case _ => println("[unexpected message.]")
+	}
+}
+
+object MyAkka {
+	def main(args: Array[String]) {
+		val system = ActorSystem("HelloSystem")
+		val hello = system.actorOf(Props[Hello])
+		hello ! "10086"
+	}
+}
+</textarea>
+<p>编译运行：</p>
+<p># spark-compile Actor.scala</p>
+<p># spark-submit --class MyAkka ./Actor.jar</p>
+
+<hr/>
+
+
+<h3>6、C/C++ 示例：</h3>
+<p># echo 'main() { puts("Hello World"); }' > main.c</p>
+<p># gcc main.c && ./a.out</p>
+
+<hr/>
+
+
+<h3>7、MPI 示例：</h3>
+
+<p>保存如下内容至mpi.cpp</p>
+<textarea style="width:700px;height:320px">
+#include <stdio.h>
+#include <mpi.h>
+
+int main (int argc, char *argv[])
+{
+	int myid, numprocs, namelen;
+	char processor_name[MPI_MAX_PROCESSOR_NAME];
+
+	MPI_Init (&argc, &argv);        /* starts MPI */
+	MPI_Comm_rank (MPI_COMM_WORLD, &myid);  /* get current process id */
+	MPI_Comm_size (MPI_COMM_WORLD, &numprocs);      /* get number of processes */
+	MPI_Get_processor_name(processor_name,&namelen);
+
+	if(myid == 0) printf("number of processes: %d\n",numprocs);
+	printf( "%s: Hello world from process %d \n", processor_name, myid);
+
+	MPI_Finalize();
+}
+</textarea>
+
+<p>编译运行：</p>
+<p># mpic++ mpi.cpp && mpiexec -n 4 ./a.out</p>
+
+<hr/>
+
+
+
+<div style="margin-bottom: 400px" />
+
+</body>
+

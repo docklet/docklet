@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# Example:
+# WORK_ON=192.168.4.231 USER_NAME=root IMAGE=ssh NATIVE_IP=10.0.0.254 BRIDGE_IP=192.168.4.200 BRIDGE_GW=192.168.4.2 BRIDGE_DEV=br1 cave
+# WORK_ON=192.168.4.231 USER_NAME=root IMAGE=ssh NATIVE_IP=10.0.0.1 cave
+# WORK_ON=192.168.4.232 USER_NAME=root IMAGE=ssh NATIVE_IP=10.0.0.2 cave
+#
+#
+# ssh root@192.168.4.200
+# >> spark-shell --master spark://nat-master:7077
+# use: /home/docker/root/.ssh/id_rsa
+
+HOME_PREF=/home/docklet
+
+[[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
+
+[[ "${USER_NAME}" == "" ]] && echo "USER_NAME not specified!" && exit 1
+[[ "${IMAGE}" == "" ]] && echo "IMAGE not specified!" && exit 1
+[[ "${NATIVE_IP}" == "" ]] && echo "NATIVE_IP not specified!" && exit 1
+[[ "${WORK_ON}" == "" ]] && echo "WORK_ON not specified!" && exit 1
+
+HOST_PROP=$(echo ${NATIVE_IP} | awk -F. '{print $4}')
+MASTER_IP=$(basename ${NATIVE_IP} ${HOST_PROP})"254"
+
+if [[ "$HOST_PROP" == "254" ]]; then
+	[[ "${BRIDGE_IP}" == "" ]] && echo "BRIDGE_IP not specified!" && exit 1
+	[[ "${BRIDGE_GW}" == "" ]] && echo "BRIDGE_GW not specified!" && exit 1
+	[[ "${BRIDGE_DEV}" == "" ]] && echo "BRIDGE_DEV not specified!" && exit 1
+fi
+
+[[ "${USER_NAME}" != "root" ]] && [[ "${OPTS}" != "" ]] && echo "extra opts now allowed for ${USER_NAME}!"
+
+
+if [[ "$HOST_PROP" == "254" ]]; then
+	HOST_NAME=nat-master
+	NET_CONF="--net=none --lxc-conf=\"lxc.network.type=veth\" --lxc-conf=\"lxc.network.ipv4=${BRIDGE_IP}/24\" --lxc-conf=\"lxc.network.ipv4.gateway=${BRIDGE_GW}\" --lxc-conf=\"lxc.network.link=${BRIDGE_DEV}\" --lxc-conf=\"lxc.network.name=eth0\" --lxc-conf=\"lxc.network.flags=up\""
+else
+	HOST_NAME=nat-slave${HOST_PROP}
+	NET_CONF='--net=bridge'
+fi
+
+USER_NAME=${USER_NAME} stone >/dev/null
+
+ENTRY=/etc/docklet-init/vm-init
+
+echo "weave run ${NATIVE_IP}/24 -v ${HOME_PREF}/${USER_NAME}/home:/root -m 1024m -it ${NET_CONF} -h ${HOST_NAME} ${OPTS} ${IMAGE} ${ENTRY} ${NATIVE_IP} ${MASTER_IP}" > /dev/stderr
+
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${WORK_ON} ham pull_3v ${MOD}_${IMAGE} > /dev/stderr
+
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${WORK_ON} weave run ${NATIVE_IP}/24 -v ${HOME_PREF}/${USER_NAME}/home:/root -m 1024m -it ${NET_CONF} -h ${HOST_NAME} ${OPTS} ${IMAGE} ${ENTRY} ${NATIVE_IP} ${MASTER_IP} | cut -b 1-12
+
