@@ -21,8 +21,9 @@ if [[ ! -e "${HOME_PREF}/${USER_NAME}/id_rsa" ]] || [[ "$@" == "update" ]]; then
 	rm -rf "${HOME_PREF}/${USER_NAME}/id_rsa" "${HOME_PREF}/${USER_NAME}/id_rsa.pub"
 	echo -e '\n' | ssh-keygen -t rsa -P '' -f "${HOME_PREF}/${USER_NAME}/id_rsa" >/dev/null 2>&1
 
-	cp ${HOME_PREF}/${USER_NAME}/id_rsa ${HOME_PREF}/${USER_NAME}/home/.ssh/id_rsa
-	cp ${HOME_PREF}/${USER_NAME}/id_rsa.pub ${HOME_PREF}/${USER_NAME}/home/.ssh/authorized_keys
 fi
+
+cp ${HOME_PREF}/${USER_NAME}/id_rsa ${HOME_PREF}/${USER_NAME}/home/.ssh/id_rsa
+cp ${HOME_PREF}/${USER_NAME}/id_rsa.pub ${HOME_PREF}/${USER_NAME}/home/.ssh/authorized_keys
 
 cat "${HOME_PREF}/${USER_NAME}/id_rsa"

@@ -181,9 +181,12 @@ elif [[ "$@" == "save" ]]; then
 					ON=$(echo ${ITEM} | awk -F\: '{print $1}')
 					ID=$(echo ${ITEM} | awk -F\: '{print $2}')
 					GENERATE="${USER_NAME}_${IMAGE_NAME}"
-					ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${ON} docker commit ${ID} ${GENERATE}
-					ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${ON} ham push_2v ${GENERATE}
-					ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${ON} docker rmi ${GENERATE}
+					if ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${ON} docker commit ${ID} ${GENERATE}; then
+						ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${ON} ham push_2v ${GENERATE}
+						ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${ON} docker rmi ${GENERATE}
+					else
+						leave 1
+					fi
 					break
 				fi
 			done

@@ -43,7 +43,7 @@ USER_NAME=${USER_NAME} stone >/dev/null
 
 ENTRY=/etc/docklet-init/vm-init
 
-echo "weave run ${NATIVE_IP}/24 -v ${HOME_PREF}/${USER_NAME}/home:/root -m 1024m -it ${NET_CONF} -h ${HOST_NAME} ${OPTS} ${IMAGE} ${ENTRY} ${NATIVE_IP} ${MASTER_IP}" > /dev/stderr
+echo "weave run ${NATIVE_IP}/24 --lxc-conf="lxc.cgroup.memory.kmem.limit_in_bytes=10m" -v ${HOME_PREF}/${USER_NAME}/home:/root -m 1024m -it ${NET_CONF} -h ${HOST_NAME} ${OPTS} ${IMAGE} ${ENTRY} ${NATIVE_IP} ${MASTER_IP}" > /dev/stderr
 
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${WORK_ON} ham pull_3v ${MOD}_${IMAGE} > /dev/stderr
 

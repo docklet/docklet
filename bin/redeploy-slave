@@ -18,7 +18,7 @@ umount -l /var/lib/docker/aufs/ >/dev/null 2>&1
 
 rm -rf /var/lib/docker
 
-nohup docker -d -e lxc >/dev/null 2>&1 &
+nohup docker -d -e lxc -s devicemapper --storage-opt dm.basesize=2G >/dev/null 2>&1 &
 
 sleep 2
 
