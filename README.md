@@ -60,3 +60,10 @@ CREATE_ID=0 pocket remove
 
 btrfs-tools dh-golang dh-systemd go-md2man golang golang golang-context-dev golang-dbus-dev golang-go-patricia-dev golang-go-systemd-dev golang-go.net-dev golang-gocapability-dev golang-gosqlite-dev golang-mux-dev golang-pty-dev libapparmor-dev libdevmapper-dev
 
+
+[Make and install]
+
+autoreconf -is
+./configure --prefix=/home/docklet
+make
+make install
