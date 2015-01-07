@@ -8,7 +8,7 @@ HOME_PREF=/home/docklet
 
 apt-get install lxc ethtool python-pampy bridge-utils libapparmor1
 
-weave stop >/dev/null 2>&1 || true
+docklet-weave stop >/dev/null 2>&1 || true
 
 killall docker >/dev/null 2>&1
 
@@ -22,9 +22,9 @@ nohup docker -d -e lxc -s devicemapper --storage-opt dm.basesize=2G >/dev/null 2
 
 sleep 2
 
-weave stop >/dev/null 2>&1 || true
+docklet-weave stop >/dev/null 2>&1 || true
 
-weave launch "$@"
+docklet-weave launch "$@"
 
 umount -l ${HOME_PREF} >/dev/null 2>&1 || true
 mkdir -p ${HOME_PREF}

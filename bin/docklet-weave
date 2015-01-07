@@ -354,14 +354,18 @@ case "$COMMAND" in
         # restarts.
         MACADDR=`cat /sys/class/net/$BRIDGE/address`
         # backward compatibility...
-        if is_cidr "$1" ; then
+        if [ "$1" = "centre" ]; then
+            ( [ "$CIDR" = "" ] || [ "$CBR" = "" ] || [ "$CGW" = "" ] ) && echo "ENV Require: CIDR, CBR, CGW." && exit 1
+            FLAGS="--net=none --lxc-conf=\"lxc.network.type=veth\" --lxc-conf=\"lxc.network.ipv4=${CIDR}\" --lxc-conf=\"lxc.network.ipv4.gateway=${CGW}\" --lxc-conf=\"lxc.network.link=${CBR}\" --lxc-conf=\"lxc.network.name=eth0\" --lxc-conf=\"lxc.network.flags=up\""
+            shift 1
+        elif is_cidr "$1" ; then
             echo "WARNING: $1 parameter ignored; 'weave launch' no longer takes a CIDR as the first parameter" >&2
             shift 1
         fi
         # Set WEAVE_DOCKER_ARGS in the environment in order to supply
         # additional parameters, such as resource limits, to docker
         # when launching the weave container.
-        CONTAINER=$(docker run --privileged -d --name=$CONTAINER_NAME -p $PORT:$PORT/tcp -p $PORT:$PORT/udp $WEAVE_DOCKER_ARGS $IMAGE -name $MACADDR "$@" | tail -n 1)
+        CONTAINER=$(docker run --privileged -d $FLAGS --name=$CONTAINER_NAME -p $PORT:$PORT/tcp -p $PORT:$PORT/udp $WEAVE_DOCKER_ARGS $IMAGE -name $MACADDR "$@" | tail -n 1)
         with_container_netns $CONTAINER launch >/dev/null
         echo $CONTAINER
         ;;

@@ -7,6 +7,6 @@ bin_SCRIPTS = cave \
 	redeploy-master \
 	redeploy-slave  \
 	stone \
-	weave 
+	docklet-weave 
 
 EXTRA_DIST = ${bin_SCRIPTS}
