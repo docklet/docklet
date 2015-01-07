@@ -15,6 +15,7 @@ dist-hook:
 	rm -rf `find $(distdir)/doc -type d -name .git`
 
 install-data-hook:
+	mkdir -p $(localdatadir)
 	cp  -r dashboard $(localdatadir)
 
 uninstall-hook:
