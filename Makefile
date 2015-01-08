@@ -1,5 +1,6 @@
 
 install:
-	cp -r bin/* usr/local/sbin
-	cp -r dashboard/ usr/local/sbin
+	scp -r bin/* /usr/local/sbin
+	scp -r dashboard /usr/local/sbin
+	scp -r conf/docklet.conf /etc
 

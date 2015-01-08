@@ -6,7 +6,7 @@ HOME_PREF=/home/docklet
 
 apt-get install lxc ethtool python-pampy bridge-utils libapparmor1
 
-weave stop >/dev/null 2>&1 || true
+docklet-weave stop >/dev/null 2>&1 || true
 
 killall docker >/dev/null 2>&1
 killall etcd >/dev/null 2>&1
@@ -23,7 +23,7 @@ cd / && nohup etcd >/dev/null 2>&1 &
 
 sleep 2
 
-weave launch
+docklet-weave launch centre
 
 mkdir -p ${HOME_PREF}/images
 
