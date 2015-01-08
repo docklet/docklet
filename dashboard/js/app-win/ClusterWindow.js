@@ -96,15 +96,16 @@ clusterWindow = Ext.extend(AppWin.AbstractWindow, {
 						if (record.get('user')!=MyDesktop.getGatewayUsername())
 							return MyDesktop.messageBox('This cluster is not owned by you.');
 
-						MyDesktop.promptBox('Please enter a name for image (only letters and digits are allowed):', function(reply, text) {
+						var limit = 'only letters, digits, "-" are allowed, and word length: 1-20';
+						MyDesktop.promptBox('Please enter a name for image ('+limit+'):', function(reply, text) {
 							if (reply=='ok') {
 								for (var i=0;i<text.length;i++)
-									if (!(text[i]>='a' && text[i]<='z' || text[i]>='0' && text[i]<='9' || text[i]>='A' && text[i]<='Z')) {
+									if (!(text[i]>='a' && text[i]<='z' || text[i]>='0' && text[i]<='9' || text[i]>='A' && text[i]<='Z' || text[i]=='-')) {
 										text='';
 										break;
 									}
 								if (text.length==0 || text.length>20)
-									MyDesktop.messageBox('Failed, only letters and digits are allowed, word length should be in [1,20]!');
+									MyDesktop.messageBox('Failed:'+limit+'!');
 								else {
 									win.handle.close();
 									MyDesktop.postMessage('docker.dashboard.cluster.save', { portal: portal, name: text });

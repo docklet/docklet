@@ -22,10 +22,19 @@ function init {
 	else
 		true
 	fi
+	
+	LOGS="/root/.docklet/logs"
+	mkdir -p ${LOGS}
+	
+	FOLDER="/etc/docklet-autostart"
+	AUTOSTART="`ls ${FOLDER}`"
+	
+	for FILE in ${AUTOSTART}; do
+		bash ${FOLDER}/${FILE} >> ${LOGS}/${NODE_IP}-${FILE}-stdout 2>> ${LOGS}/${NODE_IP}-${FILE}-stderr
+	done
 
 	cd /root && bash
 }
 
 init && exit
-# init >> /root/.docklet-stdout 2>> /root/.docklet-stderr && exit
 

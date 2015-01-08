@@ -1,66 +1,88 @@
 <meta http-equiv="content-type" content="text/html;charset=utf-8" />
 <head><title>Docklet Doc</title></head>
 
-<script>
-	function onload() {
-		var dash = document.getElementById('dash_host');
-		dash.href = dash.innerHTML = 'http://'+location.host+'/';
-	}
-</script>
-
 <body onload="onload()">
 <p>Contact us: unias@sei.pku.edu.cn</p>
 <hr/>
 
-<h2>Docklet 说明文档 - 2014/12/12</h2>
-
-<p>Docklet入口：<a id="dash_host"></a></p>
+<h2>Docklet 说明文档 - 2015/1/8</h2>
 
 <p>第一步：PAM登录</p>
-<p>第二步：点击"Sources"，选择unios镜像点击"Create"</p>
-<p>第三步：在弹出的"Clusters"中双击创建的条目，输入VNC密码登入集群系统；</p>
+<p>第二步：点击"Images"，选择一个合适的镜像点击"Start Image"</p>
+<p>第三步：创建后，会得到一个实例的portal，如：192.168.192.100，用ssh进行登录： ssh root@192.168.192.100</p>
 
-<p>附加说明：VNC密码为123456；</p>
+<p>附加说明：初始密码为 123456，可进入云主机的nat-master通过passwd root命令修改；</p>
 
 <hr/>
 
-<h3>1、Nginx 示例：</h3>
+<h3>如何上传下载文件（注意：所有docklet实例中只有/root目录是永久可靠的存储环境，且在多hosts间完全共享）：</h3>
 
-<p># service nginx start</p>
+<p>从本地上传文件到云主机：scp local-file root@portal-ip:~/</p>
+<p></p>
+<p>从云主机下载文件到本地：scp root@portal-ip:~/remote-file ./</p>
+<p></p>
+<p>从云主机下载ssh的免密码登录证书：scp root@portal-ip:~/.ssh/id_rsa ./</p>
+
+<hr/>
+
+<h3>如何将个人配置好的云主机保存为镜像：</h3>
+
+<p>在云主机的nat-master节点将所有依赖、配置文件等设置完整；</p>
+<p></p>
+<p>然后打开"Clusters"，选择配置好的云主机，点击"Save Master as Image .." 起一个名字即可创建；</p>
+<p></p>
+<p>对于个人创建的镜像，在"Images"中可以通过"Switch Access"来设定是否共享为他人所使用。</p>
+
+<hr/>
+
+<div style="margin-top: 100px" />
+
+<h2>示例部分（假设你的云主机portal为：192.168.192.100）</h2>
+<div style="margin-top: 50px" />
+
+<h3>1、Nginx 网站示例（创建 python2-nginx 实例）：</h3>
+
 <p># echo 'hello world' > /usr/share/nginx/html/index.html</p>
 <p></p>
-<p>此时内部访问：<a href="http://localhost/">http://localhost:80/</a>，可以显示首网页</p>
-<p>（外网可通过portal访问 - http://portal-ip:80/）</p>
+<p>此时外网可通过portal访问：http://192.168.192.100/，显示首网页信息</p>
 
 <hr/>
 
-<h3>2、Python 2.7 示例：</h3>
+<h3>2、Python2 编程示例（创建 python2-nginx 实例）：</h3>
 
 <p>Python程序运行：</p>
 <p># echo 'print "Hello World"' > ~/test.py</p>
 <p># python2 ~/test.py</p>
 <p></p>
+
+<hr/>
+
+<h3>3、Python FTP示例（创建 python2-nginx 实例）：</h3>
 <p>开启个人FTP主目录：</p>
+<p># cd /usr/share</p>
 <p># python2 -m SimpleHTTPServer 81</p>
-<p>此时内部访问：<a href="http://localhost:81/">http://localhost:81/</a>，可以显示个人文件列表</p>
-<p>（外网可通过portal访问 - http://portal-ip:81/）</p>
+<p>此时外网可通过portal访问：http://192.168.192.100:81/，显示所在目录的文件列表</p>
 
 <hr/>
 
-<h3>3、Spark 1.1.1 示例：</h3>
+<h3>4、Spark Shell 示例（创建 jdk7-akka-spark 实例）：</h3>
 
-<p>多机交互模式1：菜单"Applications" -> "Programming" -> "Apache Spark"</p>
-<p>多机交互模式2：# spark-shell --master spark://nat-master:7077</p>
-<p>单机交互模式1：# spark-shell --master local</p>
-<p>源代码编译与提交模式：</p>
+<p>单机独立模式：# spark-shell</p>
+<p>多机集群模式：# spark-shell --master spark://nat-master:7077</p>
+
+<hr/>
+
+<h3>5、Spark 编程示例（创建 jdk7-akka-spark 实例）：</h3>
+
+<p>编写spark代码，如 /usr/local/examples/src/main/scala/org/apache/spark/examples/SparkPi.scala，然后：</p>
 <p># spark-compile /usr/local/examples/src/main/scala/org/apache/spark/examples/SparkPi.scala</p>
-<p># spark-submit --class org.apache.spark.examples.SparkPi ./SparkPi.jar</p>
+<p># spark-submit --master spark://nat-master:7077 --class org.apache.spark.examples.SparkPi ./org.apache.spark.examples.SparkPi.jar</p>
 <p></p>
-<p>Spark 管理界面：<a href="http://localhost:8080/">http://localhost:8080/</a></p>
+<p>Spark 管理界面：http://192.168.192.100:8080/</a></p>
 
 <hr/>
 
-<h3>4、OpenJDK 7 示例：</h3>
+<h3>6、Java7 编程示例（创建 jdk7-akka-spark 实例）：</h3>
 
 <p>保存如下内容至Main.java</p>
 <textarea style="width:700px;height:120px">
@@ -75,9 +97,9 @@ public class Main {
 
 <hr/>
 
-<h3>5、Akka Actor 示例：</h3>
+<h3>7、Akka 编程示例（创建 jdk7-akka-spark 实例）：</h3>
 
-<p>保存如下内容至Actor.scala</p>
+<p>保存如下内容至 MyAkka.scala</p>
 
 <textarea style="width:700px;height:280px">
 import akka.actor._
@@ -98,20 +120,19 @@ object MyAkka {
 }
 </textarea>
 <p>编译运行：</p>
-<p># spark-compile Actor.scala</p>
-<p># spark-submit --class MyAkka ./Actor.jar</p>
+<p># spark-compile -e MyAkka.scala</p>
 
 <hr/>
 
 
-<h3>6、C/C++ 示例：</h3>
+<h3>8、C/C++ 编程示例（创建 gxx-mpi 实例）：</h3>
 <p># echo 'main() { puts("Hello World"); }' > main.c</p>
 <p># gcc main.c && ./a.out</p>
 
 <hr/>
 
 
-<h3>7、MPI 示例：</h3>
+<h3>9、MPI 编程示例（创建 gxx-mpi 实例）：</h3>
 
 <p>保存如下内容至mpi.cpp</p>
 <textarea style="width:700px;height:320px">
@@ -136,7 +157,8 @@ int main (int argc, char *argv[])
 </textarea>
 
 <p>编译运行：</p>
-<p># mpic++ mpi.cpp && mpiexec -hosts hosta,hostb,hostc -n 4 ./a.out</p>
+<p># HOSTS=$(echo `cat /etc/hosts | grep nat | awk '{print $2}'` | tr ' '  ',' )</p>
+<p># mpic++ mpi.cpp && mpiexec -hosts ${HOSTS} -n 4 ./a.out</p>
 
 <hr/>
 
