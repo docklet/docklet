@@ -20,10 +20,10 @@ clusterWindow = Ext.extend(AppWin.AbstractWindow, {
 			return null;
 		
 		var openVNC = function() {
-			var record = Ext.getCmp('cluster-list-grid').getSelectionModel().getSelected();
+			/*var record = Ext.getCmp('cluster-list-grid').getSelectionModel().getSelected();
 			if (record==null)
 				return MyDesktop.messageBox('You are supposed to select a portal.');
-			window.open('http://'+record.get('portal')+':1501/');
+			window.open('http://'+record.get('portal')+':1501/');*/
 		};
 		
 		var clusters = [];
@@ -62,7 +62,10 @@ clusterWindow = Ext.extend(AppWin.AbstractWindow, {
 				autoHeight: true,
 				monitorResize: true,
 				listeners : {
-					'rowdblclick' : openVNC
+					'rowdblclick' : function() {
+						var portal = Ext.getCmp('cluster-list-grid').getSelectionModel().getSelected().get('portal')
+						MyDesktop.messageBox('Your ssh portal is: root@'+portal+'<br/><br/>(Default password: 123456)');
+					}
 				},
 			}), {
 				region: 'south',
@@ -72,7 +75,7 @@ clusterWindow = Ext.extend(AppWin.AbstractWindow, {
 						win.handle.close();
 						MyDesktop.postMessage('docker.dashboard.source.entry', {});
 					}
-				},*/{
+				},{
 					text: 'Open VNC',
 					handler: openVNC
 				},{
@@ -83,7 +86,7 @@ clusterWindow = Ext.extend(AppWin.AbstractWindow, {
 								MyDesktop.postMessage('docker.dashboard.resetVNC', { });
 						})
 					}
-				},{
+				},*/{
 					text: 'Save Master as Image ..',
 					handler: function() {
 						var record = Ext.getCmp('cluster-list-grid').getSelectionModel().getSelected();

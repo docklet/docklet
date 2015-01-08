@@ -31,10 +31,8 @@ sourceWindow = Ext.extend(AppWin.AbstractWindow, {
 				name: 'rd_portal',
 				checked: (i==0)
 			});
-		if (portals.length==0) {
-			MyDesktop.messageBox('All your portals are in used, please apply more from admin or properly stop one of your clusters to free a portal.');
-			portals.push({ html: '' });
-		}
+		if (portals.length==0)
+			portals.push({ html: '<strong style="color:red">All your portals are in used, please apply more from admin or properly stop one of your clusters to free a portal.</strong>' });
 		
 		return new Ext.Panel({
 			layout: 'border',

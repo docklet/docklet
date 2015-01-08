@@ -67,15 +67,27 @@ if [[ "$@" == "create" ]]; then
 
 		RESULT=""
 		CREATE_SEQ="254"
+		
+		COMMON_HOST="${HOME_PREF}/${USER_NAME}/hosts-${FREE_NAT}"
+		echo "127.0.0.1 localhost" > ${COMMON_HOST}
 
 		while [[ "${CREATE_SEQ}" != "${NODE_NUM}" ]]; do
 			echo "[INFO] Booting Docker 10.${SECOND}.${THIRD}.${CREATE_SEQ} ..." > /dev/stderr
+			
+			if [[ "${CREATE_SEQ}" == "254" ]]; then
+				HOST_NAME=nat-master
+			else
+				HOST_NAME=nat-slave${CREATE_SEQ}
+			fi
+
+			echo "10.${SECOND}.${THIRD}.${CREATE_SEQ} ${HOST_NAME}" >> ${COMMON_HOST}
+			
 			HOST_OFFSET=${CREATE_SEQ}
 			[[ "${CREATE_SEQ}" == "254" ]] && HOST_OFFSET=0
 
 			RANDOM_HOST=$(let CNT=0 ; for IP in ${LIVE_HOSTS}; do let CNT=CNT+1; done ; let X=${HOST_OFFSET}%CNT ; let X=X+1 ; echo "${LIVE_HOSTS}" | awk '{print $'${X}'}')
 			NATIVE_IP=10.${SECOND}.${THIRD}.${CREATE_SEQ}
-			CONTAINER_ID=$(WORK_ON=${RANDOM_HOST} NATIVE_IP=${NATIVE_IP} MOD=${MOD} cave)
+			CONTAINER_ID=$(HOST_NAME=${HOST_NAME} WORK_ON=${RANDOM_HOST} NATIVE_IP=${NATIVE_IP} MOD=${MOD} NAT_ID=${FREE_NAT} cave)
 			[[ "${CREATE_SEQ}" == "254" ]] && sleep 1
 			RESULT="${RANDOM_HOST}:${CONTAINER_ID}:${NATIVE_IP} ${RESULT}"
 			let CREATE_SEQ=CREATE_SEQ%254 || true
@@ -114,6 +126,8 @@ elif [[ "$@" == "remove" ]]; then
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${DOCKER_IP} docker rmi ${USE_IMAGE} 2>/dev/null || true
 	done
 	KEY="/pocket/freeNat/${CREATE_ID}" etcdemu rm
+	
+	rm -f "${HOME_PREF}/${USER_NAME}/hosts-${CREATE_ID}"
 	
 elif [[ "$@" == "list" ]]; then
 	[[ "${USER_NAME}" == "" ]] && echo "USER_NAME (like, root) not specified!" && leave 1
