@@ -3,12 +3,20 @@
 set -e
 
 [[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
-[[ "$#" != "1" ]] && echo "Usage: $0 <machine-ip>" && exit 1
 
 . /etc/docklet.conf
 
 #apt-get install lxc ethtool python-pampy bridge-utils libapparmor1 nmap curl netcat-openbsd
 #nc -q 0 0.0.0.0 7001 </dev/null >/dev/null 2>&1 && echo "running." > /dev/stderr && exit 1
+
+UNIONS=$(echo -e "`blink ${MACHINE_CIDR}`\n`ip addr | grep inet\  | awk '{print $2}' | awk -F\/ '{print $1}'`" | sort)
+
+for MY_IP in ${UNIONS}; do
+	[[ "${PREV_IP}" == "${MY_IP}" ]] && break
+	PREV_IP=${MY_IP}
+done
+
+echo "[INFO] this host ip is ${MY_IP}" > /dev/stderr
 
 docklet-weave stop >/dev/null 2>&1 || true
 killall docker >/dev/null 2>&1 || true
@@ -37,11 +45,11 @@ for MIP in $HOSTS; do
 done
 
 mkdir -p ${NFS_PREFIX}/global && cd ${NFS_PREFIX}/global
-echo "[INFO] etcd -peer-addr $@:7001 -addr $@:4001 -data-dir etcd/$@ -name $@ ${PEERS}" >/dev/stderr
+echo "[INFO] etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS}" >/dev/stderr
 
 [[ "${PEERS}" == "" ]] && rm -rf ${NFS_PREFIX}/global/etcd
 
-nohup etcd -peer-addr $@:7001 -addr $@:4001 -data-dir etcd/$@ -name $@ ${PEERS} >/dev/null 2>&1 &
+nohup etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS} >/dev/null 2>&1 &
 
 if [[ "${PEERS}" == "" ]]; then
 	#ham load /usr/local/bin/pub_root_base.tgz
