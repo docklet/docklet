@@ -1,0 +1,5 @@
+#!/bin/bash
+
+[[ "$@" == "" ]] && exit 1
+
+nmap -sP "$@" | grep report | awk '{print $5}'

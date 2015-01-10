@@ -1,0 +1,61 @@
+#!/bin/bash
+
+set -e
+
+[[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
+[[ "$#" != "1" ]] && echo "Usage: $0 <machine-ip>" && exit 1
+
+. /etc/docklet.conf
+
+#apt-get install lxc ethtool python-pampy bridge-utils libapparmor1 nmap curl netcat-openbsd
+#nc -q 0 0.0.0.0 7001 </dev/null >/dev/null 2>&1 && echo "running." > /dev/stderr && exit 1
+
+docklet-weave stop >/dev/null 2>&1 || true
+killall docker >/dev/null 2>&1 || true
+killall etcd >/dev/null 2>&1 || true
+killall python >/dev/null 2>&1 || true
+killall killall lxc-start >/dev/null 2>&1 || true
+
+umount -l /var/lib/docker/devicemapper >/dev/null 2>&1 || true
+rm -rf /var/lib/docker
+
+echo "[INFO] docker -d -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT}" > /dev/stderr
+nohup docker -d -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT} >/dev/null 2>&1 &
+
+mkdir -p ${NFS_PREFIX}
+umount -l ${NFS_PREFIX} >/dev/null 2>&1 || true
+`${NFS_MOUNT_CMD}`
+
+HOSTS="`blink ${MACHINE_CIDR}`"
+PEERS=""
+for MIP in $HOSTS; do
+        if nc -q 0 $MIP 7001 </dev/null >/dev/null 2>&1; then
+                PEERS="--peers $MIP:7001"
+		echo "[INFO] Machine discovery: ${MIP}" > /dev/stderr
+                break
+        fi
+done
+
+mkdir -p ${NFS_PREFIX}/global && cd ${NFS_PREFIX}/global
+echo "[INFO] etcd -peer-addr $@:7001 -addr $@:4001 -data-dir etcd/$@ -name $@ ${PEERS}" >/dev/stderr
+
+[[ "${PEERS}" == "" ]] && rm -rf ${NFS_PREFIX}/global/etcd
+
+nohup etcd -peer-addr $@:7001 -addr $@:4001 -data-dir etcd/$@ -name $@ ${PEERS} >/dev/null 2>&1 &
+
+if [[ "${PEERS}" == "" ]]; then
+	#ham load /usr/local/bin/pub_root_base.tgz
+
+	etcdctl rm "/pocket" --recursive >/dev/null 2>&1 || true
+	KEY="/pocket/freeNat/go" VALUE="0" etcdemu set
+	KEY="/pocket/floating/free" VALUE=" 192.168.192.101 192.168.192.102 192.168.192.103 192.168.192.104 192.168.192.105 192.168.192.106 192.168.192.107 192.168.192.108 192.168.192.109 192.168.192.110 192.168.192.111 192.168.192.112 192.168.192.113 192.168.192.114 192.168.192.115 192.168.192.116 192.168.192.117 192.168.192.118 192.168.192.119 192.168.192.120 192.168.192.121 192.168.192.122 192.168.192.123 192.168.192.124 192.168.192.125 192.168.192.126 192.168.192.127 192.168.192.128 192.168.192.129 192.168.192.130 192.168.192.131 192.168.192.132 192.168.192.133 192.168.192.134" etcdemu set
+	KEY="/pocket/glob/hosts" VALUE="192.168.192.11 192.168.192.12 192.168.192.13" etcdemu set
+fi
+
+echo "[INFO] waiting docker to get ready .." > /dev/stderr && sleep 2
+
+if [[ "${PEERS}" == "" ]]; then
+	CIDR=${PORTAL_CENTRE} CGW=${PORTAL_GATEWAY} CBR=${PORTAL_BRIDGE} docklet-weave launch centre
+else
+	docklet-weave launch ${PORTAL_CENTRE}
+fi
