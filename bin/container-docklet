@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [[ "$@" == "" ]]; then
+#	echo "Usage:"
+#	echo "  docklet hosts"
+	true
+elif [[ "$@" == "hosts" ]]; then
+	HOSTS=$(echo `cat /etc/hosts | grep nat | awk '{print $2}'` | tr ' ' ',')
+	echo ${HOSTS}
+else
+	true
+fi 

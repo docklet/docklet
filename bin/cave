@@ -42,11 +42,16 @@ fi
 
 USER_NAME=${USER_NAME} stone >/dev/null
 
+cp ${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}.safe ${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}
+
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${WORK_ON} ham pull_3v ${MOD}_${IMAGE} > /dev/stderr
 
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${WORK_ON} docklet-weave run ${NATIVE_IP}/24 \
 		-v ${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}:/etc/hosts \
-		-v ${HOME_PREF}/${USER_NAME}/container-init:/usr/bin/docklet \
+		-v ${HOME_PREF}/${USER_NAME}/container-init:/sbin/initctl \
+		-v ${HOME_PREF}/${USER_NAME}/container-docklet:/usr/bin/docklet \
 		-v ${HOME_PREF}/${USER_NAME}/home:/root \
-		-m 1024m -it ${NET_CONF} -h ${HOST_NAME} ${OPTS} ${IMAGE} /usr/bin/docklet ${NATIVE_IP} ${MASTER_IP} | cut -b 1-12
+		-m 1024m -it ${NET_CONF} -h ${HOST_NAME} ${OPTS} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP} | cut -b 1-12
+
+# --lxc-conf="lxc.cgroup.memory.kmem.limit_in_bytes=10m"
 

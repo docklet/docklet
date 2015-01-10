@@ -1,0 +1,7 @@
+#!/bin/bash
+
+while true; do
+	# check leader, ping centre -> weave stop, weave launch centre
+	sleep 60
+done
+

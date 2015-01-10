@@ -27,5 +27,6 @@ cp ${HOME_PREF}/${USER_NAME}/id_rsa ${HOME_PREF}/${USER_NAME}/home/.ssh/id_rsa
 cp ${HOME_PREF}/${USER_NAME}/id_rsa.pub ${HOME_PREF}/${USER_NAME}/home/.ssh/authorized_keys
 
 cp /usr/local/sbin/container-init ${HOME_PREF}/${USER_NAME}/container-init
+cp /usr/local/sbin/container-docklet ${HOME_PREF}/${USER_NAME}/container-docklet
 
 cat "${HOME_PREF}/${USER_NAME}/id_rsa"

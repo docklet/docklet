@@ -157,8 +157,7 @@ int main (int argc, char *argv[])
 </textarea>
 
 <p>编译运行：</p>
-<p># HOSTS=$(echo `cat /etc/hosts | grep nat | awk '{print $2}'` | tr ' '  ',' )</p>
-<p># mpic++ mpi.cpp && mpiexec -hosts ${HOSTS} -n 4 ./a.out</p>
+<p># mpic++ mpi.cpp && mpiexec -hosts $(docklet hosts) -n 4 ./a.out</p>
 
 <hr/>
 

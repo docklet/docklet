@@ -68,7 +68,7 @@ if [[ "$@" == "create" ]]; then
 		RESULT=""
 		CREATE_SEQ="254"
 		
-		COMMON_HOST="${HOME_PREF}/${USER_NAME}/hosts-${FREE_NAT}"
+		COMMON_HOST="${HOME_PREF}/${USER_NAME}/hosts-${FREE_NAT}.safe"
 		echo "127.0.0.1 localhost" > ${COMMON_HOST}
 
 		while [[ "${CREATE_SEQ}" != "${NODE_NUM}" ]]; do
@@ -127,7 +127,7 @@ elif [[ "$@" == "remove" ]]; then
 	done
 	KEY="/pocket/freeNat/${CREATE_ID}" etcdemu rm
 	
-	rm -f "${HOME_PREF}/${USER_NAME}/hosts-${CREATE_ID}"
+	rm -f "${HOME_PREF}/${USER_NAME}/hosts-${CREATE_ID}" "${HOME_PREF}/${USER_NAME}/hosts-${CREATE_ID}.safe"
 	
 elif [[ "$@" == "list" ]]; then
 	[[ "${USER_NAME}" == "" ]] && echo "USER_NAME (like, root) not specified!" && leave 1

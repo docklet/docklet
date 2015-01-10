@@ -1,14 +1,6 @@
 * [ Docklet ]
 
-==============================================================
-
-[BUGS]
-
-Todo: Root Manage, DYN WebSocket Conn
-
-Dashboard: SwitchWindow-Bug / WebSocket 18888 Redirect
-
-Image: InputMethod, Hosts Link
+git clone http://git.unias.org/docklet.git
 
 ==============================================================
 
@@ -20,8 +12,14 @@ echo 'DOCKER_OPTS="-e lxc"' >> /etc/default/docker
 echo 'GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1"' >> /etc/default/grub
 update-grub && reboot
 
+[CPU-Speed]
+--lxc-conf="lxc.cgroup.cpu.cfs_quota_us=50000"
+
+[Bandwidth]
+
+
 [Depends]
-docker with weave (>=1.2.0), etcd (=0.4.6), pocket-tools (dev)
+docker with weave (>=1.3.2), etcd (=0.4.6), pocket-tools (dev)
 
 [Config]
 MASTER=192.168.4.231
@@ -51,10 +49,11 @@ CREATE_ID=0 pocket remove
 [HOSTS]
 
 * 192.168.4.12
-* 192.168.4.230
+* 192.168.4.13
 
-[ git clone http://git.unias.org/docklet.git ]
-
+* 192.168.192.11
+* 192.168.192.12
+* 192.168.192.13
 
 [docker.dep]
 
