@@ -6,7 +6,7 @@ set -e
 
 . /etc/docklet.conf
 
-#apt-get install lxc ethtool python-pampy bridge-utils libapparmor1 nmap curl netcat-openbsd
+#apt-get install lxc ethtool python-pampy bridge-utils libapparmor1 nmap curl sshfs netcat-openbsd
 #nc -q 0 0.0.0.0 7001 </dev/null >/dev/null 2>&1 && echo "running." > /dev/stderr && exit 1
 
 UNIONS=$(echo -e "`blink ${MACHINE_CIDR}`\n`ip addr | grep inet\  | awk '{print $2}' | awk -F\/ '{print $1}'`" | sort)
