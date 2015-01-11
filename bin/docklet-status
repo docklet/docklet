@@ -7,12 +7,11 @@ HOME_PREF=/home/docklet
 echo "=============================================="
 
 echo "[Docklet Physical Hosts]"
-echo -n "* "
-KEY="/pocket/glob/hosts" etcdemu get
+KEY='/_etcd/machines' etcdemu ls | awk -F\/ '{print $NF}'
 echo
 
 echo "[Portal Allocation]"
-for USER in `KEY="/pocket/floating" etcdemu ls | grep -v free`; do
+for USER in `KEY="/docklet/portal" etcdemu ls | grep -v free`; do
 	for IP in `KEY=${USER} etcdemu ls`; do
 		STATUS="`KEY=${IP} etcdemu get`"
 		echo -e "* `basename ${USER}` `basename ${IP}` ${STATUS}" 
@@ -21,7 +20,7 @@ done
 echo
 
 echo "[Clusters Status]"
-for NAT in `KEY="/pocket/freeNat" etcdemu ls | grep -v go`; do
+for NAT in `KEY="/docklet/instances" etcdemu ls | grep -v go`; do
 	echo -n "* "
 	KEY=${NAT} etcdemu get
 done

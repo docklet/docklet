@@ -3,8 +3,7 @@
 # BRIDGE_IP=192.168.4.200 USER_NAME=root NODE_NUM=3 pocket create
 # CREATE_ID=1 pocket remove
 
-
-HOME_PREF=/home/docklet
+. /etc/docklet.conf
 
 if [[ "$@" == "" ]]; then
 	echo "Usage:"
@@ -20,12 +19,12 @@ fi
 
 
 function enter {
-	while [[ "`KEY="/pocket/lock" etcdemu get`" != "" ]]; do sleep 0.2; done;
-	KEY="/pocket/lock" VALUE="busy" etcdemu set
+	while [[ "`KEY="/docklet/lock" etcdemu get`" != "" ]]; do sleep 0.2; done;
+	KEY="/docklet/lock" VALUE="busy" etcdemu set
 }
 
 function leave {
-	KEY="/pocket/lock" etcdemu rm
+	KEY="/docklet/lock" etcdemu rm
 	exit $1
 }
 
@@ -33,37 +32,36 @@ enter
 
 if [[ "$@" == "create" ]]; then
 
-	[[ "${BRIDGE_DEV}" == "" ]] && BRIDGE_DEV=br1
+	BRIDGE_DEV=${PORTAL_BRIDGE}
+	BRIDGE_GW=${PORTAL_GATEWAY}
 	
 	[[ "${IMAGE}" == "" ]]      && echo "IMAGE (like, unios) not specified!" && leave 1
-	[[ "${BRIDGE_GW}" == "" ]]  && echo "BRIDGE_GW (like, 192.168.4.2) not specified!" && leave 1
 	[[ "${BRIDGE_IP}" == "" ]] && echo "BRIDGE_IP (like, 192.168.4.x) not specified!" && leave 1
 	[[ "${USER_NAME}" == "" ]] && echo "USER_NAME (like, root) not specified!" && leave 1
 	[[ "${NODE_NUM}" == "" ]] && echo "NODE_NUM ([1-252], like, 1) not specified!" && leave 1
 	[[ "${MOD}" == "" ]] && echo "MOD ({self|pub|}) not specified!" && leave 1
 
-	EXIST=$(KEY="/pocket/floating/${USER_NAME}/${BRIDGE_IP}" etcdemu get 2>/dev/null | grep "inactive")
+	EXIST=$(KEY="/docklet/portal/${USER_NAME}/${BRIDGE_IP}" etcdemu get 2>/dev/null | grep "inactive")
 	if [[ "${EXIST}" != "" ]]; then
-		KEY="/pocket/floating/${USER_NAME}/${BRIDGE_IP}" VALUE="active" etcdemu set
+		KEY="/docklet/portal/${USER_NAME}/${BRIDGE_IP}" VALUE="active" etcdemu set
 		
-		LIVE_HOSTS=$(KEY="/pocket/glob/hosts" etcdemu get)
+		LIVE_HOSTS="$(KEY='/_etcd/machines' etcdemu ls | awk -F\/ '{print $NF}')"
 
 		export USER_NAME BRIDGE_IP BRIDGE_GW BRIDGE_DEV IMAGE
 
-		FREE_NAT=$(KEY="/pocket/freeNat/go" etcdemu get)
-		while [[ "`KEY=/pocket/freeNat/${FREE_NAT} etcdemu get`" != "" ]]; do
+		FREE_NAT=0 || true
+		while [[ "`KEY=/docklet/instances/${FREE_NAT} etcdemu get`" != "" ]]; do
 			let FREE_NAT=FREE_NAT+1
-			[[ "${FREE_NAT}" == "65536" ]] && FREE_NAT=0 || true
+			#[[ "${FREE_NAT}" == "65536" ]] && FREE_NAT=0 || true
 		done
-		KEY="/pocket/freeNat/go" VALUE="${FREE_NAT}" etcdemu set || true
 
-		KEY="/pocket/freeNat/${FREE_NAT}" VALUE="prepare" etcdemu set || true
+		KEY="/docklet/instances/${FREE_NAT}" VALUE="prepare" etcdemu set || true
 
 		let SECOND=${FREE_NAT}/256 || true
 		let THIRD=${FREE_NAT}%256 || true
 
 		echo "[INFO] NAT selected: 10.${SECOND}.${THIRD}.0/24, Native Master IP: 10.${SECOND}.${THIRD}.254" > /dev/stderr
-		echo "[INFO] Make sure you put id_rsa/authorized_keys to \$HOME/${USER_NAME}/.ssh" > /dev/stderr
+		echo "[INFO] Launching cluster among physcal machines: ${LIVE_HOSTS}" > /dev/stderr
 
 		RESULT=""
 		CREATE_SEQ="254"
@@ -83,21 +81,27 @@ if [[ "$@" == "create" ]]; then
 			echo "10.${SECOND}.${THIRD}.${CREATE_SEQ} ${HOST_NAME}" >> ${COMMON_HOST}
 			
 			HOST_OFFSET=${CREATE_SEQ}
-			[[ "${CREATE_SEQ}" == "254" ]] && HOST_OFFSET=0
+			[[ "${CREATE_SEQ}" == "254" ]] && HOST_OFFSET=0 || true
 
-			RANDOM_HOST=$(let CNT=0 ; for IP in ${LIVE_HOSTS}; do let CNT=CNT+1; done ; let X=${HOST_OFFSET}%CNT ; let X=X+1 ; echo "${LIVE_HOSTS}" | awk '{print $'${X}'}')
+			TOTAL_MACHINE=$(echo "${LIVE_HOSTS}" | wc -w)
+			
+			#RANDOM_HOST=$(let X=${HOST_OFFSET}%${TOTAL_MACHINE} ; let X=X+1 ; echo "${LIVE_HOSTS}" | awk '{print $'${X}'}')
+			RANDOM_HOST=$(let X=${HOST_OFFSET}%${TOTAL_MACHINE} ; let X=X+1 ; echo "${LIVE_HOSTS}" | head -n ${X} | tail -n 1)
+			
 			NATIVE_IP=10.${SECOND}.${THIRD}.${CREATE_SEQ}
+			echo "[EXEC] HOST_NAME=${HOST_NAME} WORK_ON=${RANDOM_HOST} NATIVE_IP=${NATIVE_IP} MOD=${MOD} NAT_ID=${FREE_NAT} cave" > /dev/stderr
 			CONTAINER_ID=$(HOST_NAME=${HOST_NAME} WORK_ON=${RANDOM_HOST} NATIVE_IP=${NATIVE_IP} MOD=${MOD} NAT_ID=${FREE_NAT} cave)
+			
 			[[ "${CREATE_SEQ}" == "254" ]] && sleep 1
 			RESULT="${RANDOM_HOST}:${CONTAINER_ID}:${NATIVE_IP} ${RESULT}"
 			let CREATE_SEQ=CREATE_SEQ%254 || true
 			let CREATE_SEQ=CREATE_SEQ+1 || true
 		done
 
-		KEY="/pocket/freeNat/${FREE_NAT}" VALUE="${USER_NAME}|${IMAGE}|${BRIDGE_IP}|${RESULT}" etcdemu set || true
+		KEY="/docklet/instances/${FREE_NAT}" VALUE="${USER_NAME}|${IMAGE}|${BRIDGE_IP}|${RESULT}" etcdemu set || true
 	
-		echo "[INFO] Type 'KEY=/pocket/freeNat/${FREE_NAT} etcdemu get' to see cluster detail" > /dev/stderr
-		echo "[INFO] Type 'KEY=/pocket/glob/hosts etcdemu get' to see real machine list" > /dev/stderr
+		echo "[INFO] Type 'KEY=/docklet/instances/${FREE_NAT} etcdemu get' to see cluster detail" > /dev/stderr
+		echo "[INFO] Type 'KEY=/_etcd/machines etcdemu ls' to see real machine list" > /dev/stderr
 	
 		echo ${FREE_NAT}
 		
@@ -107,7 +111,7 @@ elif [[ "$@" == "remove" ]]; then
 	[[ "${USER_NAME}" == "" ]] && echo "USER_NAME (like, root) not specified!" && leave 1
 	[[ "${CREATE_ID}" == "" ]] && echo "CREATE_ID (like, 2) not specified!" && leave 1
 	
-	DATAS=$(KEY="/pocket/freeNat/${CREATE_ID}" etcdemu get)
+	DATAS=$(KEY="/docklet/instances/${CREATE_ID}" etcdemu get)
 
 	[[ "`echo ${DATAS} | awk -F\| '{print $1}'`" != "${USER_NAME}" ]] && leave 1
 
@@ -115,7 +119,7 @@ elif [[ "$@" == "remove" ]]; then
 	BRIDGE_IP=$(echo ${DATAS} | awk -F\| '{print $3}')
 	USE_IMAGE=$(echo ${DATAS} | awk -F\| '{print $2}')
 
-	KEY="/pocket/floating/${USER_NAME}/${BRIDGE_IP}" VALUE="inactive" etcdemu set
+	KEY="/docklet/portal/${USER_NAME}/${BRIDGE_IP}" VALUE="inactive" etcdemu set
 		
 	for DOCKER_PAIR in ${DOCKER_LIST}; do
 		DOCKER_IP=$(echo ${DOCKER_PAIR} | awk -F':' '{print $1}')
@@ -125,17 +129,17 @@ elif [[ "$@" == "remove" ]]; then
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${DOCKER_IP} docker rm ${DOCKER_ID} || true
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ${DOCKER_IP} docker rmi ${USE_IMAGE} 2>/dev/null || true
 	done
-	KEY="/pocket/freeNat/${CREATE_ID}" etcdemu rm
+	KEY="/docklet/instances/${CREATE_ID}" etcdemu rm
 	
 	rm -f "${HOME_PREF}/${USER_NAME}/hosts-${CREATE_ID}" "${HOME_PREF}/${USER_NAME}/hosts-${CREATE_ID}.safe"
 	
 elif [[ "$@" == "list" ]]; then
 	[[ "${USER_NAME}" == "" ]] && echo "USER_NAME (like, root) not specified!" && leave 1
 	
-	LISTS=$(KEY="/pocket/freeNat" etcdemu ls | grep -v go)
+	LISTS=$(KEY="/docklet/instances" etcdemu ls | grep -v go)
 	for ITEM in ${LISTS}; do
 		ID=$(basename ${ITEM})
-		DATAS=$(KEY="/pocket/freeNat/${ID}" etcdemu get)
+		DATAS=$(KEY="/docklet/instances/${ID}" etcdemu get)
 		KV_USER=$(echo ${DATAS} | awk -F\| '{print $1}')
 		if [[ "${KV_USER}" == "${USER_NAME}" ]] || [[ "root" == "${USER_NAME}" ]]; then
 			echo "${ID}|${DATAS}"
@@ -152,29 +156,29 @@ elif [[ "$@" == "portal" ]]; then
 	[[ "${CMD}" == "rm" ]] && [[ "${BRIDGE_IP}" == "" ]] && echo "BRIDGE_IP (like, 192.168.4.x) not specified!" && leave 1
 	
 	if [[ "${CMD}" == "app" ]]; then
-		AVAIL=$(KEY="/pocket/floating/free" etcdemu get)
+		AVAIL=$(KEY="/docklet/portal/free" etcdemu get)
 		FLOATINGS=$(echo ${AVAIL} | awk '{print $1}')
 		[[ "${FLOATINGS}" == "" ]] && echo "[ERROR] No more free portals to allocate!" > /dev/stderr
 		AVAIL=$(echo "${AVAIL}" | sed "s/ ${FLOATINGS}//")
-		KEY="/pocket/floating/free" VALUE="${AVAIL}" etcdemu set
-		KEY="/pocket/floating/${USER_NAME}/${FLOATINGS}" VALUE="inactive" etcdemu set
+		KEY="/docklet/portal/free" VALUE="${AVAIL}" etcdemu set
+		KEY="/docklet/portal/${USER_NAME}/${FLOATINGS}" VALUE="inactive" etcdemu set
 		echo "${FLOATINGS}"
 		
 	elif [[ "${CMD}" == "list" ]]; then
-		LIST=$(KEY="/pocket/floating/${USER_NAME}" etcdemu ls)
+		LIST=$(KEY="/docklet/portal/${USER_NAME}" etcdemu ls)
 		if [[ "${LIST}" != "" ]]; then
 			for LINE in ${LIST}; do
 				IP=$(basename ${LINE})
-				echo ${IP}:$(KEY="/pocket/floating/${USER_NAME}/${IP}" etcdemu get)
+				echo ${IP}:$(KEY="/docklet/portal/${USER_NAME}/${IP}" etcdemu get)
 			done
 		fi
 		
 	elif [[ "${CMD}" == "rm" ]]; then
-		EXIST=$(KEY="/pocket/floating/${USER_NAME}/${BRIDGE_IP}" etcdemu get 2>/dev/null | grep "inactive")
+		EXIST=$(KEY="/docklet/portal/${USER_NAME}/${BRIDGE_IP}" etcdemu get 2>/dev/null | grep "inactive")
 		if [[ "${EXIST}" != "" ]]; then
-			KEY="/pocket/floating/${USER_NAME}/${BRIDGE_IP}" etcdemu rm
-			AVAIL="$(KEY='/pocket/floating/free' etcdemu get) ${BRIDGE_IP}"
-			KEY='/pocket/floating/free' VALUE="${AVAIL}" etcdemu set
+			KEY="/docklet/portal/${USER_NAME}/${BRIDGE_IP}" etcdemu rm
+			AVAIL="$(KEY='/docklet/portal/free' etcdemu get) ${BRIDGE_IP}"
+			KEY='/docklet/portal/free' VALUE="${AVAIL}" etcdemu set
 		fi
 	fi
 elif [[ "$@" == "save" ]]; then
@@ -182,7 +186,7 @@ elif [[ "$@" == "save" ]]; then
 	[[ "${PORTAL}" == "" ]] && echo "PORTAL (like, 192.168.4.150) not specified!" && leave 1
 	[[ "${IMAGE_NAME}" == "" ]] && echo "IMAGE_NAME (like, test) not specified!" && leave 1
 	
-	LISTS=$(KEY="/pocket/freeNat" etcdemu ls | grep -v go)
+	LISTS=$(KEY="/docklet/instances" etcdemu ls | grep -v go)
 	for ITEM in ${LISTS}; do
 		ID=$(basename ${ITEM})
 		DATAS=$(KEY="${ITEM}" etcdemu get)

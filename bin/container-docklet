@@ -1,12 +1,15 @@
 #!/bin/bash
 
+set -e
+
 if [[ "$@" == "" ]]; then
-#	echo "Usage:"
-#	echo "  docklet hosts"
+	echo "Usage: docklet [hosts|portal|..]"
 	true
 elif [[ "$@" == "hosts" ]]; then
 	HOSTS=$(echo `cat /etc/hosts | grep nat | awk '{print $2}'` | tr ' ' ',')
 	echo ${HOSTS}
+elif [[ "$@" == "portal" ]]; then
+	ssh root@nat-master ip addr | grep global\ eth0 | awk '{ print $2}' | awk -F\/ '{print $1}'
 else
-	true
+	false
 fi 
