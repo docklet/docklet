@@ -1,6 +1,8 @@
 #!/bin/bash
 
-HOME_PREF=/home/docklet
+. /etc/docklet.conf
+
+HOME_PREF=${NFS_PREFIX}
 
 [[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
 

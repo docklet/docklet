@@ -672,7 +672,7 @@ class LiveSession(object):
 		mod = request['mod']
 		if mod=='pub' or owner==self.username or 'root'==self.username:
 			image = owner+'_'+request['image']
-			(status, output) = commands.getstatusoutput('BRIDGE_IP='+bridge+' BRIDGE_GW='+os.environ['BRIDGE_GW']+' USER_NAME='+self.username+' MOD='+mod+' IMAGE='+image+' NODE_NUM='+str(request['nodes'])+' pocket create')
+			(status, output) = commands.getstatusoutput('BRIDGE_IP='+bridge+' USER_NAME='+self.username+' MOD='+mod+' IMAGE='+image+' NODE_NUM='+str(request['nodes'])+' pocket create')
 			return {'success': True, 'portal': bridge, 'cluster': output }
 		else:
 			return {'success': False }
@@ -752,12 +752,12 @@ if __name__ == "__main__":
 	HTTP_PORT = 80
 	HTTP_PATH = "/usr/local/sbin/dashboard"
 	
-	try:
-		os.environ['BRIDGE_GW']
-	except:
-		print 'BRIDGE_GW environment not set'
-		exit() 
-		pass
+	#try:
+	#	os.environ['BRIDGE_GW']
+	#except:
+	#	print 'BRIDGE_GW environment not set'
+	#	exit() 
+	#	pass
 	
 	SocketServer.TCPServer.allow_reuse_address = True
 	httpd = SocketServer.TCPServer(("0.0.0.0", HTTP_PORT), DockletHTTPRequestHandler)

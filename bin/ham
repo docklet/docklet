@@ -1,7 +1,8 @@
 #!/bin/bash
 
+. /etc/docklet.conf
 
-HOME_PREF=/home/docklet/global
+HOME_PREF=${NFS_PREFIX}/global
 
 mkdir -p ${HOME_PREF}/images
 

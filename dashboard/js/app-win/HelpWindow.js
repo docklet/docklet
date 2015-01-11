@@ -3,7 +3,7 @@ helpWindow = Ext.extend(AppWin.AbstractWindow, {
 	label : 'Help',
 	bigIcon : 'evolution-tasks.png',
 	
-	width: 500,
+	width: 600,
 	height: 400,
 	
 	register : function() {
