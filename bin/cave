@@ -10,7 +10,7 @@
 # >> spark-shell --master spark://nat-master:7077
 # use: /home/docker/root/.ssh/id_rsa
 
-. /etc/docklet.conf
+. /etc/docklet/docklet.conf
 
 HOME_PREF=${NFS_PREFIX}
 

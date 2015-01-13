@@ -3,7 +3,7 @@
 # BRIDGE_IP=192.168.4.200 USER_NAME=root NODE_NUM=3 pocket create
 # CREATE_ID=1 pocket remove
 
-. /etc/docklet.conf
+. /etc/docklet/docklet.conf
 HOME_PREF=${NFS_PREFIX}
 
 if [[ "$@" == "" ]]; then

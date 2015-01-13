@@ -4,7 +4,7 @@ set -e
 
 [[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
 
-. /etc/docklet.conf
+. /etc/docklet/docklet.conf
 
 #apt-get install lxc ethtool python-pampy bridge-utils libapparmor1 nmap curl sshfs netcat-openbsd
 #nc -q 0 0.0.0.0 7001 </dev/null >/dev/null 2>&1 && echo "running." > /dev/stderr && exit 1
@@ -23,6 +23,9 @@ killall docker >/dev/null 2>&1 || true
 killall etcd >/dev/null 2>&1 || true
 killall python >/dev/null 2>&1 || true
 killall killall lxc-start >/dev/null 2>&1 || true
+
+echo "[INFO] Make sure all docker resources are releases .." > /dev/stderr
+sleep 5
 
 umount -l /var/lib/docker/devicemapper >/dev/null 2>&1 || true
 rm -rf /var/lib/docker
