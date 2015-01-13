@@ -6,7 +6,23 @@ set -e
 
 . /etc/docklet/docklet.conf
 
-#apt-get install lxc ethtool python-pampy bridge-utils libapparmor1 nmap curl sshfs netcat-openbsd
+if [[ "`which etcd 2>/dev/null`" == "" ]]; then
+	apt-get install -y lxc ethtool python-pampy bridge-utils libapparmor1 nmap curl sshfs netcat-openbsd net-tools openssh-server
+	
+	curl -L "${BIN_SOURCE}" > /tmp/docklet-bin.tgz
+	
+	cd /usr/local/bin
+	tar xvf /tmp/docklet-bin.tgz
+	rm -f /tmp/docklet-bin.tgz
+	
+	ip link delete ethlo 2>/dev/null || true
+	brctl addbr ethlo
+	ifconfig ethlo 172.31.0.1/16
+	
+	echo "[INFO] Finish setting up." > /dev/stderr
+fi
+
+#
 #nc -q 0 0.0.0.0 7001 </dev/null >/dev/null 2>&1 && echo "running." > /dev/stderr && exit 1
 
 UNIONS=$(echo -e "`blink ${MACHINE_CIDR}`\n`ip addr | grep inet\  | awk '{print $2}' | awk -F\/ '{print $1}'`" | sort)
@@ -55,7 +71,7 @@ echo "[INFO] etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${
 nohup etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS} >/dev/null 2>&1 &
 
 if [[ "${PEERS}" == "" ]]; then
-	# ham load /usr/local/bin/pub_root_base.tgz
+	ham load /usr/local/bin/pub_root_base.tgz
 	
 	echo "[INFO] waiting etcd to get ready .." > /dev/stderr && sleep 5
 
