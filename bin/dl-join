@@ -14,25 +14,28 @@ if [[ "`which etcd 2>/dev/null`" == "" ]]; then
 	cd /usr/local/bin
 	tar xvf /tmp/docklet-bin.tgz
 	rm -f /tmp/docklet-bin.tgz
+fi
 	
-	if [[ "${MACHINE_CIDR}" == "127.0.0.1/32" ]]; then
-		echo "[INFO] Setting up for localhost." > /dev/stderr
-		ip link delete ethlo || true
-		brctl addbr ethlo
-		ifconfig ethlo 172.31.0.1/16
-		
-		mv /root/.ssh/id_rsa /root/.ssh/id_rsa.bak || true
-		mv /root/.ssh/id_rsa.pub /root/.ssh/id_rsa.pub.bak || true
-		mv /root/.ssh/authorized_keys /root/.ssh/authorized_keys.bak || true
-		
-		echo -e '\n' | ssh-keygen -t rsa -P ''
-		mv /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
-	fi
+if [[ "${MACHINE_CIDR}" == "127.0.0.1/32" ]]; then
+	echo "[INFO] Setting up for localhost." > /dev/stderr
+	ip link delete ethlo 2>/dev/null || true
+	brctl addbr ethlo
+	ifconfig ethlo 172.31.0.1/16
 	
-	echo "[INFO] Finish setting up." > /dev/stderr
+	mv /root/.ssh/id_rsa /root/.ssh/id_rsa.bak 2>/dev/null || true
+	mv /root/.ssh/id_rsa.pub /root/.ssh/id_rsa.pub.bak 2>/dev/null || true
+	mv /root/.ssh/authorized_keys /root/.ssh/authorized_keys.bak 2>/dev/null || true
+	
+	echo -e '\n' | ssh-keygen -t rsa -P '' >/dev/null 2>&1
+	mv /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
 fi
 
-#
+echo "[INFO] Finish setting up." > /dev/stderr
+
+
+
+
+
 #nc -q 0 0.0.0.0 7001 </dev/null >/dev/null 2>&1 && echo "running." > /dev/stderr && exit 1
 
 UNIONS=$(echo -e "`blink ${MACHINE_CIDR}`\n`ip addr | grep inet\  | awk '{print $2}' | awk -F\/ '{print $1}'`" | sort)
