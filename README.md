@@ -4,10 +4,21 @@ git clone http://git.unias.org/docklet.git
 
 ==============================================================
 
-[Todo]
+[Setup]
 
-* Completely remove /docklet/portal/free;
+sudo apt-get install git make
 
+git clone http://git.unias.org/docklet.git
+
+cd docklet
+
+sudo make install
+
+sudo dl-join (download dependencies for the first time)
+
+firefox http://localhost/ (using native PAM，then create clusters, like 172.31.0.3)
+
+Finally, ssh root@172.31.0.3 (initial password: 123456)
 
 ==============================================================
 

@@ -103,6 +103,7 @@ if [[ "$@" == "create" ]]; then
 		RESULT=""
 		CREATE_SEQ="254"
 		
+		mkdir -p "${HOME_PREF}/${USER_NAME}"
 		COMMON_HOST="${HOME_PREF}/${USER_NAME}/hosts-${FREE_NAT}.safe"
 		echo "127.0.0.1 localhost" > ${COMMON_HOST}
 

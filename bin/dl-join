@@ -15,9 +15,19 @@ if [[ "`which etcd 2>/dev/null`" == "" ]]; then
 	tar xvf /tmp/docklet-bin.tgz
 	rm -f /tmp/docklet-bin.tgz
 	
-	ip link delete ethlo 2>/dev/null || true
-	brctl addbr ethlo
-	ifconfig ethlo 172.31.0.1/16
+	if [[ "${MACHINE_CIDR}" == "127.0.0.1/32" ]]; then
+		echo "[INFO] Setting up for localhost." > /dev/stderr
+		ip link delete ethlo || true
+		brctl addbr ethlo
+		ifconfig ethlo 172.31.0.1/16
+		
+		mv /root/.ssh/id_rsa /root/.ssh/id_rsa.bak || true
+		mv /root/.ssh/id_rsa.pub /root/.ssh/id_rsa.pub.bak || true
+		mv /root/.ssh/authorized_keys /root/.ssh/authorized_keys.bak || true
+		
+		echo -e '\n' | ssh-keygen -t rsa -P ''
+		mv /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
+	fi
 	
 	echo "[INFO] Finish setting up." > /dev/stderr
 fi
@@ -84,6 +94,11 @@ echo "[INFO] waiting docker to get ready .." > /dev/stderr && sleep 2
 
 if [[ "${PEERS}" == "" ]]; then
 	CIDR=${PORTAL_CENTRE} CGW=${PORTAL_GATEWAY} CBR=${PORTAL_BRIDGE} docklet-weave launch centre
+	
+	service nginx stop 2>/dev/null || true
+	service apache2 stop 2>/dev/null || true
+
+	nohup docklet-http >/dev/null 2>&1 &
 else
 	docklet-weave launch ${PORTAL_CENTRE}
 fi
