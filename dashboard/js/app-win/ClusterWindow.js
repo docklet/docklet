@@ -96,11 +96,11 @@ clusterWindow = Ext.extend(AppWin.AbstractWindow, {
 						if (record.get('user')!=MyDesktop.getGatewayUsername())
 							return MyDesktop.messageBox('This cluster is not owned by you.');
 
-						var limit = 'only letters, digits, "-" are allowed, and word length: 1-20';
+						var limit = 'only a-z, 0-9, "-" are allowed, and word length: 1-20';
 						MyDesktop.promptBox('Please enter a name for image ('+limit+'):', function(reply, text) {
 							if (reply=='ok') {
 								for (var i=0;i<text.length;i++)
-									if (!(text[i]>='a' && text[i]<='z' || text[i]>='0' && text[i]<='9' || text[i]>='A' && text[i]<='Z' || text[i]=='-')) {
+									if (!(text[i]>='a' && text[i]<='z' || text[i]>='0' && text[i]<='9' || text[i]=='-')) {
 										text='';
 										break;
 									}

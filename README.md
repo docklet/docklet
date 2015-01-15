@@ -1,6 +1,4 @@
-* [ Docklet ]
-
-git clone http://git.unias.org/docklet.git
+[ Docklet ] git clone http://git.unias.org/docklet.git
 
 ==============================================================
 
@@ -10,11 +8,13 @@ sudo apt-get install git make
 
 git clone http://git.unias.org/docklet.git
 
-cd docklet
+cd ./docklet
 
 sudo make install
 
-sudo dl-join (download dependencies for the first time)
+# edit /etc/docklet/docklet.conf for self-defined configuration
+
+sudo dl-join (only download dependencies for the first time)
 
 firefox http://localhost/ (using native PAM，then create clusters, like 172.31.0.3)
 
@@ -22,9 +22,22 @@ Finally, ssh root@172.31.0.3 (initial password: 123456)
 
 ==============================================================
 
-[Init]
-apt-get install bridge-utils lxc [bridge: /etc/network/interfaces]
-echo 'DOCKER_OPTS="-e lxc"' >> /etc/default/docker
+[Multi host bridge settings: /etc/network/interfaces]
+auto eth0
+iface eth0 inet manual
+
+auto br1
+iface br1 inet static
+	address 192.168.192.11
+	netmask 255.255.255.0
+	gateway 192.168.192.1
+	bridge_ports eth0
+	bridge_stp off
+	bridge_fd 0
+	bridge_maxwait 0
+	dns-nameservers 162.105.129.27
+
+==============================================================
 
 [Memory]
 echo 'GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1"' >> /etc/default/grub
@@ -36,16 +49,7 @@ update-grub && reboot
 [Bandwidth]
 
 
-[Depends]
-docker with weave (>=1.3.2), etcd (=0.4.6), pocket-tools (dev)
-
-[Config]
-MASTER=192.168.4.231
-sshfs root@${MASTER}:/home/docklet /home/docklet
-weave launch [ ${MASTER} ]
-cd / && nohup etcd >/dev/null &
-# mount.nfs /home/docklet
-
+==============================================================
 
 [VNC Server]
 
@@ -53,21 +57,6 @@ cd / && nohup etcd >/dev/null &
 >>	chmod a+x ${HOME}/.vnc/xstartup
 >>	echo -e "openbox-session &" >> ${HOME}/.vnc/xstartup
 >>	rm -rf /tmp/.X1-lock /tmp/.X11-unix/X1 /root/.vnc/*.log /root/.vnc/*.pid
-
-
-etcdctl rm "/docklet" --recursive || true
-# KEY="/docklet/instances/go" VALUE="0" etcdemu set
-# KEY="/docklet/portal/free" VALUE=" 192.168.192.101 192.168.192.102 192.168.192.103 192.168.192.104 192.168.192.105 192.168.192.106 192.168.192.107 192.168.192.108 192.168.192.109 192.168.192.110 192.168.192.111 192.168.192.112 192.168.192.113 192.168.192.114 192.168.192.115 192.168.192.116 192.168.192.117 192.168.192.118 192.168.192.119 192.168.192.120 192.168.192.121 192.168.192.122 192.168.192.123 192.168.192.124 192.168.192.125 192.168.192.126 192.168.192.127 192.168.192.128 192.168.192.129 192.168.192.130 192.168.192.131 192.168.192.132 192.168.192.133 192.168.192.134" etcdemu set
-
-# KEY="/docklet/glob/hosts" VALUE="192.168.192.11 192.168.192.12 192.168.192.13" etcdemu set
-# KEY="/docklet/portal/free" VALUE=" 192.168.4.150 192.168.4.151 192.168.4.152" etcdemu set
-# KEY="/docklet/glob/hosts" VALUE="192.168.4.12" etcdemu set
-
-
-[Run]
-USER_NAME=root CMD=app pocket portal
-IMAGE=unios141212 BRIDGE_IP=192.168.4.150 USER_NAME=root NODE_NUM=5 pocket create
-CREATE_ID=0 pocket remove
 
 ==============================================================
 
@@ -91,3 +80,4 @@ autoreconf -is
 ./configure --prefix=/home/docklet
 make
 make install
+
