@@ -2,6 +2,8 @@
 
 set -e
 
+[[ "`uname -a | grep x86_64`" == "" ]] && echo "Only x86_64-arch is supported." && exit 1
+
 [[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
 
 . /etc/docklet/docklet.conf
@@ -13,6 +15,7 @@ if [[ "`which etcd 2>/dev/null`" == "" ]]; then
 	
 	cd /usr/local/bin
 	tar xvf /tmp/docklet-bin.tgz
+	mv libdevmapper.so.1.02.1 /lib/x86_64-linux-gnu
 	rm -f /tmp/docklet-bin.tgz
 fi
 	
