@@ -1,7 +1,34 @@
 #!/bin/bash
 
+[[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
+[[ "${HOST}" == "" ]] && exit 1
+
+. /etc/docklet/docklet.conf
+
 while true; do
 	# check leader, ping centre -> weave stop, weave launch centre
-	sleep 60
+	
+	LEADER=$(curl -L http://0.0.0.0:4001/v2/stats/leader 2>/dev/null | python -m json.tool | grep leader | awk -F\" '{print $4}')
+	if [[ "${LEADER}" == "${HOST}" ]]; then
+		echo "I'm leader." > /dev/stderr
+		if ! ping -w 10 -c 1 ${PORTAL_CENTRE} >/dev/null 2>&1; then
+			CONTAINER_PID=$(docker inspect --format='{{ .State.Pid }}' weave 2>/dev/null)
+			if [[ "${CONTAINER_PID}" == "" ]] || [[ "$(docker inspect --format='{{ .HostConfig.LxcConf }}' weave)" == "<no value>" ]]; then
+				echo "Candidate to become the master." > /dev/stderr
+				
+				docklet-weave stop
+				CIDR=${PORTAL_CENTRE} CGW=${PORTAL_GATEWAY} CBR=${PORTAL_BRIDGE} docklet-weave launch centre
+				
+				HTTP_PID=$(ps aux | grep docklet-http | grep -v grep | awk '{print $2}')
+				if [[ "${HTTP_PID}" == "" ]]; then
+					nohup docklet-http >/dev/null 2>&1 &
+				fi
+			fi
+		fi
+		sleep 10
+	else
+		echo "I'm not leader, do nothing." > /dev/stderr
+		sleep 5
+	fi
 done
 

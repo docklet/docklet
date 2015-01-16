@@ -98,13 +98,16 @@ fi
 
 echo "[INFO] waiting docker to get ready .." > /dev/stderr && sleep 2
 
-if [[ "${PEERS}" == "" ]]; then
-	CIDR=${PORTAL_CENTRE} CGW=${PORTAL_GATEWAY} CBR=${PORTAL_BRIDGE} docklet-weave launch centre
-	
-	service nginx stop 2>/dev/null || true
-	service apache2 stop 2>/dev/null || true
 
-	nohup docklet-http >/dev/null 2>&1 &
-else
-	docklet-weave launch ${PORTAL_CENTRE}
-fi
+HOST=${MY_IP} docklet-watchdog
+
+#if [[ "${PEERS}" == "" ]]; then
+#	CIDR=${PORTAL_CENTRE} CGW=${PORTAL_GATEWAY} CBR=${PORTAL_BRIDGE} docklet-weave launch centre
+#	
+#	service nginx stop 2>/dev/null || true
+#	service apache2 stop 2>/dev/null || true
+#
+#	nohup docklet-http >/dev/null 2>&1 &
+#else
+#	docklet-weave launch ${PORTAL_CENTRE}
+#fi
