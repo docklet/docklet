@@ -11,7 +11,7 @@ while true; do
 	LEADER=$(curl -L http://0.0.0.0:4001/v2/stats/leader 2>/dev/null | python -m json.tool | grep leader | awk -F\" '{print $4}')
 	if [[ "${LEADER}" == "${HOST}" ]]; then
 		echo "I'm leader." > /dev/stderr
-		if ! ping -w 10 -c 1 ${PORTAL_CENTRE} >/dev/null 2>&1; then
+		if ! ping -w 15 -c 1 ${PORTAL_CENTRE} >/dev/null 2>&1; then
 			CONTAINER_PID=$(docker inspect --format='{{ .State.Pid }}' weave 2>/dev/null)
 			if [[ "${CONTAINER_PID}" == "" ]] || [[ "$(docker inspect --format='{{ .HostConfig.LxcConf }}' weave)" == "<no value>" ]]; then
 				echo "Candidate becomes the master." > /dev/stderr
@@ -25,14 +25,16 @@ while true; do
 				fi
 			fi
 		fi
-		sleep 10
+		sleep 25
 	else
 		echo "I'm not leader." > /dev/stderr
 		CONTAINER_PID=$(docker inspect --format='{{ .State.Pid }}' weave 2>/dev/null)
 		if [[ "${CONTAINER_PID}" == "" ]]; then
 			docklet-weave launch ${PORTAL_CENTRE}
 		fi
-		sleep 5
+		sleep 15
 	fi
+	
+	docker rmi $(docker images -q) 2>/dev/null
 done
 

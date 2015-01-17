@@ -16,7 +16,8 @@ if [[ "$1" == "push_2v" ]]; then
 	docker save $2 > ${HOME_PREF}/images/self_$2.tgz
 elif [[ "$1" == "pull_3v" ]]; then
 	[[ ! -e ${HOME_PREF}/images/$2.tgz ]] && exit 1
-	[[ "`docker images | grep $2`" != "" ]] && exit 0
+	DOCKER_IMG=$(echo $2 | awk -F\_ '{print $2"_"$3}')
+	[[ "`docker images | grep ${DOCKER_IMG}`" != "" ]] && exit 0
 	docker load < ${HOME_PREF}/images/$2.tgz
 elif [[ "$1" == "drop_3v" ]]; then
 	rm -rf ${HOME_PREF}/images/$2.tgz

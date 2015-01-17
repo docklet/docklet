@@ -126,10 +126,10 @@ var socketHandler = {
 				},
 				
 				save: function(reply) {
-					if (reply.success)
-						MyDesktop.messageBox('Save Succeed!');
+					if (reply.success && reply.messages.length>0)
+						MyDesktop.messageBox('Save Succeed! ');
 					else
-						MyDesktop.messageBox('Failed: '+reply.messages);
+						MyDesktop.messageBox('Failed: This image name already exists.');
 				},
 				
 				remove: function(reply) {

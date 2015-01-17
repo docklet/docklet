@@ -246,31 +246,33 @@ elif [[ "$@" == "save" ]]; then
 	
 	release
 	enter_fine
+	GENERATE="${USER_NAME}_${IMAGE_NAME}"
 	
-	LISTS=$(KEY="/docklet/instances" etcdemu ls | grep -v go)
-	for ITEM in ${LISTS}; do
-		ID=$(basename ${ITEM})
-		DATAS=$(KEY="${ITEM}" etcdemu get)
-		KV_USER=$(echo ${DATAS} | awk -F\| '{print $1}')
-		KV_PORTAL=$(echo ${DATAS} | awk -F\| '{print $3}')
-		if [[ "${KV_USER}" == "${USER_NAME}" ]] && [[ "${KV_PORTAL}" == "${PORTAL}" ]]; then
-			ITEMS=$(echo ${DATAS} | awk -F\| '{print $4}')
-			for ITEM in ${ITEMS}; do
-				if [[ "`echo ${ITEM} | awk -F\: '{print $3}' | awk -F\. '{print $4}'`" == "254" ]]; then
-					ON=$(echo ${ITEM} | awk -F\: '{print $1}')
-					ID=$(echo ${ITEM} | awk -F\: '{print $2}')
-					GENERATE="${USER_NAME}_${IMAGE_NAME}"
-					if ssh -o StrictHostKeyChecking=no ${ON} docker commit ${ID} ${GENERATE}; then
-						ssh -o StrictHostKeyChecking=no ${ON} ham push_2v ${GENERATE}
-						# ssh -o StrictHostKeyChecking=no ${ON} docker rmi ${GENERATE}
+	if [[ "`USER_NAME=${USER_NAME} ham list_3v | grep ${GENERATE}`" == "" ]]; then
+		LISTS=$(KEY="/docklet/instances" etcdemu ls | grep -v go)
+		for ITEM in ${LISTS}; do
+			ID=$(basename ${ITEM})
+			DATAS=$(KEY="${ITEM}" etcdemu get)
+			KV_USER=$(echo ${DATAS} | awk -F\| '{print $1}')
+			KV_PORTAL=$(echo ${DATAS} | awk -F\| '{print $3}')
+			if [[ "${KV_USER}" == "${USER_NAME}" ]] && [[ "${KV_PORTAL}" == "${PORTAL}" ]]; then
+				ITEMS=$(echo ${DATAS} | awk -F\| '{print $4}')
+				for ITEM in ${ITEMS}; do
+					if [[ "`echo ${ITEM} | awk -F\: '{print $3}' | awk -F\. '{print $4}'`" == "254" ]]; then
+						ON=$(echo ${ITEM} | awk -F\: '{print $1}')
+						ID=$(echo ${ITEM} | awk -F\: '{print $2}')
+						if ssh -o StrictHostKeyChecking=no ${ON} docker commit ${ID} ${GENERATE}; then
+							ssh -o StrictHostKeyChecking=no ${ON} ham push_2v ${GENERATE}
+							# ssh -o StrictHostKeyChecking=no ${ON} docker rmi ${GENERATE}
+						fi
+						echo ${ID}
+						break
 					fi
-					break
-				fi
-			done
-			break
-		fi
-		# [[ "${KV_USER}" == "${USER_NAME}" ]] && echo "${ID}|${DATAS}"
-	done
+				done
+				break
+			fi
+		done
+	fi
 	
 	release_fine
 	enter
