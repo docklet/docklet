@@ -62,8 +62,8 @@ sleep 5
 umount -l /var/lib/docker/devicemapper >/dev/null 2>&1 || true
 rm -rf /var/lib/docker
 
-echo "[INFO] docker -d -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT}" > /dev/stderr
-nohup docker -d -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT} >/dev/null 2>&1 &
+echo "[INFO] docker -d --icc=false -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT}" > /dev/stderr
+nohup docker -d --icc=false -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT} >/dev/null 2>&1 &
 
 mkdir -p ${NFS_PREFIX}
 umount -l ${NFS_PREFIX} >/dev/null 2>&1 || true
