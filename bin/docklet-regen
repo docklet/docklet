@@ -1,0 +1,82 @@
+#!/bin/bash
+
+
+. /etc/docklet/docklet.conf
+
+HOME_PREF=${NFS_PREFIX}
+
+[[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
+
+[[ "${NAT_ID}" == "" ]] && echo "NAT_ID not specified!" && exit 1
+[[ "${USER_NAME}" == "" ]] && echo "USER_NAME not specified!" && exit 1
+
+STATE=$(KEY=/docklet/instances/${NAT_ID} etcdemu get)
+
+[[ "${STATE}" == "" ]] && exit 1
+
+OWNER=$(echo ${STATE} | awk -F\| '{print $1}')
+
+[[ "${OWNER}" != "${USER_NAME}" ]] && exit 1
+
+CLUSTERS=$(echo ${STATE} | awk -F\| '{print $4}')
+
+if [[ "${CMD}" == "repair" ]]; then
+	NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null
+	
+	for INSTANCE in ${CLUSTERS}; do
+		SAT=$(echo ${INSTANCE} | awk -F\: '{print $1}')
+		ID=$(echo ${INSTANCE} | awk -F\: '{print $2}')
+		CIDR=$(echo ${INSTANCE} | awk -F\: '{print $3}')
+		PID=$(ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${SAT} docker inspect --format=\'{{ .State.Pid }}\' ${ID})
+		if [[ "${PID}" == "0" ]]; then
+			echo "[INFO] ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${SAT} docklet-weave start ${CIDR}/24 ${ID}" > /dev/stderr
+			ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${SAT} docklet-weave start ${CIDR}/24 ${ID}
+		fi
+	done
+else
+	SLAVES=$(echo ${CLUSTERS} | awk '{$NF="";print}')
+	MASTER=$(echo ${CLUSTERS} | awk '{print $NF}')
+	WORK_ON=$(echo ${MASTER} | awk -F\: '{print $1}')
+	
+	IMAGE=$(echo ${STATE} | awk -F\| '{print $2}')
+	
+	let OFFSET=$(echo ${SLAVES} | wc -w)+1
+	NATIVE_IP=$(echo ${MASTER} | awk -F\: '{print $3}' | awk -F\. '{$NF='${OFFSET}'; print}' | tr \  .)
+	
+	export USER_NAME IMAGE
+	
+	HOST_NAME=nat-slave${OFFSET}
+
+	COMMON_HOST="${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}.safe"
+	
+	if [[ "${CMD}" == "push" ]]; then
+
+		echo "${NATIVE_IP} ${HOST_NAME}" >> ${COMMON_HOST}
+
+		echo "[EXEC] HOST_NAME=nat-slave${OFFSET} WORK_ON=${WORK_ON} NATIVE_IP=${NATIVE_IP}  MOD=skip NAT_ID=${NAT_ID} cave" > /dev/stderr
+		CONTAINER_ID=$(HOST_NAME=${HOST_NAME} WORK_ON=${WORK_ON} NATIVE_IP=${NATIVE_IP} MOD=skip NAT_ID=${NAT_ID} cave)
+		NEW_CLUSTER="${SLAVES}${WORK_ON}:${CONTAINER_ID}:${NATIVE_IP} ${MASTER}"
+		NEW_STATE=$(echo ${STATE} | awk -F\| '{$NF="";print}' | tr \  \|)${NEW_CLUSTER}
+		KEY=/docklet/instances/${NAT_ID} VALUE=${NEW_STATE} etcdemu set
+
+	elif [[ "${CMD}" == "pop" ]]; then
+
+		[[ "${SLAVES}" == "" ]] && exit 1
+		
+		DETAIL=$(echo ${SLAVES} | awk '{print $NF}')
+		SAT=$(echo ${DETAIL} | awk -F\: '{print $1}')
+		ID=$(echo ${DETAIL} | awk -F\: '{print $2}')
+		IP=$(echo ${DETAIL} | awk -F\: '{print $3}')
+
+		sed -i '$d' ${COMMON_HOST}
+
+		ssh -o StrictHostKeyChecking=no ${SAT} docker stop ${ID} || true
+		ssh -o StrictHostKeyChecking=no ${SAT} docker rm ${ID} || true
+		NEW_STATE=$(echo ${STATE} | awk -F\| '{$NF="";print}' | tr \  \|)$(echo ${SLAVES} | awk '{$NF=""; print}')${MASTER}
+		KEY=/docklet/instances/${NAT_ID} VALUE=${NEW_STATE} etcdemu set
+		
+		NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null
+		true
+	fi
+fi
+
