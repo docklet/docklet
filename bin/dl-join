@@ -82,19 +82,12 @@ done
 mkdir -p ${NFS_PREFIX}/global && cd ${NFS_PREFIX}/global
 echo "[INFO] etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS}" >/dev/stderr
 
-[[ "${PEERS}" == "" ]] && rm -rf ${NFS_PREFIX}/global/etcd
+if [[ "${PEERS}" == "" ]]; then
+	rm -rf ${NFS_PREFIX}/global/etcd
+	ham load /usr/local/bin/pub_root_base.tgz
+fi
 
 nohup etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS} >/dev/null 2>&1 &
-
-if [[ "${PEERS}" == "" ]]; then
-	ham load /usr/local/bin/pub_root_base.tgz
-	
-	echo "[INFO] waiting etcd to get ready .." > /dev/stderr && sleep 5
-
-	etcdctl rm "/docklet" --recursive >/dev/null 2>&1 || true
-	
-	KEY="/docklet/lockfile" VALUE="ready" etcdemu set
-fi
 
 echo "[INFO] waiting docker to get ready .." > /dev/stderr && sleep 2
 

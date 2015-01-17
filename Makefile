@@ -7,7 +7,6 @@ install:
 
 test:
 	for MACHINE in 12 13; do \
-		ssh root@192.168.4.$$MACHINE killall etcd 2>/dev/null; \
 		scp -r bin/* root@192.168.4.$$MACHINE:/usr/local/sbin; \
 		scp -r dashboard root@192.168.4.$$MACHINE:/usr/local/sbin; \
 	done
