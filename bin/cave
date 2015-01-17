@@ -42,11 +42,9 @@ else
 	NET_CONF='--net=bridge'
 fi
 
-USER_NAME=${USER_NAME} stone >/dev/null
+NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null
 
-cp ${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}.safe ${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}
-
-ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} ham pull_3v ${MOD}_${IMAGE} > /dev/stderr
+[[ "${MOD}" != "skip" ]] && ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} ham pull_3v ${MOD}_${IMAGE} > /dev/stderr
 
 if [[ "`[[ -e /etc/lsb-release ]] && cat /etc/lsb-release | grep Ubuntu`" != "" ]]; then
 	FOLK_FLAG="--lxc-conf=\"lxc.cgroup.memory.kmem.limit_in_bytes=${FOLK_BOMB_SPACE}\" --lxc-conf=\"lxc.cgroup.cpu.cfs_quota_us=${CPU_SHARE_QUOTA_US}\""

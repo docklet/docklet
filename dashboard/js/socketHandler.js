@@ -138,6 +138,18 @@ var socketHandler = {
 					else
 						MyDesktop.messageBox('Deletion Failed!');
 				},
+				
+				push: function(reply) {
+					MyDesktop.messageBox(reply.messages);
+				},
+				
+				pop: function(reply) {
+					MyDesktop.messageBox(reply.messages);
+				},
+				
+				repair: function(reply) {
+					MyDesktop.messageBox(reply.messages);
+				},
 			},
 			
 			source: {

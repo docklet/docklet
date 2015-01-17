@@ -42,7 +42,7 @@ sourceWindow = Ext.extend(AppWin.AbstractWindow, {
 				width: 150,
 				items: [
 					//{ title: 'Initialize', html: '<input disabled="true" type="radio" style="margin-top:5px;margin-left:10px;" name="initialize" checked>Open Bash</input><br/><input disabled="true" type="radio" style="margin-top:5px;margin-left:10px;" name="initialize">Open Spark-Shell</input><br/><input disabled="true" type="radio" style="margin-top:5px;margin-left:10px;" name="initialize">Open File Browser</input><br/><input disabled="true" type="radio" style="margin-top:5px;margin-left:10px;" name="initialize">Open Python Shell</input><br/>' },
-					{ title: 'Select Nodes', html: '<input id="c_nodes" style="width:100%" value="3" />' },
+					{ title: 'Select Nodes', html: '<input id="c_nodes" style="width:100%" value="2" />' },
 					{ title: 'Select Portal', items: portals },
 				]
 			}, /*{

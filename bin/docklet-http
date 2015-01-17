@@ -695,6 +695,21 @@ class LiveSession(object):
 	def docker_dashboard_cluster_save(self, request):
 		messages = commands.getoutput('USER_NAME='+self.username+' IMAGE_NAME='+str(request['name'])+' PORTAL='+str(request['portal'])+' pocket save')
 		return {'success': True, 'messages': messages }
+
+	def docker_dashboard_cluster_push(self, request):
+		(status, output) = commands.getstatusoutput('USER_NAME='+self.username+' NAT_ID='+str(request['id'])+' CMD=push docklet-regen')
+		messages = str(((status, output)))
+		return {'success': True, 'messages': messages }
+
+	def docker_dashboard_cluster_pop(self, request):
+		(status, output) = commands.getstatusoutput('USER_NAME='+self.username+' NAT_ID='+str(request['id'])+' CMD=pop docklet-regen')
+		messages = str(((status, output)))
+		return {'success': True, 'messages': messages }
+
+	def docker_dashboard_cluster_repair(self, request):
+		(status, output) = commands.getstatusoutput('USER_NAME='+self.username+' NAT_ID='+str(request['id'])+' CMD=repair docklet-regen')
+		messages = str(((status, output)))
+		return {'success': True, 'messages': messages }
 	
 	def docker_dashboard_portal_app(self, request):
 		return {'success': False }

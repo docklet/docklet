@@ -87,6 +87,39 @@ clusterWindow = Ext.extend(AppWin.AbstractWindow, {
 						})
 					}
 				},*/{
+					text: 'Push a Node',
+					handler: function() {
+						var record = Ext.getCmp('cluster-list-grid').getSelectionModel().getSelected();
+						if (record==null)
+							return MyDesktop.messageBox('You are supposed to select a portal.');
+						var id = record.get('id');
+						if (record.get('user')!=MyDesktop.getGatewayUsername())
+							return MyDesktop.messageBox('This cluster is not owned by you.');
+						MyDesktop.postMessage('docker.dashboard.cluster.push', { id: id });
+					}
+				},{
+					text: 'Pop a Node',
+					handler: function() {
+						var record = Ext.getCmp('cluster-list-grid').getSelectionModel().getSelected();
+						if (record==null)
+							return MyDesktop.messageBox('You are supposed to select a portal.');
+						var id = record.get('id');
+						if (record.get('user')!=MyDesktop.getGatewayUsername())
+							return MyDesktop.messageBox('This cluster is not owned by you.');
+						MyDesktop.postMessage('docker.dashboard.cluster.pop', { id: id });
+					}
+				},{
+					text: 'Repair Cluster',
+					handler: function() {
+						var record = Ext.getCmp('cluster-list-grid').getSelectionModel().getSelected();
+						if (record==null)
+							return MyDesktop.messageBox('You are supposed to select a portal.');
+						var id = record.get('id');
+						if (record.get('user')!=MyDesktop.getGatewayUsername())
+							return MyDesktop.messageBox('This cluster is not owned by you.');
+						MyDesktop.postMessage('docker.dashboard.cluster.repair', { id: id });
+					}
+				},{
 					text: 'Save Master as Image ..',
 					handler: function() {
 						var record = Ext.getCmp('cluster-list-grid').getSelectionModel().getSelected();
