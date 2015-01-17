@@ -30,7 +30,7 @@ if [[ "`cat /proc/cmdline | grep cgroup`" == "" ]]; then
 fi
 
 if [[ "`[[ -e /etc/lsb-release ]] && cat /etc/lsb-release | grep Ubuntu`" == "" ]]; then
-	echo -e "\033[31m[WARN] Please note that current debian kernel could not prevent folk bomb destory!\033[0m"
+	echo -e "\033[31m[WARN] Please note that current debian kernel could not prevent folk bomb destory and cpu shared quota.\033[0m"
 fi
 
 if [[ "${MACHINE_CIDR}" == "127.0.0.1/32" ]]; then
@@ -70,7 +70,7 @@ killall etcd >/dev/null 2>&1 || true
 killall python >/dev/null 2>&1 || true
 killall killall lxc-start >/dev/null 2>&1 || true
 
-echo "[INFO] Make sure all docker resources are releases .." > /dev/stderr
+echo "[INFO] Make sure all docker resources are released .." > /dev/stderr
 sleep 5
 
 umount -l /var/lib/docker/devicemapper >/dev/null 2>&1 || true

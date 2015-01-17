@@ -27,7 +27,11 @@ while true; do
 		fi
 		sleep 10
 	else
-		echo "I'm not leader, do nothing." > /dev/stderr
+		echo "I'm not leader." > /dev/stderr
+		CONTAINER_PID=$(docker inspect --format='{{ .State.Pid }}' weave 2>/dev/null)
+		if [[ "${CONTAINER_PID}" == "" ]]; then
+			docklet-weave launch ${PORTAL_CENTRE}
+		fi
 		sleep 5
 	fi
 done
