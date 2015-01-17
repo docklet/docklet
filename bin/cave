@@ -55,13 +55,15 @@ echo "[CAVE] docklet-weave run ${NATIVE_IP}/24 \
                 -v ${HOME_PREF}/${USER_NAME}/home:/root \
                 -m ${TOTAL_MEMORY_LIMIT} -it ${NET_CONF} -h ${HOST_NAME} ${OPTS} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP}" >/dev/stderr
 
+if [[ "`[[ -e /etc/lsb-release ]] && cat /etc/lsb-release | grep Ubuntu`" != "" ]]; then
+	FOLK_FLAG='--lxc-conf="lxc.cgroup.memory.kmem.limit_in_bytes=10m"'
+fi
+
 ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} docklet-weave run ${NATIVE_IP}/24 \
 		-v ${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}:/etc/hosts \
 		-v ${HOME_PREF}/${USER_NAME}/container-init:/sbin/initctl \
 		-v ${HOME_PREF}/${USER_NAME}/container-docklet:/usr/bin/docklet \
 		-v ${HOME_PREF}/${USER_NAME}/home:/root \
 		--lxc-conf="lxc.cgroup.cpu.cfs_quota_us=500000" \
-		-m ${TOTAL_MEMORY_LIMIT} -it ${NET_CONF} -h ${HOST_NAME} ${OPTS} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP} | cut -b 1-12
-
-# --lxc-conf="lxc.cgroup.memory.kmem.limit_in_bytes=10m"
+		-m ${TOTAL_MEMORY_LIMIT} -it ${NET_CONF} -h ${HOST_NAME} ${FOLK_FLAG} ${OPTS} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP} | cut -b 1-12
 
