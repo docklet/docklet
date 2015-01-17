@@ -17,8 +17,18 @@ if [[ "`which etcd 2>/dev/null`" == "" ]]; then
 	tar xvf /tmp/docklet-bin.tgz
 	mv libdevmapper.so.1.02.1 /lib/x86_64-linux-gnu
 	rm -f /tmp/docklet-bin.tgz
-fi
 	
+	if [[ "`cat /etc/default/grub | grep cgroup`" == "" ]]; then
+		echo 'GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1"' >> /etc/default/grub
+		update-grub > /dev/stderr
+	fi
+fi
+
+if [[ "`cat /proc/cmdline | grep cgroup`" == "" ]]; then
+	echo -e "\033[31m[WARN] Memory limit will be enabled after your next reboot, you should reboot system and run dl-join again. Otherwise memory limit will not work.\033[0m"
+	exit 1
+fi
+
 if [[ "${MACHINE_CIDR}" == "127.0.0.1/32" ]]; then
 	echo "[INFO] Setting up for localhost." > /dev/stderr
 	ip link delete ethlo 2>/dev/null || true

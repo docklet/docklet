@@ -14,7 +14,7 @@ while true; do
 		if ! ping -w 10 -c 1 ${PORTAL_CENTRE} >/dev/null 2>&1; then
 			CONTAINER_PID=$(docker inspect --format='{{ .State.Pid }}' weave 2>/dev/null)
 			if [[ "${CONTAINER_PID}" == "" ]] || [[ "$(docker inspect --format='{{ .HostConfig.LxcConf }}' weave)" == "<no value>" ]]; then
-				echo "Candidate to become the master." > /dev/stderr
+				echo "Candidate becomes the master." > /dev/stderr
 				
 				docklet-weave stop
 				CIDR=${PORTAL_CENTRE} CGW=${PORTAL_GATEWAY} CBR=${PORTAL_BRIDGE} docklet-weave launch centre

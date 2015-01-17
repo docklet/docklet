@@ -14,7 +14,7 @@ sudo make install
 
 # edit /etc/docklet/docklet.conf for self-defined configuration
 
-sudo dl-join (only download dependencies for the first time)
+sudo dl-join (download dependencies only for the first time)
 
 firefox http://localhost/ (using native PAM，then create clusters, like 172.31.0.3)
 

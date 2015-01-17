@@ -60,6 +60,7 @@ ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} docklet-weave ru
 		-v ${HOME_PREF}/${USER_NAME}/container-init:/sbin/initctl \
 		-v ${HOME_PREF}/${USER_NAME}/container-docklet:/usr/bin/docklet \
 		-v ${HOME_PREF}/${USER_NAME}/home:/root \
+		--lxc-conf="lxc.cgroup.cpu.cfs_quota_us=500000" \
 		-m ${TOTAL_MEMORY_LIMIT} -it ${NET_CONF} -h ${HOST_NAME} ${OPTS} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP} | cut -b 1-12
 
 # --lxc-conf="lxc.cgroup.memory.kmem.limit_in_bytes=10m"
