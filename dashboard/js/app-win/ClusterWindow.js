@@ -56,7 +56,7 @@ clusterWindow = Ext.extend(AppWin.AbstractWindow, {
 					{ header : "ID", width:40, sortable : true, dataIndex : 'id' },
 					{ header : "User", width:80, sortable : true, dataIndex : 'user' },
 					{ header : "Portal", width:100, sortable : true, dataIndex : 'portal' },
-					{ header : "Image", width:100, sortable : true, dataIndex : 'image' },
+					{ header : "Image", width:150, sortable : true, dataIndex : 'image' },
 					{ header : "NAT VMs", width:200, sortable : true, dataIndex : 'nat' },
 				]),
 				autoHeight: true,
@@ -87,7 +87,7 @@ clusterWindow = Ext.extend(AppWin.AbstractWindow, {
 						})
 					}
 				},*/{
-					text: 'Push a Node',
+					text: 'Scale Out',
 					handler: function() {
 						var record = Ext.getCmp('cluster-list-grid').getSelectionModel().getSelected();
 						if (record==null)
@@ -98,7 +98,7 @@ clusterWindow = Ext.extend(AppWin.AbstractWindow, {
 						MyDesktop.postMessage('docker.dashboard.cluster.push', { id: id });
 					}
 				},{
-					text: 'Pop a Node',
+					text: 'Scale In',
 					handler: function() {
 						var record = Ext.getCmp('cluster-list-grid').getSelectionModel().getSelected();
 						if (record==null)
