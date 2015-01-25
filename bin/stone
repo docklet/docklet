@@ -9,14 +9,13 @@ HOME_PREF=${NFS_PREFIX}
 
 [[ "${USER_NAME}" == "" ]] && echo "USER_NAME not specified!" && exit 1
 
-mkdir -p ${HOME_PREF}/${USER_NAME}/home/.ssh/
+rm -rf "${HOME_PREF}/${USER_NAME}/home/.ssh"
+mkdir -p ${HOME_PREF}/${USER_NAME}/home/.ssh/ ${HOME_PREF}/${USER_NAME}/ssh_keys
 
-rm -f "${HOME_PREF}/${USER_NAME}/home/.ssh/known_hosts"
-
-if [[ ! -e "${HOME_PREF}/${USER_NAME}/id_rsa" ]] || [[ "$@" == "update" ]]; then
-	rm -rf "${HOME_PREF}/${USER_NAME}/id_rsa" "${HOME_PREF}/${USER_NAME}/id_rsa.pub"
-	echo -e '\n' | ssh-keygen -t rsa -P '' -f "${HOME_PREF}/${USER_NAME}/id_rsa" >/dev/null 2>&1
-
+if [[ ! -e "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa" ]] || [[ "$@" == "update" ]]; then
+	rm -rf ${HOME_PREF}/${USER_NAME}/ssh_keys/*
+	echo -e '\n' | ssh-keygen -t rsa -P '' -f "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa" >/dev/null 2>&1
+	mv "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa.pub" "${HOME_PREF}/${USER_NAME}/ssh_keys/authorized_keys"
 fi
 
 # mkdir -p ${HOME_PREF}/${USER_NAME}/home/.vnc/
@@ -25,10 +24,4 @@ fi
 # 	chmod 0600 "${HOME_PREF}/${USER_NAME}/home/.vnc/passwd"
 # fi
 
-cp ${HOME_PREF}/${USER_NAME}/id_rsa ${HOME_PREF}/${USER_NAME}/home/.ssh/id_rsa
-cp ${HOME_PREF}/${USER_NAME}/id_rsa.pub ${HOME_PREF}/${USER_NAME}/home/.ssh/authorized_keys
-
-cp /usr/local/sbin/container-init ${HOME_PREF}/${USER_NAME}/container-init
-cp /usr/local/sbin/container-docklet ${HOME_PREF}/${USER_NAME}/container-docklet
-
-cat "${HOME_PREF}/${USER_NAME}/id_rsa"
+cat "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa"

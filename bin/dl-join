@@ -97,7 +97,7 @@ echo "[INFO] etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${
 
 if [[ "${PEERS}" == "" ]]; then
 	rm -rf ${NFS_PREFIX}/global/etcd
-	ham load /usr/local/bin/pub_root_base.tgz
+	[[ "`USER_NAME=root ham list_3v`" == "" ]] && dl-imgbuild
 fi
 
 nohup etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS} >/dev/null 2>&1 &
