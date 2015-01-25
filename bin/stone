@@ -19,8 +19,6 @@ if [[ ! -e "${HOME_PREF}/${USER_NAME}/id_rsa" ]] || [[ "$@" == "update" ]]; then
 
 fi
 
-[[ "${NAT_ID}" != "" ]] && cp ${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}.safe ${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}
-
 # mkdir -p ${HOME_PREF}/${USER_NAME}/home/.vnc/
 # if [[ ! -e "${HOME_PREF}/${USER_NAME}/home/.vnc/passwd" ]] || [[ "$@" == "reset" ]]; then
 # 	echo '0000000: 4940 15f9 a35e 8b22' | xxd -r > "${HOME_PREF}/${USER_NAME}/home/.vnc/passwd"

@@ -121,7 +121,7 @@ if [[ "$@" == "create" ]]; then
 		CREATE_SEQ="254"
 		
 		mkdir -p "${HOME_PREF}/${USER_NAME}"
-		COMMON_HOST="${HOME_PREF}/${USER_NAME}/hosts-${FREE_NAT}.safe"
+		COMMON_HOST="${HOME_PREF}/${USER_NAME}/hosts-${FREE_NAT}"
 		echo "127.0.0.1 localhost" > ${COMMON_HOST}
 
 		while [[ "${CREATE_SEQ}" != "${NODE_NUM}" ]]; do
@@ -186,7 +186,7 @@ elif [[ "$@" == "remove" ]]; then
 	done
 	KEY="/docklet/instances/${CREATE_ID}" etcdemu rm
 	
-	rm -rf "${HOME_PREF}/${USER_NAME}/hosts-${CREATE_ID}" "${HOME_PREF}/${USER_NAME}/hosts-${CREATE_ID}.safe"
+	rm -rf "${HOME_PREF}/${USER_NAME}/hosts-${CREATE_ID}"
 	
 elif [[ "$@" == "list" ]]; then
 	[[ "${USER_NAME}" == "" ]] && echo "USER_NAME (like, root) not specified!" && leave 1

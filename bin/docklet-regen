@@ -47,7 +47,7 @@ else
 	
 	HOST_NAME=nat-slave${OFFSET}
 
-	COMMON_HOST="${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}.safe"
+	COMMON_HOST="${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}"
 	
 	if [[ "${CMD}" == "push" ]]; then
 
