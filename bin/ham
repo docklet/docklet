@@ -13,7 +13,7 @@ if [[ "$1" == "push_2v" ]]; then
 	[[ -e ${HOME_PREF}/images/pub_$2.tgz ]] && exit 0
 	[[ -e ${HOME_PREF}/images/self_$2.tgz ]] && exit 0
 	[[ "`docker images | grep $2`" == "" ]] && exit 1
-	docker save $2 > ${HOME_PREF}/images/self_$2.tgz
+	docker save $2 | gzip > ${HOME_PREF}/images/self_$2.tgz
 elif [[ "$1" == "pull_3v" ]]; then
 	[[ ! -e ${HOME_PREF}/images/$2.tgz ]] && exit 1
 	DOCKER_IMG=$(echo $2 | awk -F\_ '{print $2"_"$3}')
@@ -46,7 +46,5 @@ elif [[ "$1" == "list_3v" ]]; then
 			echo "${IMAGE}:-"
 		fi
 	done
-elif [[ "$1" == "load" ]]; then
-	cp "$2" ${HOME_PREF}/images/
 fi
 

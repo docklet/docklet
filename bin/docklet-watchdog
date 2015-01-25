@@ -35,6 +35,6 @@ while true; do
 		sleep 15
 	fi
 	
-	docker rmi $(docker images -q) 2>/dev/null
+	# docker rmi $(docker images -q) 2>/dev/null
 done
 

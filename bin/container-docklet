@@ -3,7 +3,7 @@
 set -e
 
 if [[ "$@" == "" ]]; then
-	echo "Usage: docklet [hosts|portal|status|..]"
+	echo "Usage: docklet [hosts | portal | status | ..]"
 	true
 elif [[ "$@" == "hosts" ]]; then
 	HOSTS=$(echo `cat /etc/hosts | grep nat | awk '{print $2}'` | tr ' ' ',')

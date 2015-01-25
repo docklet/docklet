@@ -83,14 +83,14 @@ echo 'LogLevel QUIET' >> ./etc/ssh/ssh_config
 
 sed -i 's/PermitRootLogin\ without\-password/PermitRootLogin\ yes/g' ./etc/ssh/sshd_config
 
-IMAGE_ID='1e868fd4a983baa2b698e29c86fced779eb993f88f89df55882c5814ff0697be'
+IMAGE_ID='1f0000000000baa2b698e29c86fced779eb993f88f89df55882c5814ff0697be'
 mkdir ../${IMAGE_ID}
 
 tar cvf ../${IMAGE_ID}/layer.tar *
 cd ../${IMAGE_ID} && rm -rf ../layer
 
 echo '1.0' > VERSION
-echo '{"id":"'${IMAGE_ID}'","comment":"Imported from -","created":"2015-01-08T11:48:50.022791942Z","container_config":{"Hostname":"","Domainname":"","User":"","Memory":0,"MemorySwap":0,"CpuShares":0,"Cpuset":"","AttachStdin":false,"AttachStdout":false,"AttachStderr":false,"PortSpecs":null,"ExposedPorts":null,"Tty":false,"OpenStdin":false,"StdinOnce":false,"Env":null,"Cmd":null,"Image":"","Volumes":null,"WorkingDir":"","Entrypoint":null,"NetworkDisabled":false,"OnBuild":null},"docker_version":"1.3.2","architecture":"'${ARCH}'","os":"linux","Size":0}' > json
+echo '{"id":"'${IMAGE_ID}'","parent":null}' > json
 
 cd .. && echo '{"root_base":{"latest":"'${IMAGE_ID}'"}}' > repositories
 
