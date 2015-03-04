@@ -48,7 +48,7 @@ fi
 
 echo "[INFO] Finish setting up." > /dev/stderr
 
-
+ip link delete lxcbr0 >/dev/null 2>&1 || true
 
 
 
@@ -97,7 +97,11 @@ echo "[INFO] etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${
 
 if [[ "${PEERS}" == "" ]]; then
 	rm -rf ${NFS_PREFIX}/global/etcd
-	[[ "`USER_NAME=root ham list_3v`" == "" ]] && dl-imgbuild
+	if [[ "`USER_NAME=root ham list_3v`" == "" ]]; then
+		mkdir -p ${NFS_PREFIX}/global/images
+		# ln -s /usr/local/bin/pub_root_base.tgz ${NFS_PREFIX}/global/images
+		dl-imgbuild
+	fi
 fi
 
 nohup etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS} >/dev/null 2>&1 &

@@ -20,11 +20,19 @@ TEMP_ROOTFS=/tmp/docklet_root_base
 rm -rf ${TEMP_ROOTFS}
 mkdir -p ${TEMP_ROOTFS}/layer
 
-debootstrap --arch=${ARCH} --foreign ${DIST} ${TEMP_ROOTFS}/layer ${MIRR}
-
 cd ${TEMP_ROOTFS}/layer
 
-chroot . /debootstrap/debootstrap --second-stage
+#debootstrap --arch=${ARCH} --foreign ${DIST} . ${MIRR}
+#chroot . /debootstrap/debootstrap --second-stage
+
+LSB=ubuntu
+IMAGE_URL='http://mirrors.ustc.edu.cn/ubuntu-cdimage/ubuntu-core/releases/14.04/release/ubuntu-core-14.04-core-amd64.tar.gz'
+IMAGE_NAME=$(basename ${IMAGE_URL})
+rm -f /tmp/${IMAGE_NAME}
+wget ${IMAGE_URL} -P /tmp/
+tar xvf /tmp/${IMAGE_NAME}
+rm -f /tmp/${IMAGE_NAME}
+
 
 echo 'docklet-node' > ./etc/hostname
 
@@ -64,6 +72,8 @@ echo 'cd /usr/share/locale' >> ${CLEAN}
 echo 'rm -rf `ls . | grep -v zh_CN`' >> ${CLEAN}
 
 chmod a+x ${CLEAN}
+
+cp /etc/resolv.conf etc/
 
 DEBIAN_FRONTEND=noninteractive chroot . apt-get update
 DEBIAN_FRONTEND=noninteractive chroot . apt-get install -y bash-completion openssh-server inetutils-ping 
