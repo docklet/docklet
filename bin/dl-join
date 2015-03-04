@@ -9,7 +9,7 @@ set -e
 . /etc/docklet/docklet.conf
 
 if [[ "`which etcd 2>/dev/null`" == "" ]]; then
-	apt-get install -y lxc ethtool debootstrap python-pampy bridge-utils libapparmor1 nmap curl sshfs netcat-openbsd net-tools openssh-server
+	apt-get install -y cgroup-lite lxc ethtool debootstrap python-pampy bridge-utils libapparmor1 nmap curl sshfs netcat-openbsd net-tools openssh-server
 	
 	curl -L "${BIN_SOURCE}" > /tmp/docklet-bin.tgz
 	

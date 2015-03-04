@@ -2,8 +2,8 @@
 install:
 	@cp -r bin/* /usr/local/sbin
 	@cp -r dashboard /usr/local/sbin
-	@mkdir -p /etc/docklet
-	@cp -r conf/docklet.conf /etc/docklet
+	#@mkdir -p /etc/docklet
+	#@cp -r conf/docklet.conf /etc/docklet
 
 test:
 	for MACHINE in 12 13; do \
