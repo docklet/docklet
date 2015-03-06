@@ -9,11 +9,11 @@ elif [[ "$@" == "hosts" ]]; then
 	HOSTS=$(echo `cat /etc/hosts | grep nat | awk '{print $2}'` | tr ' ' ',')
 	echo ${HOSTS}
 elif [[ "$@" == "portal" ]]; then
-	ssh root@nat-master ip addr 2>/dev/null | grep global\ eth0 | awk '{ print $2}' | awk -F\/ '{print $1}'
+	ssh -o ConnectTimeout=3 root@nat-master ip addr 2>/dev/null | grep global\ eth0 | awk '{ print $2}' | awk -F\/ '{print $1}'
 elif [[ "$@" == "status" ]]; then
 	for HOST in `cat /etc/hosts | grep nat | awk '{print $2}'`; do
 		echo -n "* docklet ${HOST} : "
-		if ssh -o ConnectTimeout=5 root@${HOST} true 2>/dev/null; then
+		if ping -c 1 -w 5 ${HOST} >/dev/null 2>&1; then
 			echo "live."
 		else
 			echo "dead."

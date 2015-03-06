@@ -47,6 +47,9 @@ if [[ "${MACHINE_CIDR}" == "127.0.0.1/32" ]]; then
 		mv /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
 	fi
 	
+	iptables -t nat -D POSTROUTING -s 172.31.0.0/16 ! -o docker0 -j MASQUERADE >/dev/null 2>&1 || true
+	iptables -t nat -A POSTROUTING -s 172.31.0.0/16 ! -o docker0 -j MASQUERADE
+	
 	ssh root@0.0.0.0 true
 fi
 
@@ -79,8 +82,13 @@ sleep 5
 umount -l /var/lib/docker/devicemapper >/dev/null 2>&1 || true
 rm -rf /var/lib/docker
 
-echo "[INFO] docker -d --icc=false -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT}" > /dev/stderr
-nohup docker -d --icc=false -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT} >/dev/null 2>&1 &
+DOCKER_DNS=""
+for DNS in ${DNS_SERVERS}; do
+	DOCKER_DNS="${DOCKER_DNS} --dns ${DNS}"
+done
+
+echo "[INFO] docker -d --icc=false ${DOCKER_DNS} -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT}" > /dev/stderr
+nohup docker -d --icc=false ${DOCKER_DNS} -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT} >/dev/null 2>&1 &
 
 mkdir -p ${NFS_PREFIX}
 umount -l ${NFS_PREFIX} >/dev/null 2>&1 || true
