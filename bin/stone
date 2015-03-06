@@ -9,7 +9,7 @@ HOME_PREF=${NFS_PREFIX}
 
 [[ "${USER_NAME}" == "" ]] && echo "USER_NAME not specified!" && exit 1
 
-rm -rf "${HOME_PREF}/${USER_NAME}/home/.ssh"
+rm -rf "${HOME_PREF}/${USER_NAME}/home/.ssh" >/dev/null 2>&1 || true
 mkdir -p ${HOME_PREF}/${USER_NAME}/home/.ssh/ ${HOME_PREF}/${USER_NAME}/ssh_keys
 
 if [[ ! -e "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa" ]] || [[ "$@" == "update" ]]; then

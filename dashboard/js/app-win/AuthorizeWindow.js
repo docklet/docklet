@@ -8,7 +8,7 @@ authorizeWindow = Ext.extend(AppWin.AbstractWindow, {
 		
 		return [{
 			layout: 'border',
-			title: 'Use this key file as <span style="color: red">user.key</span> to login any of your portal:<div style="margin-top:10px; color:green">chmod 0600 <span style="color: red">./user.key</span></div><div style="margin-bottom:5px; color:green">ssh <span style="color: red">-i ./user.key</span> root@portal</div>',
+			title: 'Use this key file as <span style="color: red">user.key</span> to login any of your portal:<div style="margin-top:10px; color:green">For Unix: chmod go-rw <span style="color:red">./user.key</span> ; ssh <span style="color: red">-i ./user.key</span> root@portal-ip</div><div style="margin-top:10px; color:green">For Firefox SSH: <span style="color:blue">ssh://portal-ip/</span> with root.key </div>',
 			items: [ new Ext.form.TextArea({
 				id:"t_rocker",
 				region:"center",
