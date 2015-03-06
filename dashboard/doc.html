@@ -1,43 +1,65 @@
 <meta http-equiv="content-type" content="text/html;charset=utf-8" />
 <head><title>Docklet Doc</title></head>
 
-<body onload="onload()">
-<p>Contact us: unias@sei.pku.edu.cn</p>
+<h1>Docklet 说明文档 - 2015/3/6</h1> <hr/>
+
+<h2>@ 第一步，创建私有的集群：</h2>
+<p style="margin-left:20px">进入 http://docklet.unias.org/ ，点击"Images"，选择一个合适的镜像点击"Start Image"；</p>
+<p style="color:#ff7777;margin-left:20px">完成创建后会得到一个集群的入口，如：192.168.0.10，是 Open SSH Server 的登录入口。</p>
+
 <hr/>
 
-<h2>Docklet 说明文档 - 2015/1/8</h2>
+<h2>@ 第二步，登录你的集群入口：</h2>
+<h3 style="margin-top:30px">1、浏览器通用登录方式（Windows 推荐）：火狐浏览器 / 谷歌浏览器</h3>
 
-<p>第一步：PAM登录</p>
-<p>第二步：点击"Images"，选择一个合适的镜像点击"Start Image"</p>
-<p>第三步：创建后，会得到一个实例的portal，如：192.168.192.100，用ssh进行登录： ssh root@192.168.192.100</p>
+<p style="font-weight:bold;margin-left:20px">a) 火狐浏览器登录</p>
+<p style="margin-left:20px">在浏览器中打开你的入口IP，如：ssh://192.168.0.10/ ，用户名填写 root，“浏览”选择本地私钥文件(id_rsa)，点击"确定"登录。</p>
+<p style="color:#ff7777;margin-left:20px">注意：请确保已经安装FireSSH插件！ <a href="http://docklet.unias.org/firessh@nightlight.ws.xpi">点此安装 FireSSH for Firefox</a></p>
+<p style="font-weight:bold;margin-left:20px;margin-top:30px">b) 谷歌浏览器登录</p>
+<p style="margin-left:20px">打开SecureShell扩展应用，填写入口IP如 root@192.168.0.10，并在认证(Identity)栏中导入(Import)本地私钥文件(id_rsa)即可连接到入口。</p>
+<p style="color:#ff7777;margin-left:20px">注意：请确保已经添加SecureShell插件！ <a href="https://chrome.google.com/webstore/detail/secure-shell/pnhechapfaindjhompbnflcldabbghjo?utm_campaign=en&utm_source=en-et-na-us-oc-webstrapp&utm_medium=et">从谷歌应用市场安装 SecureShell for Chrome</a></p>
 
 <p>附加说明：初始密码为 123456，可进入云主机的nat-master通过passwd root命令修改；</p>
 
-<hr/>
 
-<h3>如何上传下载文件（注意：所有docklet实例中只有/root目录是永久可靠的存储环境，且在多hosts间完全共享）：</h3>
 
-<p>从本地上传文件到云主机：scp local-file root@portal-ip:~/</p>
-<p></p>
-<p>从云主机下载文件到本地：scp root@portal-ip:~/remote-file ./</p>
-<p></p>
-<p>从云主机下载ssh的免密码登录证书：scp root@portal-ip:~/.ssh/id_rsa ./</p>
+<h3 style="margin-top:40px">2、Unix 终端登录方式（Linux/Mac 推荐）： Open SSH 客户端</h3>
 
-<hr/>
+<p style="margin-left:20px">在终端下执行正常的SSH远程链接即可登录，如：</p>
+<p style="font-weight:bold;margin-left:40px">ssh -i ./id_rsa root@192.168.0.10</p>
 
-<h3>如何将个人配置好的云主机保存为镜像：</h3>
+<p style="color:#ff7777;margin-left:20px">注意：如果提示 "WARNING: UNPROTECTED PRIVATE KEY FILE!" 无法免密登录SSH，请设置私有权限保护你的私钥，然后重新尝试登录：</p>
+<p style="font-weight:bold;margin-left:40px">chmod go-rw ./id_rsa</p>
 
-<p>在云主机的nat-master节点将所有依赖、配置文件等设置完整；</p>
-<p></p>
-<p>然后打开"Clusters"，选择配置好的云主机，点击"Save Master as Image .." 起一个名字即可创建；</p>
-<p></p>
-<p>对于个人创建的镜像，在"Images"中可以通过"Switch Access"来设定是否共享为他人所使用。</p>
+
+<h3 style="margin-top:40px">3、第三方SSH客户端登录方式： Putty, Bitvise SSH, ...</h3>
+
+<p style="color:#ff7777;margin-left:20px;margin-top:30px;margin-bottom:30px">注意：第三方 SSH 客户端可能不支持证书认证方式登录。</p>
 
 <hr/>
 
-<div style="margin-top: 100px" />
+<div style="margin-top: 60px" />
 
-<h2>示例部分（假设你的云主机portal为：192.168.192.100）</h2>
+<h2>@ 扩展：从集群上传下载文件：</h2>
+<p style="margin-left:20px">从本地上传文件到云主机：scp local-file root@portal-ip:~/</p>
+<p></p>
+<p style="margin-left:20px">从云主机下载文件到本地：scp root@portal-ip:~/remote-file ./</p>
+<p></p>
+<p style="margin-left:20px">从云主机下载ssh的免密码登录证书：scp root@portal-ip:~/.ssh/id_rsa ./</p>
+
+<p style="margin-left:20px;margin-top:30px;margin-bottom:30px;font-weight:bold">所有docklet实例中只有/root目录是永久可靠的存储环境，且在多hosts间完全共享。</p>
+
+<hr/>
+
+<h2>@ 扩展：将个人配置好的云主机保存为镜像：</h2>
+
+<p style="margin-left:20px">在云主机的nat-master节点将所有依赖、配置文件等设置完整；</p>
+<p style="margin-left:20px">然后打开"Clusters"，选择配置好的云主机，点击"Save Master as Image .." 起一个名字即可创建；</p>
+<p style="margin-left:20px">对于个人创建的镜像，在"Images"中可以通过"Switch Access"来设定是否共享为他人所使用。</p>
+
+<hr/>
+
+<h2>@ 扩展：使用私有集群（假设你的云主机portal为：192.168.192.100）</h2>
 <div style="margin-top: 50px" />
 
 <h3>1、Nginx 网站示例（创建 python2-nginx 实例）：</h3>
