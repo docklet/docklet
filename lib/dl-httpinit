@@ -2,20 +2,22 @@
 
 set -e
 
-[[ "$@" == "" ]] && exit 1
+if [[ "$#" == "3" ]]; then
+	echo "$3" > /etc/defaultdomain
+	echo ypserver "$2" >> /etc/yp.conf
 
-echo sei.pku.edu.cn > /etc/defaultdomain
-echo ypserver 192.168.4.10 >> /etc/yp.conf
+	sed -i 's/compat/compat\ nis/g' /etc/nsswitch.conf
+	sed -i 's/dns/nis\ dns/g' /etc/nsswitch.conf
 
-sed -i 's/compat/compat\ nis/g' /etc/nsswitch.conf
-sed -i 's/dns/nis\ dns/g' /etc/nsswitch.conf
+	mkdir -p /run/sendsigs.omit.d
 
-mkdir -p /run/sendsigs.omit.d
+	domainname "$3"
 
-domainname sei.pku.edu.cn
+	/etc/init.d/rpcbind start
+	/etc/init.d/nis start
+	
+	NIS="$2 $3"
+fi
 
-/etc/init.d/rpcbind start
-/etc/init.d/nis start
-
-GROW_ON="$@" /usr/local/lib/docklet-http/docklet-http
+GROW_ON="$1" NIS="${NIS}" /usr/local/lib/docklet-http/docklet-http
 

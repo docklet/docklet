@@ -128,4 +128,5 @@ log_msg "INFO" "Waiting docker to get ready .." && sleep 2
 
 HOST=${MY_IP} docklet-watchdog
 
+false
 

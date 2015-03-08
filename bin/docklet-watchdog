@@ -5,9 +5,9 @@
 . /etc/docklet/docklet.conf
 
 while true; do
-	# check leader, ping centre -> weave stop, weave launch centre
 	
 	LEADER=$(curl -L http://0.0.0.0:4001/v2/stats/leader 2>/dev/null | python -m json.tool | grep leader | awk -F\" '{print $4}')
+	
 	if [[ "${LEADER}" == "${HOST}" ]]; then
 		echo "* ${HOST}: I'm leader" > /dev/stderr
 		if ! ping -w 15 -c 1 ${PORTAL_CENTRE} >/dev/null 2>&1; then
@@ -28,7 +28,7 @@ while true; do
 				docker run ${NET_CONF} \
 					-v /root:/root:ro \
 					-v /usr/local/lib/docklet-http:/usr/local/lib/docklet-http:ro \
-					--privileged -d -h docklet-http root_base /usr/local/lib/docklet-http/dl-httpinit ${HOST}
+					--privileged -d -h docklet-http root_base /usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}
 				
 				# HTTP_PID=$(ps aux | grep docklet-http | grep -v grep | awk '{print $2}')
 				# if [[ "${HTTP_PID}" == "" ]]; then

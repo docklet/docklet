@@ -644,7 +644,7 @@ class LiveSession(object):
 	
 	def docker_dashboard_login(self, request):
 		if request['username']=='root':
-			loggedIn = False
+			loggedIn = LiveSession.ALLOW_ROOT
 		else:
 			loggedIn = pam.authenticate(request['username'], request['password'])
 		if loggedIn:
@@ -772,7 +772,11 @@ if __name__ == "__main__":
 	except:
 		print 'environment GROW_ON not set'
 		exit()
-		pass
+
+	try:
+		LiveSession.ALLOW_ROOT = len(os.environ['NIS'])<=1
+	except:
+		LiveSession.ALLOW_ROOT = True
 	
 	SocketServer.TCPServer.allow_reuse_address = True
 	httpd = SocketServer.TCPServer(("0.0.0.0", HTTP_PORT), DockletHTTPRequestHandler)
