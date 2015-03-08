@@ -2,6 +2,8 @@
 
 set -e
 
+RES_URL='http://docklet.unias.org'
+
 function log_msg {
 	TYPE=$1 && shift && COLOR=35
 	[[ "${TYPE}" == "INFO" ]] && COLOR=34
@@ -22,7 +24,7 @@ log_msg "INFO" "Docklet Cluster for Ubuntu distribution x86_64."
 
 if [[ "`which etcd 2>/dev/null`" == "" ]]; then
 	apt-get install -y cgroup-lite lxc ethtool debootstrap python-pampy bridge-utils libapparmor1 nmap curl sshfs netcat-openbsd net-tools openssh-server
-	curl -L "http://docklet.unias.org/docklet-bin-latest.tar.gz" > /tmp/docklet-bin.tgz
+	curl -L "${RES_URL}/docklet-bin-latest.tar.gz" > /tmp/docklet-bin.tgz
 	
 	cd /usr/local/bin
 	tar xvf /tmp/docklet-bin.tgz
@@ -109,13 +111,12 @@ for MIP in $HOSTS; do
         fi
 done
 
-mkdir -p ${NFS_PREFIX}/global && cd ${NFS_PREFIX}/global
+mkdir -p ${NFS_PREFIX}/global/images && cd ${NFS_PREFIX}/global
 
 if [[ "${PEERS}" == "" ]]; then
 	rm -rf ${NFS_PREFIX}/global/etcd
 	if [[ "`USER_NAME=root ham list_3v`" == "" ]]; then
-		mkdir -p ${NFS_PREFIX}/global/images
-		ln -s /usr/local/bin/pub_root_base.tgz ${NFS_PREFIX}/global/images
+		curl -L "${RES_URL}/pub_root_base.tgz" > ${NFS_PREFIX}/global/images/pub_root_base.tgz
 		# dl-imgbuild
 	fi
 fi

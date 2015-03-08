@@ -17,10 +17,23 @@ while true; do
 				
 				echo "*" `docklet-weave stop` `CIDR=${PORTAL_CENTRE} CGW=${PORTAL_GATEWAY} CBR=${PORTAL_BRIDGE} docklet-weave launch centre` > /dev/stderr
 				
-				HTTP_PID=$(ps aux | grep docklet-http | grep -v grep | awk '{print $2}')
-				if [[ "${HTTP_PID}" == "" ]]; then
-					GROW_ON=${HOST} nohup docklet-http >/dev/null 2>&1 &
-				fi
+				NET_CONF="--net=none --lxc-conf=\"lxc.network.type=veth\" --lxc-conf=\"lxc.network.ipv4=${PORTAL_HTTP}/24\" --lxc-conf=\"lxc.network.ipv4.gateway=${PORTAL_GATEWAY}\" --lxc-conf=\"lxc.network.link=${PORTAL_BRIDGE}\" --lxc-conf=\"lxc.network.name=eth0\" --lxc-conf=\"lxc.network.flags=up\""
+				
+				ham pull_3v pub_root_base
+				
+				echo "docker run ${NET_CONF} \
+					-v /root:/root:ro \
+					-v /usr/local/lib/docklet-http:/usr/local/lib/docklet-http:ro \
+					-d -h docklet-http root_base /usr/local/lib/docklet-http/dl-httpinit ${HOST}"
+				docker run ${NET_CONF} \
+					-v /root:/root:ro \
+					-v /usr/local/lib/docklet-http:/usr/local/lib/docklet-http:ro \
+					--privileged -d -h docklet-http root_base /usr/local/lib/docklet-http/dl-httpinit ${HOST}
+				
+				# HTTP_PID=$(ps aux | grep docklet-http | grep -v grep | awk '{print $2}')
+				# if [[ "${HTTP_PID}" == "" ]]; then
+				# 	GROW_ON=${HOST} nohup docklet-http >/dev/null 2>&1 &
+				# fi
 			fi
 		fi
 		sleep 25
