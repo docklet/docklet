@@ -2,15 +2,26 @@
 
 set -e
 
-[[ "`uname -a | grep x86_64`" == "" ]] && echo "Only x86_64-arch is supported." && exit 1
+function log_msg {
+	TYPE=$1 && shift && COLOR=35
+	[[ "${TYPE}" == "INFO" ]] && COLOR=34
+	[[ "${TYPE}" == "WARN" ]] && COLOR=33
+	[[ "${TYPE}" == "ERROR" ]] && COLOR=31
+	echo -e "\033[${COLOR}m[${TYPE}] $@\033[0m" > /dev/stderr
+	[[ "${TYPE}" == "ERROR" ]] && exit 1
+	return 0
+}
 
-[[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
+log_msg "INFO" "Docklet Cluster for Ubuntu distribution x86_64."
+
+[[ "`uname -a | grep x86_64`" == "" ]] && log_msg "ERROR" "Only x86_64-arch is supported."
+
+[[ "`whoami`" != "root" ]] && log_msg "ERROR" "Root previledge required!"
 
 . /etc/docklet/docklet.conf
 
 if [[ "`which etcd 2>/dev/null`" == "" ]]; then
 	apt-get install -y cgroup-lite lxc ethtool debootstrap python-pampy bridge-utils libapparmor1 nmap curl sshfs netcat-openbsd net-tools openssh-server
-	
 	curl -L "${BIN_SOURCE}" > /tmp/docklet-bin.tgz
 	
 	cd /usr/local/bin
@@ -24,19 +35,17 @@ if [[ "`cat /proc/cmdline | grep cgroup`" == "" ]]; then
 		echo 'GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1"' >> /etc/default/grub
 		update-grub > /dev/stderr
 	fi
-	echo -e "\033[31m[WARN] Memory limit will be enabled after your next reboot, you should reboot system and run dl-join again. Otherwise memory limit will not work.\033[0m"
-	exit 1
+	log_msg "ERROR" "Memory limit will be enabled after your next reboot, you should reboot system and run dl-join again. Otherwise memory limit will not work."
 fi
 
-if [[ "`[[ -e /etc/lsb-release ]] && cat /etc/lsb-release | grep Ubuntu`" == "" ]]; then
-	echo -e "\033[31m[WARN] Please note that current debian kernel could not prevent folk bomb destory and cpu shared quota.\033[0m"
-fi
+ip link delete lxcbr0 >/dev/null 2>&1 || true
 
-if [[ "${MACHINE_CIDR}" == "127.0.0.1/32" ]]; then
-	echo "[INFO] Setting up for localhost." > /dev/stderr
-	ip link delete ethlo 2>/dev/null || true
+if [[ "${MACHINE_CIDR}" == "172.31.0.1/32" ]]; then
+	log_msg "WARN" "Setting up for localhost."
+	ip link delete dev ethlo 2>/dev/null || true
 	brctl addbr ethlo
-	ifconfig ethlo 172.31.0.1/16
+	ip addr add 172.31.0.1/16 dev ethlo
+	ip link set dev ethlo up
 	
 	if [[ ! -e "/root/.ssh/id_rsa" ]] && [[ ! -e "/root/.ssh/authorized_keys" ]]; then
 		mv /root/.ssh/id_rsa /root/.ssh/id_rsa.bak 2>/dev/null || true
@@ -53,13 +62,9 @@ if [[ "${MACHINE_CIDR}" == "127.0.0.1/32" ]]; then
 	ssh root@0.0.0.0 true
 fi
 
-echo "[INFO] Finish setting up." > /dev/stderr
+log_msg "INFO" "Finish setting up."
 
-ip link delete lxcbr0 >/dev/null 2>&1 || true
-
-
-
-#nc -q 0 0.0.0.0 7001 </dev/null >/dev/null 2>&1 && echo "running." > /dev/stderr && exit 1
+# nc -q 0 0.0.0.0 7001 </dev/null >/dev/null 2>&1 && echo "running." > /dev/stderr && exit 1
 
 UNIONS=$(echo -e "`blink ${MACHINE_CIDR}`\n`ip addr | grep inet\  | awk '{print $2}' | awk -F\/ '{print $1}'`" | sort)
 
@@ -68,7 +73,7 @@ for MY_IP in ${UNIONS}; do
 	PREV_IP=${MY_IP}
 done
 
-echo "[INFO] this host ip is ${MY_IP}" > /dev/stderr
+log_msg "INFO" "IP of this host is ${MY_IP}."
 
 docklet-weave stop >/dev/null 2>&1 || true
 killall docker >/dev/null 2>&1 || true
@@ -76,7 +81,7 @@ killall etcd >/dev/null 2>&1 || true
 killall python >/dev/null 2>&1 || true
 killall killall lxc-start >/dev/null 2>&1 || true
 
-echo "[INFO] Make sure all docker resources are released .." > /dev/stderr
+log_msg "INFO" "Make sure all docker resources are released .."
 sleep 5
 
 umount -l /var/lib/docker/devicemapper >/dev/null 2>&1 || true
@@ -87,7 +92,7 @@ for DNS in ${DNS_SERVERS}; do
 	DOCKER_DNS="${DOCKER_DNS} --dns ${DNS}"
 done
 
-echo "[INFO] docker -d --icc=false ${DOCKER_DNS} -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT}" > /dev/stderr
+log_msg "WARN" "docker -d --icc=false ${DOCKER_DNS} -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT}"
 nohup docker -d --icc=false ${DOCKER_DNS} -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT} >/dev/null 2>&1 &
 
 mkdir -p ${NFS_PREFIX}
@@ -105,7 +110,6 @@ for MIP in $HOSTS; do
 done
 
 mkdir -p ${NFS_PREFIX}/global && cd ${NFS_PREFIX}/global
-echo "[INFO] etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS}" >/dev/stderr
 
 if [[ "${PEERS}" == "" ]]; then
 	rm -rf ${NFS_PREFIX}/global/etcd
@@ -116,10 +120,11 @@ if [[ "${PEERS}" == "" ]]; then
 	fi
 fi
 
+log_msg "WARN" "etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS}"
 nohup etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS} >/dev/null 2>&1 &
 
-echo "[INFO] waiting docker to get ready .." > /dev/stderr && sleep 2
-
+log_msg "INFO" "Waiting docker to get ready .." && sleep 2
 
 HOST=${MY_IP} docklet-watchdog
+
 

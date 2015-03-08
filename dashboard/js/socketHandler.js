@@ -1,4 +1,4 @@
-var userSpace = { app: 'Docklet', nameSuffix: '@sei.pku.edu.cn' };
+var userSpace = { app: 'Docklet' };
 
 document.getElementById('app_title').innerHTML = 'Welcome to ' + userSpace.app;
 

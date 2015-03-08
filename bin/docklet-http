@@ -643,27 +643,27 @@ class WebSocketSession(WebSocket):
 class LiveSession(object):
 	
 	def docker_dashboard_login(self, request):
-		if request['username']=='root' and request['password']=='q1w2e3':
-			loggedIn = True
+		if request['username']=='root':
+			loggedIn = False
 		else:
-			loggedIn = (request['username'] in ['zhanhl10', 'caodg', 'wanghu14', 'liupd15', 'liult12', 'libao14', 'kanglh09', 'cuiwei13']) # pam.authenticate(request['username'], request['password'])
+			loggedIn = pam.authenticate(request['username'], request['password'])
 		if loggedIn:
 			self.loggedIn = True
 			self.username = request['username']
 			if len(self.docker_dashboard_portal_list(request)['portals'])==0:
-				commands.getstatusoutput('USER_NAME='+self.username+' CMD=app pocket portal')
+				commands.getstatusoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' CMD=app pocket portal')
 		return {'success': loggedIn, 'level': 1 }
 	
 	def docker_dashboard_updateKey(self, request):
-		(status, output) = commands.getstatusoutput("USER_NAME="+self.username+" stone update")
+		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+"USER_NAME="+self.username+" stone update")
 		return {'success': (status == 0), 'key': output }
 	
 	def docker_dashboard_resetVNC(self, request):
-		(status, output) = commands.getstatusoutput("USER_NAME="+self.username+" stone reset")
+		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+"USER_NAME="+self.username+" stone reset")
 		return {'success': (status == 0) }
 
 	def docker_dashboard_watchKey(self, request):
-		(status, output) = commands.getstatusoutput("USER_NAME="+self.username+" stone")
+		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+"USER_NAME="+self.username+" stone")
 		return {'success': (status == 0), 'key': output }
 	
 	def docker_dashboard_cluster_create(self, request):
@@ -672,13 +672,13 @@ class LiveSession(object):
 		mod = request['mod']
 		if mod=='pub' or owner==self.username or 'root'==self.username:
 			image = owner+'_'+request['image']
-			(status, output) = commands.getstatusoutput('BRIDGE_IP='+bridge+' USER_NAME='+self.username+' MOD='+mod+' IMAGE='+image+' NODE_NUM='+str(request['nodes'])+' pocket create')
+			(status, output) = commands.getstatusoutput(self.SSH_PREFIX+'BRIDGE_IP='+bridge+' USER_NAME='+self.username+' MOD='+mod+' IMAGE='+image+' NODE_NUM='+str(request['nodes'])+' pocket create')
 			return {'success': True, 'portal': bridge, 'cluster': output }
 		else:
 			return {'success': False }
 	
 	def docker_dashboard_cluster_list(self, request):
-		(status, output) = commands.getstatusoutput('USER_NAME='+self.username+' pocket list')
+		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' pocket list')
 		clusters = []
 		for item in output.split('\n'):
 			if len(item)==0:
@@ -689,42 +689,42 @@ class LiveSession(object):
 		return {'success': True, 'clusters': clusters }
 	
 	def docker_dashboard_cluster_remove(self, request):
-		output = commands.getoutput('USER_NAME='+self.username+' CREATE_ID='+str(request['id'])+' pocket remove')
+		output = commands.getoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' CREATE_ID='+str(request['id'])+' pocket remove')
 		return {'success': True }
 	
 	def docker_dashboard_cluster_save(self, request):
-		messages = commands.getoutput('USER_NAME='+self.username+' IMAGE_NAME='+str(request['name'])+' PORTAL='+str(request['portal'])+' pocket save')
+		messages = commands.getoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' IMAGE_NAME='+str(request['name'])+' PORTAL='+str(request['portal'])+' pocket save')
 		return {'success': True, 'messages': messages }
 
 	def docker_dashboard_cluster_push(self, request):
-		(status, output) = commands.getstatusoutput('USER_NAME='+self.username+' NAT_ID='+str(request['id'])+' CMD=push docklet-regen')
+		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' NAT_ID='+str(request['id'])+' CMD=push docklet-regen')
 		messages = str(((status, output)))
 		return {'success': True, 'messages': messages }
 
 	def docker_dashboard_cluster_pop(self, request):
-		(status, output) = commands.getstatusoutput('USER_NAME='+self.username+' NAT_ID='+str(request['id'])+' CMD=pop docklet-regen')
+		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' NAT_ID='+str(request['id'])+' CMD=pop docklet-regen')
 		messages = str(((status, output)))
 		return {'success': True, 'messages': messages }
 
 	def docker_dashboard_cluster_repair(self, request):
-		(status, output) = commands.getstatusoutput('USER_NAME='+self.username+' NAT_ID='+str(request['id'])+' CMD=repair docklet-regen')
+		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' NAT_ID='+str(request['id'])+' CMD=repair docklet-regen')
 		messages = str(((status, output)))
 		return {'success': True, 'messages': messages }
 	
 	def docker_dashboard_portal_app(self, request):
 		return {'success': False }
-		(status, output) = commands.getstatusoutput('USER_NAME='+self.username+' CMD=app pocket portal')
+		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' CMD=app pocket portal')
 		if output != '':
 			return {'success': True, 'portal': output }
 		else:
 			return {'success': False }
 	
 	def docker_dashboard_portal_remove(self, request):
-		(status, output) = commands.getstatusoutput('USER_NAME='+self.username+' CMD=rm BRIDGE_IP='+request['portal']+' pocket portal')
+		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' CMD=rm BRIDGE_IP='+request['portal']+' pocket portal')
 		return {'success': True }
 	
 	def docker_dashboard_portal_list(self, request):
-		(status, output) = commands.getstatusoutput('USER_NAME='+self.username+' CMD=list pocket portal')
+		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' CMD=list pocket portal')
 		portals = []
 		for item in output.split('\n'):
 			if len(item)==0:
@@ -734,7 +734,7 @@ class LiveSession(object):
 		return {'success': True, 'portals': sorted(portals, key=lambda p: p['portal']) }
 	
 	def docker_dashboard_source_entry(self, request):
-		output = commands.getoutput('USER_NAME='+self.username+' CMD=list pocket portal').split('\n')
+		output = commands.getoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' CMD=list pocket portal').split('\n')
 		portals = []
 		for item in output:
 			if len(item)==0:
@@ -742,7 +742,7 @@ class LiveSession(object):
 			[portal, status] = item.split(':')
 			if status=='inactive':
 				portals.append( [portal, portal] )
-		output = commands.getoutput('USER_NAME='+self.username+' pocket images').split('\n')
+		output = commands.getoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' pocket images').split('\n')
 		images = []
 		for item in output:
 			if len(item)==0:
@@ -753,11 +753,11 @@ class LiveSession(object):
 		return {'success': True, 'portals': portals, 'images': images  }
 	
 	def docker_dashboard_source_remove(self, request):
-		output = commands.getoutput('ham drop_3v '+request['mod']+'_'+self.username+'_'+request['image'])
+		output = commands.getoutput(self.SSH_PREFIX+'ham drop_3v '+request['mod']+'_'+self.username+'_'+request['image'])
 		return {'success': True }
 	
 	def docker_dashboard_source_chmod(self, request):
-		output = commands.getoutput('ham switch_3v '+request['mod']+'_'+self.username+'_'+request['image'])
+		output = commands.getoutput(self.SSH_PREFIX+'ham switch_3v '+request['mod']+'_'+self.username+'_'+request['image'])
 		return {'success': True }
 
 
@@ -765,14 +765,14 @@ if __name__ == "__main__":
 	SESSION = 'mysession'
 	WEBSOCKET_PORT = 18888
 	HTTP_PORT = 80
-	HTTP_PATH = "/usr/local/sbin/dashboard"
+	HTTP_PATH = "/usr/local/lib/docklet-http/dashboard"
 	
-	#try:
-	#	os.environ['BRIDGE_GW']
-	#except:
-	#	print 'BRIDGE_GW environment not set'
-	#	exit() 
-	#	pass
+	try:
+		LiveSession.SSH_PREFIX = 'ssh -o StrictHostKeyChecking=no root@'+os.environ['GROW_ON']+' '
+	except:
+		print 'environment GROW_ON not set'
+		exit()
+		pass
 	
 	SocketServer.TCPServer.allow_reuse_address = True
 	httpd = SocketServer.TCPServer(("0.0.0.0", HTTP_PORT), DockletHTTPRequestHandler)
@@ -780,8 +780,8 @@ if __name__ == "__main__":
 	os.chdir(HTTP_PATH)
 	thread.start_new_thread(httpd.serve_forever, ())
 	
-	#Module = __import__(SESSION)
-	#WebSocketSession = getattr(Module, 'WebSocketSession')
+	# Module = __import__(SESSION)
+	# WebSocketSession = getattr(Module, 'WebSocketSession')
 	server = SimpleWebSocketServer('0.0.0.0', WEBSOCKET_PORT, WebSocketSession)
 
 	def close_sig_handler(signal, frame):

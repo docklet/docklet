@@ -38,7 +38,7 @@ LoginWindow = new Ext.Window({
 			triggerAction : 'all',
 			selectOnFocus : true,
 			allowBlank : false,
-			value : userSpace.nameSuffix,
+			//value : userSpace.nameSuffix,
 			//submit : function() {},
 			listeners: {
 				specialkey: function(field,e) {
@@ -64,7 +64,7 @@ LoginWindow = new Ext.Window({
 					inputType : 'submit',
 					handler : function() {
 						var pass = document.getElementById('j_password').value;
-						var userid = document.getElementById('j_userid').value.replace(userSpace.nameSuffix, '');
+						var userid = document.getElementById('j_userid').value; //.replace(userSpace.nameSuffix, '');
 						var messages = null;
 						if (pass.length == 0 || userid.length == 0)
 							messages = "Please fill in the blocked!";

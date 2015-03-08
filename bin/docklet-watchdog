@@ -1,7 +1,6 @@
 #!/bin/bash
 
-[[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
-[[ "${HOST}" == "" ]] && exit 1
+( [[ "`whoami`" != "root" ]] || [[ "${HOST}" == "" ]] ) && exit 1
 
 . /etc/docklet/docklet.conf
 
@@ -10,24 +9,23 @@ while true; do
 	
 	LEADER=$(curl -L http://0.0.0.0:4001/v2/stats/leader 2>/dev/null | python -m json.tool | grep leader | awk -F\" '{print $4}')
 	if [[ "${LEADER}" == "${HOST}" ]]; then
-		echo "I'm leader." > /dev/stderr
+		echo "* ${HOST}: I'm leader" > /dev/stderr
 		if ! ping -w 15 -c 1 ${PORTAL_CENTRE} >/dev/null 2>&1; then
 			CONTAINER_PID=$(docker inspect --format='{{ .State.Pid }}' weave 2>/dev/null)
 			if [[ "${CONTAINER_PID}" == "" ]] || [[ "$(docker inspect --format='{{ .HostConfig.LxcConf }}' weave)" == "<no value>" ]]; then
-				echo "Candidate becomes the master." > /dev/stderr
+				echo "* ${HOST}: Becomes the master" > /dev/stderr
 				
-				docklet-weave stop
-				CIDR=${PORTAL_CENTRE} CGW=${PORTAL_GATEWAY} CBR=${PORTAL_BRIDGE} docklet-weave launch centre
+				echo "*" `docklet-weave stop` `CIDR=${PORTAL_CENTRE} CGW=${PORTAL_GATEWAY} CBR=${PORTAL_BRIDGE} docklet-weave launch centre` > /dev/stderr
 				
 				HTTP_PID=$(ps aux | grep docklet-http | grep -v grep | awk '{print $2}')
 				if [[ "${HTTP_PID}" == "" ]]; then
-					nohup docklet-http >/dev/null 2>&1 &
+					GROW_ON=${HOST} nohup docklet-http >/dev/null 2>&1 &
 				fi
 			fi
 		fi
 		sleep 25
 	else
-		echo "I'm not leader." > /dev/stderr
+		echo "* ${HOST}: I'm not leader" > /dev/stderr
 		CONTAINER_PID=$(docker inspect --format='{{ .State.Pid }}' weave 2>/dev/null)
 		if [[ "${CONTAINER_PID}" == "" ]]; then
 			docklet-weave launch ${PORTAL_CENTRE}
