@@ -22,7 +22,7 @@ log_msg "INFO" "Docklet Cluster for Ubuntu distribution x86_64."
 
 if [[ "`which etcd 2>/dev/null`" == "" ]]; then
 	apt-get install -y cgroup-lite lxc ethtool debootstrap python-pampy bridge-utils libapparmor1 nmap curl sshfs netcat-openbsd net-tools openssh-server
-	curl -L "${BIN_SOURCE}" > /tmp/docklet-bin.tgz
+	curl -L "http://docklet.unias.org/docklet-bin-latest.tar.gz" > /tmp/docklet-bin.tgz
 	
 	cd /usr/local/bin
 	tar xvf /tmp/docklet-bin.tgz
