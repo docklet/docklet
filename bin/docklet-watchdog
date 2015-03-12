@@ -8,6 +8,8 @@ while true; do
 	
 	LEADER=$(curl -L http://0.0.0.0:4001/v2/stats/leader 2>/dev/null | python -m json.tool | grep leader | awk -F\" '{print $4}')
 	
+	ham pull_3v pub_root_base
+	
 	if [[ "${LEADER}" == "${HOST}" ]]; then
 		echo "* ${HOST}: I'm leader" > /dev/stderr
 		if ! ping -w 15 -c 1 ${PORTAL_CENTRE} >/dev/null 2>&1; then
@@ -18,8 +20,6 @@ while true; do
 				echo "*" `docklet-weave stop` `CIDR=${PORTAL_CENTRE} CGW=${PORTAL_GATEWAY} CBR=${PORTAL_BRIDGE} docklet-weave launch centre` > /dev/stderr
 				
 				NET_CONF="--net=none --lxc-conf=\"lxc.network.type=veth\" --lxc-conf=\"lxc.network.ipv4=${PORTAL_HTTP}/24\" --lxc-conf=\"lxc.network.ipv4.gateway=${PORTAL_GATEWAY}\" --lxc-conf=\"lxc.network.link=${PORTAL_BRIDGE}\" --lxc-conf=\"lxc.network.name=eth0\" --lxc-conf=\"lxc.network.flags=up\""
-				
-				ham pull_3v pub_root_base
 				
 				echo "docker run ${NET_CONF} \
 					-v /root:/root:ro \

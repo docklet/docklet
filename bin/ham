@@ -12,8 +12,14 @@ mkdir -p ${HOME_PREF}/images
 if [[ "$1" == "push_2v" ]]; then
 	[[ -e ${HOME_PREF}/images/pub_$2.tgz ]] && exit 0
 	[[ -e ${HOME_PREF}/images/self_$2.tgz ]] && exit 0
-	[[ "`docker images | grep $2`" == "" ]] && exit 1
-	docker save $2 | gzip > ${HOME_PREF}/images/self_$2.tgz
+	[[ "`docker inspect "$2" 2>/dev/null`" == "[]" ]] && exit 1
+	
+	lockfile-create /tmp/docklet-commit.lock
+	rm -rf /tmp/docklet-commit-layers/ && mkdir -p /tmp/docklet-commit-layers/
+	docker save "$2" | tar xvf - --exclude="1e868fd4a983baa2b698e29c86fced779eb993f88f89df55882c5814ff0697be/*" -C /tmp/docklet-commit-layers/
+	cd /tmp/docklet-commit-layers/ && tar czvf ${HOME_PREF}/images/self_$2.tgz *
+	rm -rf /tmp/docklet-commit-layers/
+	lockfile-remove /tmp/docklet-commit.lock
 elif [[ "$1" == "pull_3v" ]]; then
 	[[ ! -e ${HOME_PREF}/images/$2.tgz ]] && exit 1
 	DOCKER_IMG=$(echo $2 | awk -F\_ '{print $2"_"$3}')
