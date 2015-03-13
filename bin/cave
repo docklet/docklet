@@ -44,11 +44,7 @@ fi
 
 NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null
 
-[[ "${MOD}" != "skip" ]] && ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} ham pull_3v ${MOD}_${IMAGE} > /dev/stderr
-
-if [[ "`[[ -e /etc/lsb-release ]] && cat /etc/lsb-release | grep Ubuntu`" != "" ]]; then
-	FOLK_FLAG="--lxc-conf=\"lxc.cgroup.memory.kmem.limit_in_bytes=${FOLK_BOMB_SPACE}\" --lxc-conf=\"lxc.cgroup.cpu.cfs_quota_us=${CPU_SHARE_QUOTA_US}\""
-fi
+FOLK_FLAG="--lxc-conf=\"lxc.cgroup.memory.kmem.limit_in_bytes=${FOLK_BOMB_SPACE}\" --lxc-conf=\"lxc.cgroup.cpu.cfs_quota_us=${CPU_SHARE_QUOTA_US}\""
 
 echo "[CAVE] ${WORK_ON} docklet-weave run ${NATIVE_IP}/24 \
 		-v ${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}:/etc/hosts:ro \
@@ -58,11 +54,13 @@ echo "[CAVE] ${WORK_ON} docklet-weave run ${NATIVE_IP}/24 \
 		-v ${HOME_PREF}/${USER_NAME}/ssh_keys:/root/.ssh:ro \
 		-m ${TOTAL_MEMORY_LIMIT} -it ${NET_CONF} -h ${HOST_NAME} ${FOLK_FLAG} ${OPTS} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP}" >/dev/stderr
 
-ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} docklet-weave run ${NATIVE_IP}/24 \
+
+ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} bash -c "ham pull_3v ${MOD}_${IMAGE}; docklet-weave run ${NATIVE_IP}/24 \
+		--name=${NAME} \
 		-v ${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}:/etc/hosts:ro \
 		-v /usr/local/sbin/container-init:/sbin/initctl:ro \
 		-v /usr/local/sbin/container-docklet:/usr/bin/docklet:ro \
 		-v ${HOME_PREF}/${USER_NAME}/home:/root \
 		-v ${HOME_PREF}/${USER_NAME}/ssh_keys:/root/.ssh:ro \
-		-m ${TOTAL_MEMORY_LIMIT} -it ${NET_CONF} -h ${HOST_NAME} ${FOLK_FLAG} ${OPTS} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP} | cut -b 1-12
+		-m ${TOTAL_MEMORY_LIMIT} -it ${NET_CONF} -h ${HOST_NAME} ${FOLK_FLAG} ${OPTS} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP}" &
 

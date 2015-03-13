@@ -21,6 +21,8 @@ if [[ "$1" == "push_2v" ]]; then
 	rm -rf /tmp/docklet-commit-layers/
 	lockfile-remove /tmp/docklet-commit.lock
 elif [[ "$1" == "pull_3v" ]]; then
+	TYPE=$(echo $2 | awk -F\_ '{print $1}')
+	[[ "${TYPE}" == "skip" ]] && exit 0
 	[[ ! -e ${HOME_PREF}/images/$2.tgz ]] && exit 1
 	DOCKER_IMG=$(echo $2 | awk -F\_ '{print $2"_"$3}')
 	[[ "`docker images | grep ${DOCKER_IMG}`" != "" ]] && exit 0
