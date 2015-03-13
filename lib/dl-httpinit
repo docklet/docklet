@@ -16,8 +16,14 @@ if [[ "$#" == "3" ]]; then
 	/etc/init.d/rpcbind start
 	/etc/init.d/nis start
 	
-	NIS="$2 $3"
+	LOCAL_NIS="$2 $3"
 fi
 
-GROW_ON="$1" NIS="${NIS}" /usr/local/lib/docklet-http/docklet-http
+
+export GROW_ON="$1"
+export NIS="${LOCAL_NIS}"
+
+/usr/local/lib/docklet-http/dl-httprest.py &
+
+/usr/local/lib/docklet-http/docklet-http
 
