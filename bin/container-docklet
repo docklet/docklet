@@ -3,20 +3,20 @@
 set -e
 
 if [[ "$@" == "" ]]; then
-	echo "Usage: docklet [hosts | portal | status | ..]"
+	echo "Usage: docklet [hosts|portal|status|..]"
 	true
 elif [[ "$@" == "hosts" ]]; then
 	HOSTS=$(echo `cat /etc/hosts | grep nat | awk '{print $2}'` | tr ' ' ',')
 	echo ${HOSTS}
 elif [[ "$@" == "portal" ]]; then
-	ssh -o ConnectTimeout=3 root@nat-master ip addr 2>/dev/null | grep global\ eth0 | awk '{ print $2}' | awk -F\/ '{print $1}'
+	cat /etc/hosts | grep ext-portal | awk '{print $1}'
 elif [[ "$@" == "status" ]]; then
 	for HOST in `cat /etc/hosts | grep nat | awk '{print $2}'`; do
 		echo -n "* docklet ${HOST} : "
 		if ping -c 1 -w 5 ${HOST} >/dev/null 2>&1; then
-			echo "live."
+			echo "ready."
 		else
-			echo "dead."
+			echo "no response."
 		fi
 	done
 else

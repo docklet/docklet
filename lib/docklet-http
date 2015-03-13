@@ -698,18 +698,17 @@ class LiveSession(object):
 
 	def docker_dashboard_cluster_push(self, request):
 		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' NAT_ID='+str(request['id'])+' CMD=push docklet-regen')
-		messages = str(((status, output)))
-		return {'success': True, 'messages': messages }
+		return {'success': status==0, 'messages': '' }
 
 	def docker_dashboard_cluster_pop(self, request):
 		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' NAT_ID='+str(request['id'])+' CMD=pop docklet-regen')
 		messages = str(((status, output)))
-		return {'success': True, 'messages': messages }
+		return {'success': status==0, 'messages': '' }
 
 	def docker_dashboard_cluster_repair(self, request):
 		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' NAT_ID='+str(request['id'])+' CMD=repair docklet-regen')
 		messages = str(((status, output)))
-		return {'success': True, 'messages': messages }
+		return {'success': True, 'messages': 'Finish repairing dead nodes.' }
 	
 	def docker_dashboard_portal_app(self, request):
 		return {'success': False }

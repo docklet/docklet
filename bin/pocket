@@ -90,8 +90,9 @@ if [[ "$@" == "create" ]]; then
 	[[ "${IMAGE}" == "" ]]      && echo "IMAGE (like, unios) not specified!" && leave 1
 	[[ "${BRIDGE_IP}" == "" ]] && echo "BRIDGE_IP (like, 192.168.4.x) not specified!" && leave 1
 	[[ "${USER_NAME}" == "" ]] && echo "USER_NAME (like, root) not specified!" && leave 1
-	[[ "${NODE_NUM}" == "" ]] && echo "NODE_NUM ([1-252], like, 1) not specified!" && leave 1
+	[[ "${NODE_NUM}" == "" ]] && echo "NODE_NUM ([1-?], like, 1) not specified!" && leave 1
 	[[ "${MOD}" == "" ]] && echo "MOD ({self|pub|}) not specified!" && leave 1
+	[[ "$(${NODE_NUM}>${CLUSTER_LIMIT})" == "1" ]] && echo "NODE_NUM exceeds limit!" && leave 1
 
 	EXIST=$(KEY="/docklet/portal/${USER_NAME}/${BRIDGE_IP}" etcdemu get 2>/dev/null | grep "inactive")
 	if [[ "${EXIST}" != "" ]]; then
@@ -101,7 +102,7 @@ if [[ "$@" == "create" ]]; then
 
 		export USER_NAME BRIDGE_IP BRIDGE_GW BRIDGE_DEV IMAGE
 
-		FREE_NAT=0 || true
+		FREE_NAT=1 || true
 		while [[ "`KEY=/docklet/instances/${FREE_NAT} etcdemu get`" != "" ]]; do
 			let FREE_NAT=FREE_NAT+1
 			# [[ "${FREE_NAT}" == "65536" ]] && FREE_NAT=0 || true
@@ -123,6 +124,8 @@ if [[ "$@" == "create" ]]; then
 		mkdir -p "${HOME_PREF}/${USER_NAME}"
 		COMMON_HOST="${HOME_PREF}/${USER_NAME}/hosts-${FREE_NAT}"
 		echo "127.0.0.1 localhost" > ${COMMON_HOST}
+		echo "${PORTAL_HTTP} docklet-cloud" >> ${COMMON_HOST}
+		echo "${BRIDGE_IP} ext-portal" >> ${COMMON_HOST}
 
 		while [[ "${CREATE_SEQ}" != "${NODE_NUM}" ]]; do
 			echo "[INFO] Booting Docker 10.${SECOND}.${THIRD}.${CREATE_SEQ} ..." > /dev/stderr

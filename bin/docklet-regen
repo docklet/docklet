@@ -51,6 +51,8 @@ else
 	
 	if [[ "${CMD}" == "push" ]]; then
 
+		[[ "`echo ${SLAVES} | wc -w`" == "$((${CLUSTER_LIMIT}-1))" ]] && exit 1
+
 		echo "${NATIVE_IP} ${HOST_NAME}" >> ${COMMON_HOST}
 
 		echo "[EXEC] HOST_NAME=nat-slave${OFFSET} WORK_ON=${WORK_ON} NATIVE_IP=${NATIVE_IP}  MOD=skip NAT_ID=${NAT_ID} cave" > /dev/stderr
@@ -58,10 +60,11 @@ else
 		NEW_CLUSTER="${SLAVES}${WORK_ON}:${CONTAINER_ID}:${NATIVE_IP} ${MASTER}"
 		NEW_STATE=$(echo ${STATE} | awk -F\| '{$NF="";print}' | tr \  \|)${NEW_CLUSTER}
 		KEY=/docklet/instances/${NAT_ID} VALUE=${NEW_STATE} etcdemu set
+		true
 
 	elif [[ "${CMD}" == "pop" ]]; then
 
-		[[ "${SLAVES}" == "" ]] && exit 1
+		[[ "`echo ${SLAVES} | wc -w`" == "0" ]] && exit 1
 		
 		DETAIL=$(echo ${SLAVES} | awk '{print $NF}')
 		SAT=$(echo ${DETAIL} | awk -F\: '{print $1}')
