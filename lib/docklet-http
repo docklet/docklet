@@ -622,6 +622,7 @@ class WebSocketSession(WebSocket):
 				self.data = ''
 			[field, string] = str(self.data).split(" ", 1)
 			if field=='docker.dashboard.login' or self.session.loggedIn:
+				print 'self.session.'+field.replace('.','_')+'('+string+')'
 				reply = eval('self.session.'+field.replace('.','_')+'('+string+')')
 			else:
 				reply = '{ "success": false }'
@@ -728,6 +729,7 @@ class LiveSession(object):
 		for item in output.split('\n'):
 			if len(item)==0:
 				continue
+			print "!!!!!!!!!!!", item
 			[portal, status] = item.split(':')
 			portals.append( {'portal': portal, 'status': status } )
 		return {'success': True, 'portals': sorted(portals, key=lambda p: p['portal']) }
@@ -741,7 +743,7 @@ class LiveSession(object):
 			[portal, status] = item.split(':')
 			if status=='inactive':
 				portals.append( [portal, portal] )
-		output = commands.getoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' pocket images').split('\n')
+		output = commands.getoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' pocket images 2>/dev/null').split('\n')
 		images = []
 		for item in output:
 			if len(item)==0:

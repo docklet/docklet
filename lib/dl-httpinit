@@ -11,7 +11,7 @@ if [[ "$#" == "3" ]]; then
 
 	mkdir -p /run/sendsigs.omit.d
 
-	domainname "$3"
+	#domainname "$3"
 
 	/etc/init.d/rpcbind start
 	/etc/init.d/nis start
