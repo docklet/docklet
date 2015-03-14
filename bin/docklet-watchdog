@@ -13,8 +13,7 @@ while true; do
 	if [[ "${LEADER}" == "${HOST}" ]]; then
 		echo "* ${HOST}: I'm leader" > /dev/stderr
 		if ! ping -w 15 -c 1 ${PORTAL_CENTRE} >/dev/null 2>&1; then
-			CONTAINER_PID=$(docker inspect --format='{{ .State.Pid }}' weave 2>/dev/null)
-			if [[ "${CONTAINER_PID}" == "" ]] || [[ "$(docker inspect --format='{{ .HostConfig.LxcConf }}' weave)" == "<no value>" ]]; then
+			if ! docker inspect weave | grep Running | grep true >/dev/null 2>&1 || [[ "$(docker inspect --format='{{ .HostConfig.LxcConf }}' weave 2>/dev/null)" == "<no value>" ]]; then
 				echo "* ${HOST}: Becomes the master" > /dev/stderr
 				
 				echo "*" `docklet-weave stop` `CIDR=${PORTAL_CENTRE} CGW=${PORTAL_GATEWAY} CBR=${PORTAL_BRIDGE} docklet-weave launch centre` > /dev/stderr
@@ -39,8 +38,7 @@ while true; do
 		sleep 25
 	else
 		echo "* ${HOST}: I'm not leader" > /dev/stderr
-		CONTAINER_PID=$(docker inspect --format='{{ .State.Pid }}' weave 2>/dev/null)
-		if [[ "${CONTAINER_PID}" == "" ]]; then
+		if ! docker inspect weave | grep Running | grep true >/dev/null 2>&1; then
 			docklet-weave launch ${PORTAL_CENTRE}
 		fi
 		sleep 15

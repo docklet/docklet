@@ -88,6 +88,8 @@ sleep 5
 
 umount -l /var/lib/docker/devicemapper >/dev/null 2>&1 || true
 rm -rf /var/lib/docker
+mkdir -p /var/lib/docker/devicemapper/devicemapper/
+dd if=/dev/zero of=/var/lib/docker/devicemapper/devicemapper/data bs=1G count=0 seek=200 >/dev/null 2>&1
 
 DOCKER_DNS=""
 for DNS in ${DNS_SERVERS}; do
@@ -106,7 +108,7 @@ PEERS=""
 for MIP in $HOSTS; do
         if nc -q 0 $MIP 7001 </dev/null >/dev/null 2>&1; then
                 PEERS="--peers $MIP:7001"
-		echo "[INFO] Machine discovery: ${MIP}" > /dev/stderr
+		log_msg "INFO" "Machine discovery: ${MIP}"
                 break
         fi
 done
