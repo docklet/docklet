@@ -92,8 +92,7 @@ if [[ "$@" == "create" ]]; then
 	[[ "${USER_NAME}" == "" ]] && echo "USER_NAME (like, root) not specified!" && leave 1
 	[[ "${NODE_NUM}" == "" ]] && echo "NODE_NUM ([1-?], like, 1) not specified!" && leave 1
 	[[ "${MOD}" == "" ]] && echo "MOD ({self|pub|}) not specified!" && leave 1
-	[[ "$(${NODE_NUM}>${CLUSTER_LIMIT})" == "1" ]] && echo "NODE_NUM exceeds limit!" && leave 1
-
+	[[ "$((${NODE_NUM}>${CLUSTER_LIMIT}))" == "1" ]] && echo "NODE_NUM exceeds limit!" && leave 1
 	EXIST=$(KEY="/docklet/portal/${USER_NAME}/${BRIDGE_IP}" etcdemu get 2>/dev/null | grep "inactive")
 	if [[ "${EXIST}" != "" ]]; then
 		KEY="/docklet/portal/${USER_NAME}/${BRIDGE_IP}" VALUE="active" etcdemu set
@@ -146,8 +145,8 @@ if [[ "$@" == "create" ]]; then
 			RANDOM_HOST=$(echo "${LIVE_HOSTS}" | head -n $((${HOST_OFFSET}%${TOTAL_MACHINE}+1)) | tail -n 1)
 			
 			NATIVE_IP=10.${SECOND}.${THIRD}.${CREATE_SEQ}
-			echo "[EXEC] HOST_NAME=${HOST_NAME} WORK_ON=${RANDOM_HOST} NATIVE_IP=${NATIVE_IP} MOD=${MOD} NAT_ID=${FREE_NAT} cave" > /dev/stderr
 			CONTAINER_ID=$(uuidgen)
+			echo "[EXEC] HOST_NAME=${HOST_NAME} WORK_ON=${RANDOM_HOST} NATIVE_IP=${NATIVE_IP} MOD=${MOD} NAT_ID=${FREE_NAT} NAME=${CONTAINER_ID} cave" > /dev/stderr
 			HOST_NAME=${HOST_NAME} WORK_ON=${RANDOM_HOST} NATIVE_IP=${NATIVE_IP} MOD=${MOD} NAT_ID=${FREE_NAT} NAME=${CONTAINER_ID} cave
 			
 			[[ "${CREATE_SEQ}" == "254" ]] && sleep 1

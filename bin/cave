@@ -56,7 +56,10 @@ echo "[CAVE] ${WORK_ON}: ham pull_3v ${MOD}_${IMAGE}; docklet-weave run ${NATIVE
 		-m ${TOTAL_MEMORY_LIMIT} -it ${NET_CONF} -h ${HOST_NAME} ${FOLK_FLAG} ${OPTS} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP}" >/dev/stderr
 
 
-nohup ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} "ham pull_3v ${MOD}_${IMAGE} ;
+nohup ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} " \
+  lockfile-create /tmp/docklet-images-load; \
+  ham pull_3v ${MOD}_${IMAGE}; \
+  lockfile-remove /tmp/docklet-images-load; \
   docklet-weave run ${NATIVE_IP}/24 \
     --name=${NAME} \
     -v ${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}:/etc/hosts:ro \
