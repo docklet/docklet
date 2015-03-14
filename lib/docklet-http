@@ -662,10 +662,6 @@ class LiveSession(object):
 	def docker_dashboard_resetVNC(self, request):
 		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+"USER_NAME="+self.username+" stone reset")
 		return {'success': (status == 0) }
-
-	def docker_dashboard_watchKey(self, request):
-		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+"USER_NAME="+self.username+" stone")
-		return {'success': (status == 0), 'key': output }
 	
 	def docker_dashboard_cluster_create(self, request):
 		bridge = request['bridge']
@@ -711,6 +707,11 @@ class LiveSession(object):
 		messages = str(((status, output)))
 		return {'success': True, 'messages': 'Finish repairing dead nodes.' }
 	
+	def docker_dashboard_cluster_restart(self, request):
+		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' NAT_ID='+str(request['id'])+' CMD=restart docklet-regen')
+		messages = str(((status, output)))
+		return {'success': True, 'messages': 'Finish restarting all nodes.' }
+	
 	def docker_dashboard_portal_app(self, request):
 		return {'success': False }
 		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+'USER_NAME='+self.username+' CMD=app pocket portal')
@@ -729,7 +730,6 @@ class LiveSession(object):
 		for item in output.split('\n'):
 			if len(item)==0:
 				continue
-			print "!!!!!!!!!!!", item
 			[portal, status] = item.split(':')
 			portals.append( {'portal': portal, 'status': status } )
 		return {'success': True, 'portals': sorted(portals, key=lambda p: p['portal']) }
@@ -760,6 +760,10 @@ class LiveSession(object):
 	def docker_dashboard_source_chmod(self, request):
 		output = commands.getoutput(self.SSH_PREFIX+'ham switch_3v '+request['mod']+'_'+self.username+'_'+request['image'])
 		return {'success': True }
+
+	def docker_dashboard_authorize_entry(self, request):
+		(status, output) = commands.getstatusoutput(self.SSH_PREFIX+"USER_NAME="+self.username+" stone")
+		return {'success': (status == 0), 'key': output }
 
 
 if __name__ == "__main__":
