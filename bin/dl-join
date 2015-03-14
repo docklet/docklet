@@ -95,7 +95,7 @@ for DNS in ${DNS_SERVERS}; do
 done
 
 log_msg "WARN" "docker -d --icc=false ${DOCKER_DNS} -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT}"
-nohup docker -d --icc=false ${DOCKER_DNS} -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT} >/dev/null 2>&1 &
+docker -d --icc=false ${DOCKER_DNS} -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT} >/dev/null 2>&1 &
 
 mkdir -p ${NFS_PREFIX}
 umount -l ${NFS_PREFIX} >/dev/null 2>&1 || true
@@ -122,7 +122,7 @@ if [[ "${PEERS}" == "" ]]; then
 fi
 
 log_msg "WARN" "etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS}"
-nohup etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS} >/dev/null 2>&1 &
+etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS} >/dev/null 2>&1 &
 
 log_msg "INFO" "Waiting docker to get ready .." && sleep 2
 
