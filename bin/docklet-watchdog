@@ -6,7 +6,7 @@
 
 while true; do
 	
-	LEADER=$(curl -L http://0.0.0.0:4001/v2/stats/leader >/dev/null 2>&1 | python -m json.tool | grep leader | awk -F\" '{print $4}')
+	LEADER=$(curl -L http://0.0.0.0:4001/v2/stats/leader 2>/dev/null | python -m json.tool 2>/dev/null | grep leader | awk -F\" '{print $4}')
 	
 	ham pull_3v pub_root_base
 	
