@@ -80,7 +80,6 @@ log_msg "INFO" "IP of this host is ${MY_IP}."
 docklet-weave stop >/dev/null 2>&1 || true
 killall docker >/dev/null 2>&1 || true
 killall etcd >/dev/null 2>&1 || true
-killall python >/dev/null 2>&1 || true
 killall killall lxc-start >/dev/null 2>&1 || true
 
 log_msg "INFO" "Make sure all docker resources are released .."
@@ -88,8 +87,18 @@ sleep 5
 
 umount -l /var/lib/docker/devicemapper >/dev/null 2>&1 || true
 rm -rf /var/lib/docker
-mkdir -p /var/lib/docker/devicemapper/devicemapper/
-dd if=/dev/zero of=/var/lib/docker/devicemapper/devicemapper/data bs=1G count=0 seek=200 >/dev/null 2>&1
+
+mkdir -p ${NFS_PREFIX}
+
+if [[ "${NFS_MOUNT_CMD}" != "" ]]; then
+	log_msg "INFO" "Remounting Commong NFS ${NFS_PREFIX} .."
+	umount -l ${NFS_PREFIX} >/dev/null 2>&1 || true
+	`${NFS_MOUNT_CMD}`
+fi
+
+mkdir -p ${NFS_PREFIX}/global/volumes/${MY_IP} /var/lib/docker/devicemapper
+ln -s ${NFS_PREFIX}/global/volumes/${MY_IP} /var/lib/docker/devicemapper/devicemapper
+dd if=/dev/zero of=/var/lib/docker/devicemapper/devicemapper/data bs=1G count=0 seek=1000 >/dev/null 2>&1
 
 DOCKER_DNS=""
 for DNS in ${DNS_SERVERS}; do
@@ -98,10 +107,6 @@ done
 
 log_msg "WARN" "docker -d --icc=false ${DOCKER_DNS} -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT}"
 docker -d --icc=false ${DOCKER_DNS} -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT} >/dev/null 2>&1 &
-
-mkdir -p ${NFS_PREFIX}
-umount -l ${NFS_PREFIX} >/dev/null 2>&1 || true
-`${NFS_MOUNT_CMD}`
 
 HOSTS="`blink ${MACHINE_CIDR}`"
 PEERS=""
