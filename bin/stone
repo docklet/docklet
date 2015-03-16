@@ -15,6 +15,7 @@ if [[ ! -e "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa" ]] || [[ "$@" == "update"
 	rm -rf ${HOME_PREF}/${USER_NAME}/ssh_keys/*
 	echo -e '\n' | ssh-keygen -t rsa -P '' -f "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa" >/dev/null 2>&1
 	mv "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa.pub" "${HOME_PREF}/${USER_NAME}/ssh_keys/authorized_keys"
+	which puttygen >/dev/null 2>&1 && puttygen "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa" -o "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa.ppk"
 fi
 
 # mkdir -p ${HOME_PREF}/${USER_NAME}/home/.vnc/
@@ -24,3 +25,5 @@ fi
 # fi
 
 cat "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa"
+echo "========"
+cat "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa.ppk"
