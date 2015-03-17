@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, subprocess, pam, json
+import os, subprocess, pam, json, commands
 import posixpath, BaseHTTPServer, urllib, cgi, shutil, mimetypes
 from StringIO import StringIO
 
@@ -37,41 +37,38 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		return
 
 	def do_POST(self):
-		print self.headers
-		return
 		form = cgi.FieldStorage(
-			fp=self.rfile, 
-			headers=self.headers,
-			environ={'REQUEST_METHOD':'POST','CONTENT_TYPE': "application/json", }
+			fp=self.rfile, headers=self.headers,
+			environ={'REQUEST_METHOD':'POST','CONTENT_TYPE': "text/html"}
 		)
 
-		# Begin the response
 		self.send_response(200)
 		self.end_headers()
 		self.wfile.write('Client: %s\n' % str(self.client_address))
-		self.wfile.write('User-agent: %s\n' %
-						 str(self.headers['user-agent']))
+		self.wfile.write('User-agent: %s\n' % str(self.headers['user-agent']))
 		self.wfile.write('Path: %s\n' % self.path)
 		self.wfile.write('Form data:\n')
 
-		print form.keys()
-
-		# Echo back information about what was posted in the form
+		print "#### ", form['key'].file.read().strip() == commands.getoutput("%s cat /home/docklet/%s/ssh_keys/id_rsa 2>/dev/null" % (self.WORK_ON, form['user'].value)).strip()
+		
+		
+		
+		print "========================="
+		
+		# curl -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key http://127.0.0.1:8000/cluster/1?op=status/scaleup/commit/restart/close
+		# /user/login
+		# /user/key
+		# /portal
+		
 		for field in form.keys():
 			field_item = form[field]
 			if field_item.filename:
-				# The field contains an uploaded file
 				file_data = field_item.file.read()
 				file_len = len(file_data)
 				del file_data
-				self.wfile.write(
-					'\tUploaded %s as "%s" (%d bytes)\n' % \
-						(field, field_item.filename, file_len))
-				print "========================="
+				self.wfile.write('\tUploaded %s as "%s" (%d bytes)\n' % (field, field_item.filename, file_len))
 			else:
-				# Regular form value
-				self.wfile.write('\t%s=%s\n' %
-								 (field, form[field].value))
+				self.wfile.write('\t%s=%s\n' % (field, form[field].value))
 		return
 
 if __name__ == '__main__':
@@ -79,4 +76,6 @@ if __name__ == '__main__':
 		DockletHTTPRequestHandler.ALLOW_ROOT = len(os.environ['NIS'])<=1
 	except:
 		DockletHTTPRequestHandler.ALLOW_ROOT = True
+	DockletHTTPRequestHandler.WORK_ON = "ssh root@%s " % os.environ['WORK_ON']
 	BaseHTTPServer.test(DockletHTTPRequestHandler, BaseHTTPServer.HTTPServer)
+
