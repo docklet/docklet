@@ -133,7 +133,13 @@ etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name 
 
 log_msg "INFO" "Waiting docker to get ready .." && sleep 2
 
-HOST=${MY_IP} docklet-watchdog
+domainname $(echo ${NIS_SERVER} | awk '{print $2}')
+
+while true; do
+	HOST=${MY_IP} docklet-watchdog
+	sleep 5
+	# docker rmi $(docker images -q) 2>/dev/null
+done
 
 false
 

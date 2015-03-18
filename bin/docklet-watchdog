@@ -1,10 +1,8 @@
 #!/bin/bash
 
-( [[ "`whoami`" != "root" ]] || [[ "${HOST}" == "" ]] ) && exit 1
-
 . /etc/docklet/docklet.conf
 
-while true; do
+if [[ "`whoami`" == "root" ]] && [[ "${HOST}" != "" ]]; then
 	
 	LEADER=$(curl -L http://0.0.0.0:4001/v2/stats/leader 2>/dev/null | python -m json.tool 2>/dev/null | grep leader | awk -F\" '{print $4}')
 	
@@ -19,12 +17,12 @@ while true; do
 				echo "*" `docklet-weave stop` `CIDR=${PORTAL_CENTRE} CGW=${PORTAL_GATEWAY} CBR=${PORTAL_BRIDGE} docklet-weave launch centre` > /dev/stderr
 				
 				NET_CONF="--net=none --lxc-conf=\"lxc.network.type=veth\" --lxc-conf=\"lxc.network.ipv4=${PORTAL_HTTP}/24\" --lxc-conf=\"lxc.network.ipv4.gateway=${PORTAL_GATEWAY}\" --lxc-conf=\"lxc.network.link=${PORTAL_BRIDGE}\" --lxc-conf=\"lxc.network.name=eth0\" --lxc-conf=\"lxc.network.flags=up\""
-				domainname $(echo ${NIS_SERVER} | awk '{print $2}')
 				
 				echo "docker run ${NET_CONF} --name=core_service \
 					-v /root:/root:rw \
+					-v ${NFS_PREFIX}:/mnt:ro \
 					-v /usr/local/lib/docklet-http:/usr/local/lib/docklet-http:ro \
-					-d -h docklet-http root_base /usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}"
+					-d -h docklet-http root_base /usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}" > /dev/stderr
 				docker run ${NET_CONF} --name=core_service \
 					-v /root:/root:rw \
 					-v ${NFS_PREFIX}:/mnt:ro \
@@ -32,15 +30,14 @@ while true; do
 					-d -h docklet-http root_base /usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}
 			fi
 		fi
-		sleep 25
+		sleep 20
 	else
 		echo "* ${HOST}: I'm not leader" > /dev/stderr
 		if ! docker inspect weave | grep Running | grep true >/dev/null 2>&1; then
 			docklet-weave launch ${PORTAL_CENTRE}
 		fi
-		sleep 15
+		sleep 10
 	fi
 	
-	# docker rmi $(docker images -q) 2>/dev/null
-done
+fi
 
