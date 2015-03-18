@@ -25,13 +25,13 @@ elif [[ "$@" == "status" ]]; then
 		fi
 	done
 elif [[ "$@" == "scaleup" ]]; then
-	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/scaleup
+	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/scaleup 2>/dev/null | python -m json.tool
 elif [[ "$@" == "scaledown" ]]; then
-	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/scaledown
+	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/scaledown 2>/dev/null | python -m json.tool
 elif [[ "$@" == "restart" ]]; then
-	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/restart
+	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/restart 2>/dev/null | python -m json.tool
 elif [[ "$@" == "repair" ]]; then
-	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/repair
+	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/repair 2>/dev/null | python -m json.tool
 else
 	false
 fi 
