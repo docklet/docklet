@@ -125,7 +125,6 @@ if [[ "$@" == "create" ]]; then
 		echo "127.0.0.1 localhost" > ${COMMON_HOST}
 		echo "${PORTAL_HTTP} docklet-cloud" >> ${COMMON_HOST}
 		echo "${BRIDGE_IP} host-${FREE_NAT}_${USER_NAME}" >> ${COMMON_HOST}
-		echo "${BRIDGE_IP} ext-portal" >> ${COMMON_HOST}
 
 		while [[ "${CREATE_SEQ}" != "${NODE_NUM}" ]]; do
 			echo "[INFO] Booting Docker 10.${SECOND}.${THIRD}.${CREATE_SEQ} ..." > /dev/stderr
