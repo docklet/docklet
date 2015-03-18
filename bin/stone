@@ -25,5 +25,5 @@ fi
 # fi
 
 cat "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa"
-echo "========"
+echo -n "========"
 cat "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa.ppk"

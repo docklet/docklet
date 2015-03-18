@@ -8,7 +8,7 @@ while true; do
 	
 	LEADER=$(curl -L http://0.0.0.0:4001/v2/stats/leader 2>/dev/null | python -m json.tool 2>/dev/null | grep leader | awk -F\" '{print $4}')
 	
-	ham pull_3v pub_root_base
+	USER_NAME=root ham pull_2v root_base
 	
 	if [[ "${LEADER}" == "${HOST}" ]]; then
 		echo "* ${HOST}: I'm leader" > /dev/stderr
@@ -29,11 +29,6 @@ while true; do
 					-v /root:/root:rw \
 					-v /usr/local/lib/docklet-http:/usr/local/lib/docklet-http:ro \
 					-d -h docklet-http root_base /usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}
-				
-				# HTTP_PID=$(ps aux | grep docklet-http | grep -v grep | awk '{print $2}')
-				# if [[ "${HTTP_PID}" == "" ]]; then
-				# 	GROW_ON=${HOST} nohup docklet-http >/dev/null 2>&1 &
-				# fi
 			fi
 		fi
 		sleep 25

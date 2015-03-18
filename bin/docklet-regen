@@ -60,9 +60,9 @@ else
 
 		echo "${NATIVE_IP} ${HOST_NAME}" >> ${COMMON_HOST}
 
-		echo "[EXEC] HOST_NAME=nat-slave${OFFSET} WORK_ON=${WORK_ON} NATIVE_IP=${NATIVE_IP}  MOD=skip NAT_ID=${NAT_ID} cave" > /dev/stderr
+		echo "[EXEC] HOST_NAME=nat-slave${OFFSET} WORK_ON=${WORK_ON} NATIVE_IP=${NATIVE_IP} NAT_ID=${NAT_ID} cave" > /dev/stderr
 		CONTAINER_ID=$(uuidgen)
-		HOST_NAME=${HOST_NAME} WORK_ON=${WORK_ON} NATIVE_IP=${NATIVE_IP} MOD=skip NAME=${CONTAINER_ID} NAT_ID=${NAT_ID} cave
+		HOST_NAME=${HOST_NAME} WORK_ON=${WORK_ON} NATIVE_IP=${NATIVE_IP} NAME=${CONTAINER_ID} NAT_ID=${NAT_ID} cave
 		NEW_CLUSTER="${SLAVES}${WORK_ON}:${CONTAINER_ID}:${NATIVE_IP} ${MASTER}"
 		NEW_STATE=$(echo ${STATE} | awk -F\| '{$NF="";print}' | tr \  \|)${NEW_CLUSTER}
 		KEY=/docklet/instances/${NAT_ID} VALUE=${NEW_STATE} etcdemu set

@@ -22,7 +22,6 @@ HOME_PREF=${NFS_PREFIX}
 [[ "${IMAGE}" == "" ]] && echo "IMAGE not specified!" && exit 1
 [[ "${NATIVE_IP}" == "" ]] && echo "NATIVE_IP not specified!" && exit 1
 [[ "${WORK_ON}" == "" ]] && echo "WORK_ON not specified!" && exit 1
-[[ "${MOD}" == "" ]] && echo "MOD not specified!" && exit 1
 
 HOST_PROP=$(echo ${NATIVE_IP} | awk -F. '{print $4}')
 MASTER_IP=$(basename ${NATIVE_IP} ${HOST_PROP})"254"
@@ -46,7 +45,7 @@ NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null
 
 FOLK_FLAG="--lxc-conf=\"lxc.cgroup.memory.kmem.limit_in_bytes=${FOLK_BOMB_SPACE}\" --lxc-conf=\"lxc.cgroup.cpu.cfs_quota_us=${CPU_SHARE_QUOTA_US}\""
 
-echo "[CAVE] ${WORK_ON}: ham pull_3v ${MOD}_${IMAGE}; docklet-weave run ${NATIVE_IP}/24 \
+echo "[CAVE] ${WORK_ON}: USER_NAME=${USER_NAME} ham pull_2v ${IMAGE}; docklet-weave run ${NATIVE_IP}/24 \
 		--name=${NAME} \
 		-v ${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}:/etc/hosts:ro \
 		-v /usr/local/sbin/container-init:/sbin/initctl:ro \
@@ -58,7 +57,7 @@ echo "[CAVE] ${WORK_ON}: ham pull_3v ${MOD}_${IMAGE}; docklet-weave run ${NATIVE
 
 nohup ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} " \
   lockfile-create /tmp/docklet-images-load; \
-  ham pull_3v ${MOD}_${IMAGE}; \
+  USER_NAME=${USER_NAME} ham pull_2v ${IMAGE}; \
   lockfile-remove /tmp/docklet-images-load; \
   docklet-weave run ${NATIVE_IP}/24 \
     --name=${NAME} \
@@ -67,5 +66,5 @@ nohup ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} " \
     -v /usr/local/sbin/container-docklet:/usr/bin/docklet:ro \
     -v ${HOME_PREF}/${USER_NAME}/home:/root \
     -v ${HOME_PREF}/${USER_NAME}/ssh_keys:/root/.ssh:ro \
-    -m ${TOTAL_MEMORY_LIMIT} -it ${NET_CONF} -h ${HOST_NAME} ${FOLK_FLAG} ${OPTS} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP}" >/dev/null &
+    -m ${TOTAL_MEMORY_LIMIT} -it ${NET_CONF} -h ${HOST_NAME} ${FOLK_FLAG} ${OPTS} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP}" >/dev/null 2>&1 &
 
