@@ -10,17 +10,22 @@ if [[ "`whoami`" == "root" ]] && [[ "${HOST}" != "" ]]; then
 	
 	if [[ "${LEADER}" == "${HOST}" ]]; then
 		echo "* ${HOST}: I'm leader" > /dev/stderr
-		if ! ping -w 15 -c 1 ${PORTAL_CENTRE} >/dev/null 2>&1; then
+		if true; then # if ! ping -w 15 -c 1 ${PORTAL_CENTRE} >/dev/null 2>&1; then
 			if ! docker inspect weave 2>/dev/null | grep Running | grep true >/dev/null || [[ "$(docker inspect --format='{{ .HostConfig.LxcConf }}' weave 2>/dev/null)" == "<no value>" ]]; then
-				echo "* ${HOST}: Becomes the master" > /dev/stderr
+				echo "* ${HOST}: starting weave master .." > /dev/stderr
 				
 				echo "*" `docklet-weave stop` `CIDR=${PORTAL_CENTRE} CGW=${PORTAL_GATEWAY} CBR=${PORTAL_BRIDGE} docklet-weave launch centre` > /dev/stderr
+				
+			fi
+			if ! docker inspect core_service 2>/dev/null | grep Running | grep true >/dev/null ; then
+				echo "* ${HOST}: starting core_service .." > /dev/stderr
+				docker rm core_service >/dev/null 2>&1 || true
 				
 				NET_CONF="--net=none --lxc-conf=\"lxc.network.type=veth\" --lxc-conf=\"lxc.network.ipv4=${PORTAL_HTTP}/24\" --lxc-conf=\"lxc.network.ipv4.gateway=${PORTAL_GATEWAY}\" --lxc-conf=\"lxc.network.link=${PORTAL_BRIDGE}\" --lxc-conf=\"lxc.network.name=eth0\" --lxc-conf=\"lxc.network.flags=up\""
 				docker run ${NET_CONF} --name=core_service \
 					-v /root:/root:rw \
-					-v ${NFS_PREFIX}:/mnt:ro \
-					-v /usr/local/lib/docklet-http:/usr/local/lib/docklet-http:rw \
+					-v ${NFS_PREFIX}:/mnt:rw \
+					-v /usr/local/lib/docklet-http:/usr/local/lib/docklet-http:ro \
 					-d -h docklet-core root_base /usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}
 			fi
 		fi
