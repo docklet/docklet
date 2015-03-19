@@ -21,7 +21,7 @@ if [[ "`whoami`" == "root" ]] && [[ "${HOST}" != "" ]]; then
 					-v /root:/root:rw \
 					-v ${NFS_PREFIX}:/mnt:ro \
 					-v /usr/local/lib/docklet-http:/usr/local/lib/docklet-http:rw \
-					-d -h docklet-core root_base /usr/local/lib/docklet-http/dl-coreinit ${HOST} ${NIS_SERVER}
+					-d -h docklet-core root_base /usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}
 			fi
 		fi
 		sleep 20
