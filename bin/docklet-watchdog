@@ -17,17 +17,11 @@ if [[ "`whoami`" == "root" ]] && [[ "${HOST}" != "" ]]; then
 				echo "*" `docklet-weave stop` `CIDR=${PORTAL_CENTRE} CGW=${PORTAL_GATEWAY} CBR=${PORTAL_BRIDGE} docklet-weave launch centre` > /dev/stderr
 				
 				NET_CONF="--net=none --lxc-conf=\"lxc.network.type=veth\" --lxc-conf=\"lxc.network.ipv4=${PORTAL_HTTP}/24\" --lxc-conf=\"lxc.network.ipv4.gateway=${PORTAL_GATEWAY}\" --lxc-conf=\"lxc.network.link=${PORTAL_BRIDGE}\" --lxc-conf=\"lxc.network.name=eth0\" --lxc-conf=\"lxc.network.flags=up\""
-				
-				echo "docker run ${NET_CONF} --name=core_service \
-					-v /root:/root:rw \
-					-v ${NFS_PREFIX}:/mnt:ro \
-					-v /usr/local/lib/docklet-http:/usr/local/lib/docklet-http:ro \
-					-d -h docklet-http root_base /usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}" > /dev/stderr
 				docker run ${NET_CONF} --name=core_service \
 					-v /root:/root:rw \
 					-v ${NFS_PREFIX}:/mnt:ro \
-					-v /usr/local/lib/docklet-http:/usr/local/lib/docklet-http:ro \
-					-d -h docklet-http root_base /usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}
+					-v /usr/local/lib/docklet-http:/usr/local/lib/docklet-http:rw \
+					-d -h docklet-core root_base /usr/local/lib/docklet-http/dl-coreinit ${HOST} ${NIS_SERVER}
 			fi
 		fi
 		sleep 20
