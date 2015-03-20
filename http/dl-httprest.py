@@ -13,7 +13,7 @@ curl -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key "http://192.168.4.200
 curl -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key "http://192.168.4.200:8000/images"
 
 curl -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key "http://192.168.4.200:8000/clusters"
-curl -F image=root_base -F size=2 -F portal=192.168.4.41 -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key "http://192.168.4.200:8000/clusters/create"
+curl -F image=root_base -F portal=192.168.4.41 -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key "http://192.168.4.200:8000/clusters/create"
 
 curl -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key "http://192.168.4.200:8000/clusters/1"
 
@@ -79,9 +79,8 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			parts = context.split('/')
 			if parts[0]=="create":
 				image = form['image'].value
-				size = form['size'].value
 				portal = form['portal'].value
-				if self.execute('BRIDGE_IP=%s USER_NAME=%s IMAGE=%s NODE_NUM=%s pocket create' % (portal, user, image, size)) == None:
+				if self.execute('BRIDGE_IP=%s USER_NAME=%s IMAGE=%s pocket create' % (portal, user, image)) == None:
 					raise Exception("create operation failed")
 				return {}
 			

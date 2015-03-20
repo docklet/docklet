@@ -56,7 +56,7 @@ else
 	
 	if [[ "${CMD}" == "push" ]]; then
 
-		[[ "`echo ${SLAVES} | wc -w`" == "$((${CLUSTER_LIMIT}-1))" ]] && exit 1
+		[[ "`echo ${SLAVES} | wc -w`" == "${SLAVE_LIMIT}" ]] && exit 1
 
 		echo "${NATIVE_IP} ${HOST_NAME}" >> ${COMMON_HOST}
 
