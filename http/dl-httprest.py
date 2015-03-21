@@ -102,13 +102,17 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 					nodes.append({'work_on':work_on, 'uuid':uuid, 'nat_id':nat_id})
 				return {'id': clusterInt, 'owner': owner, 'image': image, 'portal': portal, 'nodes': nodes}
 			elif op == "scaleup":
-				if self.execute('USER_NAME=%s NAT_ID=%s CMD=push docklet-regen' % (user, clusterInt))==None:
+				result = self.execute('USER_NAME=%s NAT_ID=%s CMD=push docklet-regen' % (user, clusterInt))
+				if result==None:
 					raise Exception("nodes number exceed the upbound limit")
-				return {}
+				[ipaddr, workon, uuid] = result.split()
+				return {'ip':ipaddr, 'uuid':uuid}
 			elif op == "scaledown":
-				if self.execute('USER_NAME=%s NAT_ID=%s CMD=pop docklet-regen' % (user, clusterInt))==None:
+				result = self.execute('USER_NAME=%s NAT_ID=%s CMD=pop docklet-regen' % (user, clusterInt))
+				if result==None:
 					raise Exception("nodes number exceed the lowerbound limit")
-				return {}
+				[ipaddr, workon, uuid] = result.split()
+				return {'ip':ipaddr, 'uuid':uuid}
 			elif op == "repair":
 				if self.execute('USER_NAME=%s NAT_ID=%s CMD=repair docklet-regen' % (user, clusterInt))==None:
 					raise Exception("repair operation failed")

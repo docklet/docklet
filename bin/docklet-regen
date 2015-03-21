@@ -47,7 +47,6 @@ else
 	
 	let OFFSET=$(echo ${SLAVES} | wc -w)+1
 	NATIVE_IP=$(echo ${MASTER} | awk -F\: '{print $3}' | awk -F\. '{$NF='${OFFSET}'; print}' | tr \  .)
-	
 	export USER_NAME IMAGE
 	
 	HOST_NAME=nat-slave${OFFSET}
@@ -55,18 +54,17 @@ else
 	COMMON_HOST="${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}"
 	
 	if [[ "${CMD}" == "push" ]]; then
-
 		[[ "`echo ${SLAVES} | wc -w`" == "${SLAVE_LIMIT}" ]] && exit 1
 
 		echo "${NATIVE_IP} ${HOST_NAME}" >> ${COMMON_HOST}
 
-		echo "[EXEC] HOST_NAME=nat-slave${OFFSET} WORK_ON=${WORK_ON} NATIVE_IP=${NATIVE_IP} NAT_ID=${NAT_ID} cave" > /dev/stderr
+		#echo "[EXEC] HOST_NAME=nat-slave${OFFSET} WORK_ON=${WORK_ON} NATIVE_IP=${NATIVE_IP} NAT_ID=${NAT_ID} cave" > /dev/stderr
 		CONTAINER_ID=$(uuidgen)
-		HOST_NAME=${HOST_NAME} WORK_ON=${WORK_ON} NATIVE_IP=${NATIVE_IP} NAME=${CONTAINER_ID} NAT_ID=${NAT_ID} cave
+		HOST_NAME=${HOST_NAME} WORK_ON=${WORK_ON} NATIVE_IP=${NATIVE_IP} NAME=${CONTAINER_ID} NAT_ID=${NAT_ID} cave >/dev/null 2>&1
 		NEW_CLUSTER="${SLAVES}${WORK_ON}:${CONTAINER_ID}:${NATIVE_IP} ${MASTER}"
 		NEW_STATE=$(echo ${STATE} | awk -F\| '{$NF="";print}' | tr \  \|)${NEW_CLUSTER}
 		KEY=/docklet/instances/${NAT_ID} VALUE=${NEW_STATE} etcdemu set
-		true
+		echo "${NATIVE_IP} ${WORK_ON} ${CONTAINER_ID}"
 
 	elif [[ "${CMD}" == "pop" ]]; then
 
@@ -80,13 +78,14 @@ else
 		WIPE_CONTENT=`cat ${COMMON_HOST} | head -n -1`
 		echo "${WIPE_CONTENT}" > ${COMMON_HOST}
 
-		nohup ssh -o StrictHostKeyChecking=no ${SAT} "docker stop ${ID}; docker rm ${ID}" >/dev/null &
+		nohup ssh -o StrictHostKeyChecking=no ${SAT} "docker stop ${ID}; docker rm ${ID}" >/dev/null 2>&1 &
 		
 		NEW_STATE=$(echo ${STATE} | awk -F\| '{$NF="";print}' | tr \  \|)$(echo ${SLAVES} | awk '{$NF=""; print}')${MASTER}
-		KEY=/docklet/instances/${NAT_ID} VALUE=${NEW_STATE} etcdemu set
+		KEY=/docklet/instances/${NAT_ID} VALUE=${NEW_STATE} etcdemu set >/dev/null 2>&1
 		
-		NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null
-		true
+		NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null 2>&1
+		
+		echo "${IP} ${SAT} ${ID}"
 	fi
 fi
 
