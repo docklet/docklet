@@ -128,7 +128,7 @@ if [[ "$@" == "create" ]]; then
 		
 		RANDOM_HOST=$(echo "${LIVE_HOSTS}" | head -n $(((${RANDOM})%${TOTAL_MACHINE}+1)) | tail -n 1)
 		
-		CONTAINER_ID=$(uuidgen)
+		CONTAINER_ID=${USER_NAME}-${FREE_NAT}-$(uuidgen)
 		HOST_NAME=${HOST_NAME} WORK_ON=${RANDOM_HOST} NATIVE_IP=${MASTER_IP} NAT_ID=${FREE_NAT} NAME=${CONTAINER_ID} cave
 		
 		RESULT="${RANDOM_HOST}:${CONTAINER_ID}:${MASTER_IP}"
