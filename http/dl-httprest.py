@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, subprocess, pam, json, commands
+import os, subprocess, pam, json, commands, sys
 import posixpath, BaseHTTPServer, urllib, cgi, shutil, mimetypes
 from StringIO import StringIO
 
@@ -24,6 +24,7 @@ curl -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key -F saveas=aaa "http:/
 class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		
 	def execute(self, command):
+		sys.stderr.write("[RPC] %s\n" % ("%s %s 2>/dev/null" % (self.WORK_ON, command)))
 		(status, output) = commands.getstatusoutput("%s %s 2>/dev/null" % (self.WORK_ON, command))
 		return output if status==0 else None
 
@@ -65,7 +66,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 	def on_post_request(self, context, user, form):
 		if context.startswith('/clusters/'):
-			context = context[10:]
+			context = context[10:].strip()
 			if context == "":
 				detail = self.execute("USER_NAME=%s pocket list" % user)
 				clusters = []
@@ -185,6 +186,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		self.send_header("Content-type", "application/json")
 		self.end_headers()
 		self.wfile.write(json.dumps(obj))
+		self.wfile.write('\n')
 		self.wfile.close()
 		
 		""" for field in form.keys():

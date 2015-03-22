@@ -22,6 +22,12 @@ if [[ "`whoami`" == "root" ]] && [[ "${HOST}" != "" ]]; then
 				docker rm core_service >/dev/null 2>&1 || true
 				
 				NET_CONF="--net=none --lxc-conf=\"lxc.network.type=veth\" --lxc-conf=\"lxc.network.ipv4=${PORTAL_HTTP}/24\" --lxc-conf=\"lxc.network.ipv4.gateway=${PORTAL_GATEWAY}\" --lxc-conf=\"lxc.network.link=${PORTAL_BRIDGE}\" --lxc-conf=\"lxc.network.name=eth0\" --lxc-conf=\"lxc.network.flags=up\""
+				
+				echo "docker run ${NET_CONF} --name=core_service \
+                                        -v /root:/root:rw \
+                                        -v ${NFS_PREFIX}:/mnt:rw \
+                                        -v /usr/local/lib/docklet-http:/usr/local/lib/docklet-http:ro \
+                                        -d -h docklet-core root_base /usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}"
 				docker run ${NET_CONF} --name=core_service \
 					-v /root:/root:rw \
 					-v ${NFS_PREFIX}:/mnt:rw \

@@ -32,7 +32,7 @@ def main(command):
 			sys_call('KEY="/docklet/portal/%s/%s" VALUE="active" etcdemu set' % (USER_NAME, BRIDGE_IP))
 			
 			NAT_ID = 1
-			while sys_call('KEY=/docklet/instances/%d etcdemu get' % NAT_ID) != None:
+			while sys_call('KEY=/docklet/instances/%d etcdemu get 2>/dev/null' % NAT_ID) != None:
 				NAT_ID += 1
 			sys_call('KEY="/docklet/instances/%d" VALUE="active" etcdemu set' % NAT_ID)
 			
@@ -73,12 +73,14 @@ def main(command):
 	elif command == 'list':
 		[USER_NAME] = get_environ(["USER_NAME"])
 		
-		for ITEM in sys_call('KEY="/docklet/instances" etcdemu ls').split():
-			NAT_ID = ITEM.split('/')[-1]
-			DATAS = sys_call('KEY="/docklet/instances/%s" etcdemu get' % NAT_ID)
-			OWNER = DATAS.split('|')[0]
-			if USER_NAME == OWNER or USER_NAME == 'root':
-				print('%s|%s' % (NAT_ID, DATAS))
+		INST = sys_call('KEY="/docklet/instances" etcdemu ls')
+		if INST != None:
+			for ITEM in INST.split():
+				NAT_ID = ITEM.split('/')[-1]
+				DATAS = sys_call('KEY="/docklet/instances/%s" etcdemu get' % NAT_ID)
+				OWNER = DATAS.split('|')[0]
+				if USER_NAME == OWNER or USER_NAME == 'root':
+					print('%s|%s' % (NAT_ID, DATAS))
 		
 	elif command == 'images':
 		[USER_NAME] = get_environ(["USER_NAME"])
@@ -88,29 +90,31 @@ def main(command):
 	elif command == 'save':
 		[USER_NAME, NAT_ID, IMAGE_NAME] = get_environ(["USER_NAME", "NAT_ID", "IMAGE_NAME"])
 		
-		if re.match('^[0-9,a-z,\-]{1,20}$', IMAGE_NAME):
-			GENERATE='%s_%s' % (USER_NAME, IMAGE_NAME)
-			if sys_call('USER_NAME=%s ham list_3v | grep %s' % (USER_NAME, GENERATE)) != None:
-				raise Exception("image already exists")
-			[OWNER, USE_IMAGE, BRIDGE_IP, DOCKER_LIST] = sys_call('KEY="/docklet/instances/%s" etcdemu get' % NAT_ID).split('|')
-			if OWNER != USER_NAME:
-				raise Exception("wrong container owners")
-			for NODE in DOCKER_LIST.strip().split():
-				[ON, ID, NAT_IP] = NODE.split(':') #### to add hostname
-				if NAT_IP.split('.')[-1] == '254': #### to add hostname
-					sys_call('nohup ssh -o StrictHostKeyChecking=no %s "docker commit %s %s && ( lockfile-create /tmp/docklet-images-save; ham push_2v %s; lockfile-remove /tmp/docklet-images-save; )" >/dev/null 2>&1 &' % (ON, ID, GENERATE, GENERATE))
-					break
+		if not re.match('^[0-9,a-z,\-]{1,20}$', IMAGE_NAME):
+			raise Exception("image name not allowed")
+		GENERATE='%s_%s' % (USER_NAME, IMAGE_NAME)
+		if sys_call('USER_NAME=%s ham list_3v | grep %s' % (USER_NAME, GENERATE)) != None:
+			raise Exception("image already exists")
+		[OWNER, USE_IMAGE, BRIDGE_IP, DOCKER_LIST] = sys_call('KEY="/docklet/instances/%s" etcdemu get' % NAT_ID).split('|')
+		if OWNER != USER_NAME:
+			raise Exception("wrong container owners")
+		for NODE in DOCKER_LIST.strip().split():
+			[ON, ID, NAT_IP] = NODE.split(':') #### to add hostname
+			if NAT_IP.split('.')[-1] == '254': #### to add hostname
+				sys_call('nohup ssh -o StrictHostKeyChecking=no %s "docker commit %s %s && ( lockfile-create /tmp/docklet-images-save; ham push_2v %s; lockfile-remove /tmp/docklet-images-save; )" >/dev/null 2>&1 &' % (ON, ID, GENERATE, GENERATE))
+				break
 		
 	elif command == 'portal':
 		[USER_NAME] = get_environ(["USER_NAME"])
 		
 		LIST = sys_call('KEY="/docklet/portal/%s" etcdemu ls' % USER_NAME)
 		if LIST == None:
+			sys_call('etcdctl mkdir /docklet/portal')
 			[AVAIL, MASK] = get_environ(["PORTAL_CIDR"])[0].split('/')
-			while sys_call('etcdctl ls /docklet/portal --recursive | grep %s$' % AVAIL) != None:
+			while sys_call('etcdctl ls /docklet/portal --recursive 2>/dev/null | grep %s$' % AVAIL) != None:
 				[a, b, c, d] = AVAIL.split('.')
-				next = (int(a)<<24)+(int(b)<<16)+(int(c)<<8)+(int(d))+1
-				AVAIL = "%d.%d.%d.%d" % (next>>24, (next>>16)&255, (next>>8)&255, next&255)
+				next = (long(a)<<24)+(long(b)<<16)+(long(c)<<8)+(long(d))+1
+				AVAIL = "%ld.%ld.%ld.%ld" % (next>>24, (next>>16)&255, (next>>8)&255, next&255)
 			sys_call('KEY="/docklet/portal/%s/%s" VALUE="inactive" etcdemu set' % (USER_NAME, AVAIL))
 			print("%s:inactive" % AVAIL)
 			
@@ -129,9 +133,10 @@ if __name__ == '__main__' and subprocess.getoutput("whoami") == 'root':
 	try:
 		etcd_lock()
 		main(sys.argv[1])
+		exit(0)
 	except Exception as ex:
 		print(str(ex))
-		pass
+		exit(1)
 	finally:
 		etcd_unlock()
 
