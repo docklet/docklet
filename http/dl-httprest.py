@@ -130,6 +130,20 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				if self.execute('USER_NAME=%s NAT_ID=%s IMAGE_NAME=%s pocket save' % (user, clusterInt, form['saveas'].value))==None:
 					raise Exception("commit operation failed")
 				return {}
+			else:
+				nodeRank = op
+				nodes = self.execute('KEY=/docklet/instances/%s etcdemu get' % clusterInt)
+				if nodes == None or nodes == '':
+					raise Exception("no cluster information found")
+				for node in nodes.strip().split('|')[3].strip().split():
+					[workon, uuid, natip] = node.split(':')
+					if uuid.split('-')[-1] == nodeRank:
+						output = commands.getoutput('ssh %s dl-meter %s 2>/dev/null' % (workon, uuid)).strip()
+						if output == '':
+							raise Exception("load node resource failed")
+						[cpuacct, memory] = output.split()
+						return {'cpuacct': long(cpuacct), 'memory': long(memory) }
+				raise Exception("no node information found")
 		elif context.startswith("/images/"):
 			context = context[8:]
 			if context == "":
