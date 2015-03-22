@@ -3,7 +3,7 @@
 set -e
 
 if [[ "$@" == "" ]]; then
-	echo -e "\033[34mUsage for lookup info:\033[0m docklet [clusterid|owner|hosts|portal|status|..]" > /dev/stderr
+	echo -e "\033[34mUsage for lookup info:\033[0m docklet [clusterid|owner|hosts|portal|status]" > /dev/stderr
 	echo -e "\033[34mUsage for control cluster:\033[0m docklet [scaleup|scaledown|repair|restart]" > /dev/stderr
 	true
 elif [[ "$@" == "clusterid" ]]; then
@@ -19,7 +19,7 @@ elif [[ "$@" == "status" ]]; then
 	for HOST in `cat /etc/hosts | grep \ nat- | awk '{print $2}'`; do
 		echo -n "* docklet ${HOST} : "
 		if ping -c 1 -w 5 ${HOST} >/dev/null 2>&1; then
-			echo "ready."
+			echo "okay."
 		else
 			echo "no response."
 		fi
@@ -33,5 +33,6 @@ elif [[ "$@" == "restart" ]]; then
 elif [[ "$@" == "repair" ]]; then
 	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/repair 2>/dev/null | python -m json.tool
 else
-	false
+	echo "Error parsing commands: '$@'" > /dev/stderr
+	exit 1
 fi 

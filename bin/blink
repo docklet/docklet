@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 [[ "$@" == "" ]] && exit 1
 
 nmap -sP "$@" | grep report | awk '{print $NF}' | awk -F\( '{print $NF}' | awk -F\) '{print $1}'

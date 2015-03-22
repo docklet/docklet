@@ -11,7 +11,7 @@ function init {
 	service ssh start
 
 	while true; do
-		ping ${MASTER_IP} -c 4 -w 20 && break
+		ping ${MASTER_IP} -c 1 -w 2 && break
 	done
 
 	if [[ "`hostname`" == "nat-master" ]]; then

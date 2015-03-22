@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# BRIDGE_IP=192.168.4.200 USER_NAME=root pocket create
-# NAT_ID=1 pocket remove
+set -e
 
 . /etc/docklet/docklet.conf
 
