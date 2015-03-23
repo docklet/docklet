@@ -26,8 +26,10 @@ elif [[ "$@" == "status" ]]; then
 	done
 elif [[ "$@" == "scaleup" ]]; then
 	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/scaleup 2>/dev/null | python -m json.tool
+	sleep 2
 elif [[ "$@" == "scaledown" ]]; then
 	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/scaledown 2>/dev/null | python -m json.tool
+	sleep 2
 elif [[ "$@" == "restart" ]]; then
 	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/restart 2>/dev/null | python -m json.tool
 elif [[ "$@" == "repair" ]]; then

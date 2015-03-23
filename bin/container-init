@@ -19,6 +19,8 @@ function init {
 	else
 		true
 	fi
+
+	[[ -e "/init" ]] && /init >/dev/null 2>&1 || true
 	
 	LOGS="/root/.docklet/logs"
 	mkdir -p ${LOGS}

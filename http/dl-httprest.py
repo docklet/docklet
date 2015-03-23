@@ -99,21 +99,21 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				for node in clusters.split(' '):
 					if len(node)==0:
 						continue
-					[work_on, uuid, nat_id] = node.split(':')
-					nodes.append({'work_on':work_on, 'uuid':uuid, 'nat_id':nat_id})
+					[work_on, uuid, nat_id, host_name] = node.split(':')
+					nodes.append({'work_on':work_on, 'uuid':uuid, 'nat_id':nat_id, 'host_name':host_name})
 				return {'id': clusterInt, 'owner': owner, 'image': image, 'portal': portal, 'nodes': nodes}
 			elif op == "scaleup":
 				result = self.execute('USER_NAME=%s NAT_ID=%s CMD=push docklet-regen' % (user, clusterInt))
 				if result==None:
 					raise Exception("nodes number exceed the upbound limit")
-				[ipaddr, workon, uuid] = result.split()
-				return {'ip':ipaddr, 'uuid':uuid}
+				[ipaddr, workon, uuid, host] = result.split()
+				return {'ip':ipaddr, 'uuid':uuid, 'host_name':host}
 			elif op == "scaledown":
 				result = self.execute('USER_NAME=%s NAT_ID=%s CMD=pop docklet-regen' % (user, clusterInt))
 				if result==None:
 					raise Exception("nodes number exceed the lowerbound limit")
-				[ipaddr, workon, uuid] = result.split()
-				return {'ip':ipaddr, 'uuid':uuid}
+				[ipaddr, workon, uuid, host] = result.split()
+				return {'ip':ipaddr, 'uuid':uuid, 'host_name':host}
 			elif op == "repair":
 				if self.execute('USER_NAME=%s NAT_ID=%s CMD=repair docklet-regen' % (user, clusterInt))==None:
 					raise Exception("repair operation failed")

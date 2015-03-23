@@ -63,7 +63,7 @@ else
 		NEW_CLUSTER="${SLAVES}${WORK_ON}:${CONTAINER_ID}:${NATIVE_IP}:${HOST_NAME} ${MASTER}"
 		NEW_STATE=$(echo ${STATE} | awk -F\| '{$NF="";print}' | tr \  \|)${NEW_CLUSTER}
 		KEY=/docklet/instances/${NAT_ID} VALUE=${NEW_STATE} etcdemu set
-		echo "${NATIVE_IP} ${WORK_ON} ${CONTAINER_ID}"
+		echo "${NATIVE_IP} ${WORK_ON} ${CONTAINER_ID} ${HOST_NAME}"
 
 	elif [[ "${CMD}" == "pop" ]]; then
 
@@ -73,6 +73,7 @@ else
 		SAT=$(echo ${DETAIL} | awk -F\: '{print $1}')
 		ID=$(echo ${DETAIL} | awk -F\: '{print $2}')
 		IP=$(echo ${DETAIL} | awk -F\: '{print $3}')
+		HOST=$(echo ${DETAIL} | awk -F\: '{print $4}')
 
 		WIPE_CONTENT=`cat ${COMMON_HOST} | head -n -1`
 		echo "${WIPE_CONTENT}" > ${COMMON_HOST}
@@ -84,7 +85,7 @@ else
 		
 		NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null 2>&1
 		
-		echo "${IP} ${SAT} ${ID}"
+		echo "${IP} ${SAT} ${ID} ${HOST}"
 	fi
 fi
 
