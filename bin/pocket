@@ -53,7 +53,7 @@ def main(command):
 			CONTAINER_ID = '%s-%d-0' % (USER_NAME, NAT_ID)
 			
 			sys_call('BRIDGE_DEV=%s BRIDGE_GW=%s BRIDGE_IP=%s USER_NAME=%s IMAGE=%s HOST_NAME=%s WORK_ON=%s NATIVE_IP=%s NAT_ID=%d NAME=%s cave' % (BRIDGE_DEV, BRIDGE_GW, BRIDGE_IP, USER_NAME, IMAGE, HOST_NAME, WORK_ON, MASTER_IP, NAT_ID, CONTAINER_ID))
-			sys_call('KEY="/docklet/instances/%d" VALUE="%s|%s|%s|%s:%s:%s" etcdemu set' % (NAT_ID, USER_NAME, IMAGE, BRIDGE_IP, WORK_ON, CONTAINER_ID, MASTER_IP)) #### to add hostname
+			sys_call('KEY="/docklet/instances/%d" VALUE="%s|%s|%s|%s:%s:%s:%s" etcdemu set' % (NAT_ID, USER_NAME, IMAGE, BRIDGE_IP, WORK_ON, CONTAINER_ID, MASTER_IP, HOST_NAME))
 			print(NAT_ID)
 		
 	elif command == 'remove':
@@ -63,7 +63,7 @@ def main(command):
 		if USER_NAME == OWNER:
 			DOCKER_NODES = DOCKER_LIST.strip().split()
 			for DOCKER_NODE in DOCKER_NODES:
-				[DOCKER_IP, DOCKER_ID, NATIVE_IP] = DOCKER_NODE.split(':') #### to add hostname
+				[DOCKER_IP, DOCKER_ID, NATIVE_IP, HOST_NAME] = DOCKER_NODE.split(':')
 				sys_call('nohup ssh -o StrictHostKeyChecking=no %s "docker stop %s; docker rm %s" >/dev/null 2>&1 &' % (DOCKER_IP, DOCKER_ID, DOCKER_ID))
 				
 			sys_call('KEY="/docklet/portal/%s/%s" VALUE="inactive" etcdemu set' % (USER_NAME, BRIDGE_IP))
@@ -99,8 +99,8 @@ def main(command):
 		if OWNER != USER_NAME:
 			raise Exception("wrong container owners")
 		for NODE in DOCKER_LIST.strip().split():
-			[ON, ID, NAT_IP] = NODE.split(':') #### to add hostname
-			if NAT_IP.split('.')[-1] == '254': #### to add hostname
+			[ON, ID, NAT_IP, HOST_NAME] = NODE.split(':')
+			if HOST_NAME == 'nat-master':
 				sys_call('nohup ssh -o StrictHostKeyChecking=no %s "docker commit %s %s && ( lockfile-create /tmp/docklet-images-save; ham push_2v %s; lockfile-remove /tmp/docklet-images-save; )" >/dev/null 2>&1 &' % (ON, ID, GENERATE, GENERATE))
 				break
 		
@@ -127,7 +127,7 @@ def main(command):
 		# allow CMD: <app|list|rm>
 		# portal-remove: KEY="/docklet/portal/${USER_NAME}/${BRIDGE_IP}" etcdemu get 2>/dev/null | grep "inactive" >/dev/null && KEY="/docklet/portal/${USER_NAME}/${BRIDGE_IP}" etcdemu rm
 	else:
-		print("Usage:\n\tBRIDGE_IP=.. USER_NAME=.. pocket create")
+		print("Wrong Usage.")
 
 if __name__ == '__main__' and subprocess.getoutput("whoami") == 'root':
 	try:
