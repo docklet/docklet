@@ -26,45 +26,27 @@ HOME_PREF=${NFS_PREFIX}
 HOST_PROP=$(echo ${NATIVE_IP} | awk -F. '{print $4}')
 MASTER_IP=$(basename ${NATIVE_IP} ${HOST_PROP})"254"
 
-if [[ "$HOST_PROP" == "254" ]]; then
+if [[ "${HOST_NAME}" == "nat-master" ]]; then
 	[[ "${BRIDGE_IP}" == "" ]] && echo "BRIDGE_IP not specified!" && exit 1
 	[[ "${BRIDGE_GW}" == "" ]] && echo "BRIDGE_GW not specified!" && exit 1
 	[[ "${BRIDGE_DEV}" == "" ]] && echo "BRIDGE_DEV not specified!" && exit 1
-fi
-
-[[ "${USER_NAME}" != "root" ]] && [[ "${OPTS}" != "" ]] && echo "extra opts now allowed for ${USER_NAME}!"
-
-
-if [[ "$HOST_PROP" == "254" ]]; then
-	NET_CONF="--net=none --lxc-conf=\"lxc.network.type=veth\" --lxc-conf=\"lxc.network.ipv4=${BRIDGE_IP}/24\" --lxc-conf=\"lxc.network.ipv4.gateway=${BRIDGE_GW}\" --lxc-conf=\"lxc.network.link=${BRIDGE_DEV}\" --lxc-conf=\"lxc.network.name=eth0\" --lxc-conf=\"lxc.network.flags=up\""
-else
-	NET_CONF='--net=bridge'
+	
+	NET_CONF="--lxc-conf=\"lxc.network.type=veth\" --lxc-conf=\"lxc.network.ipv4=${BRIDGE_IP}/24\" --lxc-conf=\"lxc.network.ipv4.gateway=${BRIDGE_GW}\" --lxc-conf=\"lxc.network.link=${BRIDGE_DEV}\" --lxc-conf=\"lxc.network.name=ethex\" --lxc-conf=\"lxc.network.flags=up\""
 fi
 
 NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null
 
 FOLK_FLAG="--lxc-conf=\"lxc.cgroup.memory.kmem.limit_in_bytes=${FOLK_BOMB_SPACE}\" --lxc-conf=\"lxc.cgroup.cpu.cfs_quota_us=${CPU_SHARE_QUOTA_US}\""
 
-echo "[CAVE] ${WORK_ON}: USER_NAME=${USER_NAME} ham pull_2v ${IMAGE}; docklet-weave run ${NATIVE_IP}/24 \
-		--name=${NAME} \
-		-v ${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}:/etc/hosts:ro \
-		-v /usr/local/sbin/container-init:/sbin/initctl:ro \
-		-v /usr/local/sbin/container-docklet:/usr/bin/docklet:ro \
-		-v ${HOME_PREF}/${USER_NAME}/home:/root \
-		-v ${HOME_PREF}/${USER_NAME}/ssh_keys:/root/.ssh:ro \
-		-m ${TOTAL_MEMORY_LIMIT} -it ${NET_CONF} -h ${HOST_NAME} ${FOLK_FLAG} ${OPTS} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP}" >/dev/stderr
-
-
 nohup ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} " \
   lockfile-create /tmp/docklet-images-load; \
   USER_NAME=${USER_NAME} ham pull_2v ${IMAGE}; \
   lockfile-remove /tmp/docklet-images-load; \
-  docklet-weave run ${NATIVE_IP}/24 \
-    --name=${NAME} \
+  docklet-weave run ${NATIVE_IP} ${NAME} \
     -v ${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}:/etc/hosts:ro \
     -v /usr/local/sbin/container-init:/sbin/initctl:ro \
     -v /usr/local/sbin/container-docklet:/usr/bin/docklet:ro \
     -v ${HOME_PREF}/${USER_NAME}/home:/root \
     -v ${HOME_PREF}/${USER_NAME}/ssh_keys:/root/.ssh:ro \
-    -m ${TOTAL_MEMORY_LIMIT} -it ${NET_CONF} -h ${HOST_NAME} ${FOLK_FLAG} ${OPTS} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP}" >/dev/null 2>&1 &
+    -m ${TOTAL_MEMORY_LIMIT} -it --net=none ${NET_CONF} -h ${HOST_NAME} ${FOLK_FLAG} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP} " >/dev/null 2>&1 &
 

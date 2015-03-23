@@ -27,7 +27,7 @@ if [[ "${CMD}" == "repair" ]]; then
 		SAT=$(echo ${INSTANCE} | awk -F\: '{print $1}')
 		ID=$(echo ${INSTANCE} | awk -F\: '{print $2}')
 		CIDR=$(echo ${INSTANCE} | awk -F\: '{print $3}')
-		nohup ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${SAT} "docker inspect ${ID} | grep Running | grep false && docklet-weave start ${CIDR}/24 ${ID}" >/dev/null &
+		nohup ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${SAT} "docker inspect ${ID} | grep Running | grep false && docklet-weave start ${CIDR} ${ID}" >/dev/null &
 	done
 elif [[ "${CMD}" == "restart" ]]; then
 	NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null
@@ -36,7 +36,7 @@ elif [[ "${CMD}" == "restart" ]]; then
 		SAT=$(echo ${INSTANCE} | awk -F\: '{print $1}')
 		ID=$(echo ${INSTANCE} | awk -F\: '{print $2}')
 		CIDR=$(echo ${INSTANCE} | awk -F\: '{print $3}')
-		nohup ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${SAT} "docker stop ${ID}; docklet-weave start ${CIDR}/24 ${ID}" >/dev/null &
+		nohup ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${SAT} "docker stop ${ID}; docklet-weave start ${CIDR} ${ID}" >/dev/null &
 	done
 else
 	SLAVES=$(echo ${CLUSTERS} | awk '{$NF="";print}')

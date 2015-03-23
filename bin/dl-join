@@ -23,7 +23,7 @@ log_msg "INFO" "Docklet Cluster for Ubuntu distribution x86_64."
 . /etc/docklet/docklet.conf
 
 if [[ "`which etcd 2>/dev/null`" == "" ]]; then
-	apt-get install -y cgroup-lite lxc ethtool bridge-utils libapparmor1 nmap curl sshfs netcat-openbsd net-tools openssh-server
+	apt-get install -y cgroup-lite lxc ethtool bridge-utils libapparmor1 nmap curl sshfs netcat-openbsd net-tools openssh-server openvswitch-switch
 	curl -L "${RES_URL}/docklet-bin-latest.tar.gz" > /tmp/docklet-bin.tgz
 	
 	cd /usr/local/bin
@@ -77,7 +77,6 @@ done
 
 log_msg "INFO" "IP of this host is ${MY_IP}."
 
-docklet-weave stop >/dev/null 2>&1 || true
 killall docker >/dev/null 2>&1 || true
 killall etcd >/dev/null 2>&1 || true
 killall killall lxc-start >/dev/null 2>&1 || true
@@ -133,7 +132,33 @@ etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name 
 
 log_msg "INFO" "Waiting docker to get ready .." && sleep 2
 
-domainname $(echo ${NIS_SERVER} | awk '{print $2}')
+domainname $(echo ${NIS_SERVER} | awk '{print $2}') >/dev/null 2>&1
+
+
+iptables -F
+iptables -t nat -F
+iptables -t nat -A POSTROUTING -s 10.0.0.0/8 -j MASQUERADE
+
+ip link set ovs-link down 2>/dev/null || true
+ip link set ovs-bridge down 2>/dev/null || true
+
+ovs-vsctl del-br ovs-link 2>/dev/null || true
+ovs-vsctl add-br ovs-link
+brctl delbr ovs-bridge 2>/dev/null || true
+brctl addbr ovs-bridge
+ip addr add 10.0.0.1/8 dev ovs-bridge
+ip link set dev ovs-bridge up
+brctl addif ovs-bridge ovs-link
+
+LIVE_HOSTS="$(KEY='/_etcd/machines' etcdemu ls | awk -F\/ '{print $NF}')" >/dev/null 2>&1
+
+for HOST in ${LIVE_HOSTS}; do
+        [[ "${HOST}" == "${MY_IP}" ]] && continue
+
+        ovs-vsctl add-port ovs-link gre-${HOST} -- set interface gre-${HOST} type=gre options:remote_ip=${HOST}
+        ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${HOST} ovs-vsctl add-port ovs-link gre-${MY_IP} -- set interface gre-${MY_IP} type=gre options:remote_ip=${MY_IP} || true
+done
+
 
 while true; do
 	HOST=${MY_IP} docklet-watchdog
