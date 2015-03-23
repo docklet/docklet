@@ -34,6 +34,10 @@ elif [[ "$@" == "restart" ]]; then
 	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/restart 2>/dev/null | python -m json.tool
 elif [[ "$@" == "repair" ]]; then
 	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/repair 2>/dev/null | python -m json.tool
+elif [[ "$@" == "meter" ]]; then
+	LABEL="`hostname | cut -b 10-`"
+	[[ "${LABEL}" == "r" ]] && LABEL="0"
+	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/${LABEL} 2>/dev/null | python -m json.tool
 else
 	echo "Error parsing commands: '$@'" > /dev/stderr
 	exit 1

@@ -136,7 +136,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				if nodes == None or nodes == '':
 					raise Exception("no cluster information found")
 				for node in nodes.strip().split('|')[3].strip().split():
-					[workon, uuid, natip] = node.split(':')
+					[workon, uuid, natip, host_name] = node.split(':')
 					if uuid.split('-')[-1] == nodeRank:
 						output = commands.getoutput('ssh %s dl-meter %s 2>/dev/null' % (workon, uuid)).strip()
 						if output == '':

@@ -113,8 +113,8 @@ def main(command):
 			[AVAIL, MASK] = get_environ(["PORTAL_CIDR"])[0].split('/')
 			while sys_call('etcdctl ls /docklet/portal --recursive 2>/dev/null | grep %s$' % AVAIL) != None:
 				[a, b, c, d] = AVAIL.split('.')
-				next = (long(a)<<24)+(long(b)<<16)+(long(c)<<8)+(long(d))+1
-				AVAIL = "%ld.%ld.%ld.%ld" % (next>>24, (next>>16)&255, (next>>8)&255, next&255)
+				next = (int(a)<<24)+(int(b)<<16)+(int(c)<<8)+(int(d))+1
+				AVAIL = "%u.%u.%u.%u" % (next>>24, (next>>16)&255, (next>>8)&255, next&255)
 			sys_call('KEY="/docklet/portal/%s/%s" VALUE="inactive" etcdemu set' % (USER_NAME, AVAIL))
 			print("%s:inactive" % AVAIL)
 			
