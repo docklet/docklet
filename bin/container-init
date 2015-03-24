@@ -1,18 +1,19 @@
 #!/bin/bash
 
-[[ "$#" != "2" ]] && exit
+#[[ "$#" != "2" ]] && exit
 
-export NODE_IP=$1
-export MASTER_IP=$2
-export HOME=/root
+#export NODE_IP=$1
+#export MASTER_IP=$2
+#export HOME=/root
 
 function init {
 
 	service ssh start
+	ssh 0.0.0.0 true >/dev/null 2>&1
 
-	while true; do
-		ping ${MASTER_IP} -c 1 -w 2 && break
-	done
+	#while true; do
+	#	sleep 10 #ping ${MASTER_IP} -c 1 -w 2 && break
+	#done
 
 	if [[ "`hostname`" == "nat-master" ]]; then
 		true
@@ -20,7 +21,7 @@ function init {
 		true
 	fi
 
-	[[ -e "/init" ]] && /init >/dev/null 2>&1 || true
+	#[[ -e "/init" ]] && /init >/dev/null 2>&1 || true
 	
 	LOGS="/root/.docklet/logs"
 	mkdir -p ${LOGS}

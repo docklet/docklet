@@ -33,26 +33,28 @@ elif [[ "$1" == "pull_2v" ]]; then
 	docker load < ${HOME_PREF}/images/${MOD}_$2.tgz
 	
 elif [[ "$1" == "drop_2v" ]]; then
-	if [[ -e ${HOME_PREF}/images/pub_$2.tgz ]] || [[ -e ${HOME_PREF}/images/self_$2.tgz ]]; then
-		rm -rf ${HOME_PREF}/images/pub_$2.tgz ${HOME_PREF}/images/self_$2.tgz
+	if [[ -e ${HOME_PREF}/images/pub_$2 ]] || [[ -e ${HOME_PREF}/images/self_$2 ]]; then
+		rm -rf ${HOME_PREF}/images/pub_$2 ${HOME_PREF}/images/self_$2
 	else
 		false
 	fi
 elif [[ "$1" == "switch_2v" ]]; then
 	[[ "$2" == "" ]] && exit 1
-	[[ -e ${HOME_PREF}/images/pub_$2.tgz ]] && MOD=pub && NEW_MOD=self
-	[[ -e ${HOME_PREF}/images/self_$2.tgz ]] && MOD=self && NEW_MOD=pub
+	[[ -e ${HOME_PREF}/images/pub_$2 ]] && MOD=pub && NEW_MOD=self
+	[[ -e ${HOME_PREF}/images/self_$2 ]] && MOD=self && NEW_MOD=pub
 	[[ "${MOD}" == "" ]] && exit 1
 	OWN="`echo $2 | awk -F\_ '{ print $1 }'`"
 	IMG="`echo $2 | awk -F\_ '{ print $2 }'`"
-	mv ${HOME_PREF}/images/${MOD}_${OWN}_${IMG}.tgz ${HOME_PREF}/images/${NEW_MOD}_${OWN}_${IMG}.tgz
+	mv ${HOME_PREF}/images/${MOD}_${OWN}_${IMG} ${HOME_PREF}/images/${NEW_MOD}_${OWN}_${IMG}
 elif [[ "$1" == "list_3v" ]]; then
 	[[ "${USER_NAME}" == "" ]] && echo "USER_NAME (like, root) not specified!" && exit 1
 	
-	! ls ${HOME_PREF}/images/*_*.tgz >/dev/null 2>&1 && exit 0
+	IMAGES=$(ls -F ${HOME_PREF}/images 2>/dev/null | grep /$)
 	
-	for ITEM in `ls ${HOME_PREF}/images/*_*_*.tgz`; do
-		IMAGE=`basename ${ITEM} .tgz`
+	[[ "${IMAGES}" == "" ]] && exit 0
+	
+	for ITEM in ${IMAGES}; do
+		IMAGE=$(basename ${ITEM})
 		MOD="`echo ${IMAGE} | awk -F\_ '{ print $1 }'`"
 		OWN="`echo ${IMAGE} | awk -F\_ '{ print $2 }'`"
 		if [[ "${MOD}" == "pub" ]] || [[ "${OWN}" == "${USER_NAME}" ]] || [[ "root" == "${USER_NAME}" ]]; then

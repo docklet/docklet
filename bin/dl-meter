@@ -6,15 +6,13 @@ set -e
 
 . /etc/docklet/docklet.conf
 
-CONT_ID=`docker inspect "$@" 2>/dev/null | grep Id.: | awk -F\" '{print $4}'`
+[[ "$@" == "" ]] && exit 1
 
-[[ "${CONT_ID}" == "" ]] && exit 1
+CPU_ACCT="`cat /sys/fs/cgroup/cpuacct/lxc/$@/cpuacct.usage 2>/dev/null`"
+[[ "${CPU_ACCT}" == "" ]] && exit 1
 
-[[ ! -e "/sys/fs/cgroup/cpuacct/lxc/${CONT_ID}/cpuacct.usage" ]] && exit 1
-CPU_ACCT=`cat /sys/fs/cgroup/cpuacct/lxc/${CONT_ID}/cpuacct.usage`
-
-[[ ! -e "/sys/fs/cgroup/memory/lxc/${CONT_ID}/memory.usage_in_bytes" ]] && exit 1
-MEM_USAGE=`cat /sys/fs/cgroup/memory/lxc/${CONT_ID}/memory.usage_in_bytes`
+MEM_USAGE="`cat /sys/fs/cgroup/memory/lxc/$@/memory.usage_in_bytes 2>/dev/null`"
+[[ "${MEM_USAGE}" == "" ]] && exit 1
 
 echo -e "${CPU_ACCT}\n${MEM_USAGE}"
 

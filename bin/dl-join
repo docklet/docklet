@@ -66,8 +66,6 @@ fi
 
 log_msg "INFO" "Finish setting up."
 
-# nc -q 0 0.0.0.0 7001 </dev/null >/dev/null 2>&1 && echo "running." > /dev/stderr && exit 1
-
 UNIONS=$(echo -e "`blink ${MACHINE_CIDR}`\n`ip addr | grep inet\  | awk '{print $2}' | awk -F\/ '{print $1}'`" | sort)
 
 for MY_IP in ${UNIONS}; do
@@ -77,14 +75,13 @@ done
 
 log_msg "INFO" "IP of this host is ${MY_IP}."
 
-killall docker >/dev/null 2>&1 || true
+lxc-stop -n core-service -k 2>/dev/null || true
+
+killall lxc-start >/dev/null 2>&1 || true
 killall etcd >/dev/null 2>&1 || true
-killall killall lxc-start >/dev/null 2>&1 || true
 
-log_msg "INFO" "Make sure all docker resources are released .."
-sleep 5
+log_msg "INFO" "Make sure all resources are released .."
 
-umount -l /var/lib/docker/devicemapper >/dev/null 2>&1 || true
 rm -rf /var/lib/docker
 
 mkdir -p ${NFS_PREFIX}
@@ -95,17 +92,7 @@ if [[ "${NFS_MOUNT_CMD}" != "" ]]; then
 	`${NFS_MOUNT_CMD}`
 fi
 
-mkdir -p ${NFS_PREFIX}/global/volumes/${MY_IP} /var/lib/docker/devicemapper
-ln -s ${NFS_PREFIX}/global/volumes/${MY_IP} /var/lib/docker/devicemapper/devicemapper
-dd if=/dev/zero of=/var/lib/docker/devicemapper/devicemapper/data bs=1G count=0 seek=1000 >/dev/null 2>&1
-
-DOCKER_DNS=""
-for DNS in ${DNS_SERVERS}; do
-	DOCKER_DNS="${DOCKER_DNS} --dns ${DNS}"
-done
-
-log_msg "WARN" "docker -d --icc=false ${DOCKER_DNS} -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT}"
-docker -d --icc=false ${DOCKER_DNS} -e lxc -s devicemapper --storage-opt dm.basesize=${TOTAL_DISK_LIMIT} >/dev/null 2>&1 &
+mkdir -p ${NFS_PREFIX}/global/volumes/ ${NFS_PREFIX}/global/mounts/ ${NFS_PREFIX}/global/images/pub_root_base
 
 HOSTS="`blink ${MACHINE_CIDR}`"
 PEERS=""
@@ -118,19 +105,19 @@ for MIP in $HOSTS; do
 done
 
 mkdir -p ${NFS_PREFIX}/global/images && cd ${NFS_PREFIX}/global
+echo '["HOME=/root","PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin","TERM=xterm"]' > ./dockerenv
 
 if [[ "${PEERS}" == "" ]]; then
 	rm -rf ${NFS_PREFIX}/global/etcd
-	if [[ "`USER_NAME=root ham list_3v | grep pub_root_base`" == "" ]]; then
-		curl -L "${RES_URL}/pub_root_base.tgz" > ${NFS_PREFIX}/global/images/pub_root_base.tgz
-		# dl-imgbuild
-	fi
+	# if [[ "`USER_NAME=root ham list_3v | grep pub_root_base`" == "" ]]; then
+	# 	curl -L "${RES_URL}/pub_root_base.tgz" > ${NFS_PREFIX}/global/images/pub_root_base.tgz
+	# fi
 fi
 
 log_msg "WARN" "etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS}"
 etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS} >/dev/null 2>&1 &
 
-log_msg "INFO" "Waiting docker to get ready .." && sleep 2
+log_msg "INFO" "Waiting etcd to get ready .." && sleep 2
 
 domainname $(echo ${NIS_SERVER} | awk '{print $2}') >/dev/null 2>&1
 
@@ -146,7 +133,8 @@ ovs-vsctl del-br ovs-link 2>/dev/null || true
 ovs-vsctl add-br ovs-link
 brctl delbr ovs-bridge 2>/dev/null || true
 brctl addbr ovs-bridge
-ip addr add 10.0.0.1/8 dev ovs-bridge
+
+ip addr add 10.0.0.$(echo ${MY_IP} | awk -F\. '{print $NF}')/8 dev ovs-bridge
 ip link set dev ovs-bridge up
 brctl addif ovs-bridge ovs-link
 
@@ -159,11 +147,11 @@ for HOST in ${LIVE_HOSTS}; do
         ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${HOST} ovs-vsctl add-port ovs-link gre-${MY_IP} -- set interface gre-${MY_IP} type=gre options:remote_ip=${MY_IP} || true
 done
 
+log_msg "INFO" "Finish all initialization .."
 
 while true; do
 	HOST=${MY_IP} docklet-watchdog
 	sleep 5
-	# docker rmi $(docker images -q) 2>/dev/null
 done
 
 false

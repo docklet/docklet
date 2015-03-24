@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -e
+
+. /etc/docklet/docklet.conf
+
+curl "http://${PORTAL_HTTP}:8000/user/login?name=root&pass=any"
+read -p "# this is standard login interface .."
+
+curl -F user=root -F key=@${NFS_PREFIX}/root/ssh_keys/id_rsa "http://${PORTAL_HTTP}:8000/portals"
+read -p "# this is portals list .."
+
+curl -F image=root_base -F portal=192.168.4.40 -F user=root -F key=@${NFS_PREFIX}/root/ssh_keys/id_rsa "http://${PORTAL_HTTP}:8000/clusters/create"
+read -p "# creating clusters .."
+
+curl -F user=root -F key=@${NFS_PREFIX}/root/ssh_keys/id_rsa "http://${PORTAL_HTTP}:8000/clusters/1"
+read -p "# cluster information .."
+
+curl -F user=root -F key=@${NFS_PREFIX}/root/ssh_keys/id_rsa "http://${PORTAL_HTTP}:8000/clusters/1/scaleup"
+read -p "# scaling clusters .."
+
+ssh root@192.168.4.40 -i ${NFS_PREFIX}/root/ssh_keys/id_rsa
+read -p "# after login clusters 1 times.."
+
+curl -F user=root -F key=@${NFS_PREFIX}/root/ssh_keys/id_rsa "http://${PORTAL_HTTP}:8000/clusters/1/restart"
+read -p "# restart clusters .."
+
+ssh root@192.168.4.40 -i ${NFS_PREFIX}/root/ssh_keys/id_rsa
+read -p "# after login clusters 2 times.."
+
+curl -F user=root -F key=@${NFS_PREFIX}/root/ssh_keys/id_rsa "http://${PORTAL_HTTP}:8000/clusters/1/remove"
+read -p "# remove clusters .."
+

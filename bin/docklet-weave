@@ -2,37 +2,268 @@
 
 set -e
 
+# $0 master root-1-0 10.0.1.0 192.168.4.12 br1 192.168.4.2
+# $0 slave root-1-0 10.0.1.0
+# $0 restart root-1-0
+# $0 remove root-1-0
+
 . /etc/docklet/docklet.conf
 
 TYPE=$1 ; shift
-IPADDR=$1 ; shift
 UUID=$1 ; shift
 
-[[ "${TYPE}" != "run" ]] && [[ "${TYPE}" != "start" ]] && false
+USER_NAME=$(echo ${UUID} | awk -F\- '{print $1}')
+NAT_ID=$(echo ${UUID} | awk -F\- '{print $2}')
+NODE_ID=$(echo ${UUID} | awk -F\- '{print $3}')
 
-if [[ "${TYPE}" == "run" ]]; then
-	docker run -d --name=${UUID} "$@" >/dev/null 2>&1
+TARGET="${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}"
+
+if [[ "${TYPE}" == "master" ]]; then
+	
+	NATADDR=$1 ; shift
+	IPADDR=$1 ; shift
+	IPDEV=$1 ; shift
+	IPGW=$1 ; shift
+	IMAGE=$1 ; shift
+	mkdir -p ${NFS_PREFIX}/${USER_NAME}
+	
+	cat <<EOF > ${NFS_PREFIX}/${USER_NAME}/${UUID}.lxc
+lxc.pts = 1024
+lxc.console = none
+lxc.tty = 1
+lxc.pivotdir = lxc_putold
+lxc.rootfs = ${TARGET}
+lxc.utsname = nat-master
+
+lxc.network.type = veth
+lxc.network.name = ethex
+lxc.network.link = ${IPDEV}
+lxc.network.ipv4 = ${IPADDR}
+lxc.network.ipv4.gateway = ${IPGW}
+lxc.network.flags = up
+
+lxc.network.type = veth
+lxc.network.name = eth0
+lxc.network.link = ovs-bridge
+lxc.network.ipv4 = ${NATADDR}/8
+lxc.network.flags = up
+
+lxc.cgroup.devices.deny = a
+lxc.cgroup.devices.allow = c *:* m
+lxc.cgroup.devices.allow = b *:* m
+lxc.cgroup.devices.allow = c 5:1 rwm
+lxc.cgroup.devices.allow = c 4:0 rwm
+lxc.cgroup.devices.allow = c 4:1 rwm
+lxc.cgroup.devices.allow = c 136:* rwm
+lxc.cgroup.devices.allow = c 5:2 rwm
+lxc.cgroup.devices.allow = c 10:200 rwm
+lxc.cgroup.devices.allow = c 1:3 rwm
+lxc.cgroup.devices.allow = c 1:5 rwm
+lxc.cgroup.devices.allow = c 1:7 rwm
+lxc.cgroup.devices.allow = c 5:0 rwm
+lxc.cgroup.devices.allow = c 1:9 rwm
+lxc.cgroup.devices.allow = c 1:8 rwm
+
+lxc.cgroup.memory.kmem.limit_in_bytes = 512m
+lxc.cgroup.memory.limit_in_bytes = 1073741824
+lxc.cgroup.memory.soft_limit_in_bytes = 1073741824
+lxc.cgroup.memory.memsw.limit_in_bytes = 2147483648
+lxc.cgroup.cpu.cfs_quota_us = 100000
+
+lxc.mount.entry = proc ${TARGET}/proc proc nosuid,nodev,noexec 0 0
+lxc.mount.entry = sysfs ${TARGET}/sys sysfs nosuid,nodev,noexec 0 0
+lxc.mount.entry = devpts ${TARGET}/dev/pts devpts newinstance,ptmxmode=0666,nosuid,noexec 0 0
+lxc.mount.entry = shm ${TARGET}/dev/shm tmpfs size=65536k,nosuid,nodev,noexec 0 0
+
+lxc.mount.entry = /dev/random ${TARGET}/dev/random none bind,ro 0 0
+lxc.mount.entry = /dev/urandom ${TARGET}/dev/urandom none bind,ro 0 0
+lxc.mount.entry = /dev/null ${TARGET}/dev/null none bind,ro 0 0
+
+lxc.mount.entry = ${NFS_PREFIX}/global/dockerenv ${TARGET}/.dockerenv none bind,ro 0 0
+lxc.mount.entry = /usr/local/bin/dockerinit ${TARGET}/.dockerinit none bind,ro 0 0
+lxc.mount.entry = /usr/local/sbin/container-init ${TARGET}/init none bind,ro 0 0
+lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet none bind,ro 0 0
+
+lxc.mount.entry = ${NFS_PREFIX}/${USER_NAME}/home ${TARGET}/root none rbind,rw 0 0
+lxc.mount.entry = ${NFS_PREFIX}/${USER_NAME}/ssh_keys ${TARGET}/root/.ssh none rbind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
+
+EOF
+	LAYER="${NFS_PREFIX}/global/volumes/${USER_NAME}-${NAT_ID}"
+	mkdir -p ${TARGET}
+	rm -rf ${LAYER}
+	
+	if [[ -e "${NFS_PREFIX}/global/images/pub_${IMAGE}" ]]; then
+		cp -r "${NFS_PREFIX}/global/images/pub_${IMAGE}" ${LAYER}
+	elif [[ -e "${NFS_PREFIX}/global/images/self_${IMAGE}" ]]; then
+		OWNER=$(echo ${IMAGE} | awk -F\_ '{print $1}')
+		if [[ "${USER_NAME}" == "root" ]] || [[ "${USER_NAME}" == "${OWNER}" ]]; then
+			cp -r "${NFS_PREFIX}/global/images/self_${IMAGE}" ${LAYER}
+		else
+			false
+		fi
+	else
+		false
+	fi
+	mount -t aufs -o dirs=${LAYER}=rw:${NFS_PREFIX}/global/root_base=ro unionfs ${TARGET}/
+	
+	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
+	
+	# NSPID=$(cat "/sys/fs/cgroup/cpu/lxc/${UUID}/tasks" 2>/dev/null | head -n 1)
+	# [[ "${NSPID}" == "" ]] && false
+	
+	# mkdir -p /var/run/netns
+	# rm -f /var/run/netns/$NSPID
+	# ln -s /proc/$NSPID/ns/net /var/run/netns/$NSPID
+	# LOCAL_IFNAME=vethl$NSPID
+	# GUEST_IFNAME=vethg$NSPID
+	# ip link add name $LOCAL_IFNAME type veth peer name $GUEST_IFNAME
+	# ip link set $LOCAL_IFNAME up
+	# ip link set $GUEST_IFNAME netns $NSPID
+	# ip netns exec $NSPID ip link set $GUEST_IFNAME name eth0
+	# ip netns exec $NSPID ip addr add ${NATADDR}/8 dev eth0
+	# ip netns exec $NSPID ip link set eth0 up
+	# brctl addif ovs-bridge $LOCAL_IFNAME
+	# rm -f /var/run/netns/$NSPID
+	
+elif [[ "${TYPE}" == "slave" ]]; then
+	NATADDR=$1 ; shift
+	
+	mkdir -p ${NFS_PREFIX}/${USER_NAME}
+	cat <<EOF > ${NFS_PREFIX}/${USER_NAME}/${UUID}.lxc
+lxc.pts = 1024
+lxc.console = none
+lxc.tty = 1
+lxc.pivotdir = lxc_putold
+lxc.rootfs = ${TARGET}
+lxc.utsname = nat-slave${NODE_ID}
+
+lxc.network.type = veth
+lxc.network.name = eth0
+lxc.network.link = ovs-bridge
+lxc.network.ipv4 = ${NATADDR}/8
+lxc.network.ipv4.gateway = $(ip route | grep ovs-bridge | awk '{print $NF}')
+lxc.network.flags = up
+
+lxc.cgroup.devices.deny = a
+lxc.cgroup.devices.allow = c *:* m
+lxc.cgroup.devices.allow = b *:* m
+lxc.cgroup.devices.allow = c 5:1 rwm
+lxc.cgroup.devices.allow = c 4:0 rwm
+lxc.cgroup.devices.allow = c 4:1 rwm
+lxc.cgroup.devices.allow = c 136:* rwm
+lxc.cgroup.devices.allow = c 5:2 rwm
+lxc.cgroup.devices.allow = c 10:200 rwm
+lxc.cgroup.devices.allow = c 1:3 rwm
+lxc.cgroup.devices.allow = c 1:5 rwm
+lxc.cgroup.devices.allow = c 1:7 rwm
+lxc.cgroup.devices.allow = c 5:0 rwm
+lxc.cgroup.devices.allow = c 1:9 rwm
+lxc.cgroup.devices.allow = c 1:8 rwm
+
+lxc.cgroup.memory.kmem.limit_in_bytes = 512m
+lxc.cgroup.memory.limit_in_bytes = 1073741824
+lxc.cgroup.memory.soft_limit_in_bytes = 1073741824
+lxc.cgroup.memory.memsw.limit_in_bytes = 2147483648
+lxc.cgroup.cpu.cfs_quota_us = 100000
+
+lxc.mount.entry = proc ${TARGET}/proc proc nosuid,nodev,noexec 0 0
+lxc.mount.entry = sysfs ${TARGET}/sys sysfs nosuid,nodev,noexec 0 0
+lxc.mount.entry = devpts ${TARGET}/dev/pts devpts newinstance,ptmxmode=0666,nosuid,noexec 0 0
+lxc.mount.entry = shm ${TARGET}/dev/shm tmpfs size=65536k,nosuid,nodev,noexec 0 0
+
+lxc.mount.entry = /dev/random ${TARGET}/dev/random none bind,ro 0 0
+lxc.mount.entry = /dev/urandom ${TARGET}/dev/urandom none bind,ro 0 0
+lxc.mount.entry = /dev/null ${TARGET}/dev/null none bind,ro 0 0
+
+lxc.mount.entry = ${NFS_PREFIX}/global/dockerenv ${TARGET}/.dockerenv none bind,ro 0 0
+lxc.mount.entry = /usr/local/bin/dockerinit ${TARGET}/.dockerinit none bind,ro 0 0
+lxc.mount.entry = /usr/local/sbin/container-init ${TARGET}/init none bind,ro 0 0
+lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet none bind,ro 0 0
+
+lxc.mount.entry = ${NFS_PREFIX}/${USER_NAME}/home ${TARGET}/root none rbind,rw 0 0
+lxc.mount.entry = ${NFS_PREFIX}/${USER_NAME}/ssh_keys ${TARGET}/root/.ssh none rbind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
+
+EOF
+	
+	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
+elif [[ "${TYPE}" == "restart" ]]; then
+	lxc-stop -k -n ${UUID}
+	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
+elif [[ "${TYPE}" == "stop" ]]; then
+	lxc-stop -k -n ${UUID}
+elif [[ "${TYPE}" == "purge" ]]; then
+	umount -l ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}
+	rm -rf ${NFS_PREFIX}/global/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}
+elif [[ "${TYPE}" == "commit" ]]; then
+	IMAGE_NAME=$1 ; shift
+	umount -l ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}
+	mv ${NFS_PREFIX}/global/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/images/self_${USER_NAME}_${IMAGE_NAME}
+	rm -rf ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}
+elif [[ "${TYPE}" == "find" ]]; then
+	lxc-info -n ${UUID} 2>/dev/null | grep RUNNING >/dev/null
+elif [[ "${TYPE}" == "bridge" ]]; then
+
+	[[ "${HOST}" != "" ]]
+	
+	cat <<EOF > ${NFS_PREFIX}/global/core.lxc
+lxc.pts = 1024
+lxc.console = none
+lxc.tty = 1
+lxc.pivotdir = lxc_putold
+lxc.rootfs = ${NFS_PREFIX}/global/root_base
+lxc.utsname = core-service
+
+lxc.network.type = veth
+lxc.network.name = ethex
+lxc.network.link = ${PORTAL_BRIDGE}
+lxc.network.ipv4 = ${PORTAL_HTTP}/24
+lxc.network.ipv4.gateway = ${PORTAL_GATEWAY}
+lxc.network.flags = up
+
+lxc.cgroup.devices.deny = a
+lxc.cgroup.devices.allow = c *:* m
+lxc.cgroup.devices.allow = b *:* m
+lxc.cgroup.devices.allow = c 5:1 rwm
+lxc.cgroup.devices.allow = c 4:0 rwm
+lxc.cgroup.devices.allow = c 4:1 rwm
+lxc.cgroup.devices.allow = c 136:* rwm
+lxc.cgroup.devices.allow = c 5:2 rwm
+lxc.cgroup.devices.allow = c 10:200 rwm
+lxc.cgroup.devices.allow = c 1:3 rwm
+lxc.cgroup.devices.allow = c 1:5 rwm
+lxc.cgroup.devices.allow = c 1:7 rwm
+lxc.cgroup.devices.allow = c 5:0 rwm
+lxc.cgroup.devices.allow = c 1:9 rwm
+lxc.cgroup.devices.allow = c 1:8 rwm
+
+lxc.cgroup.memory.kmem.limit_in_bytes = 512m
+lxc.cgroup.memory.limit_in_bytes = 1073741824
+lxc.cgroup.memory.soft_limit_in_bytes = 1073741824
+lxc.cgroup.memory.memsw.limit_in_bytes = 2147483648
+lxc.cgroup.cpu.cfs_quota_us = 100000
+
+lxc.mount.entry = proc ${NFS_PREFIX}/global/root_base/proc proc nosuid,nodev,noexec 0 0
+lxc.mount.entry = sysfs ${NFS_PREFIX}/global/root_base/sys sysfs nosuid,nodev,noexec 0 0
+lxc.mount.entry = devpts ${NFS_PREFIX}/global/root_base/dev/pts devpts newinstance,ptmxmode=0666,nosuid,noexec 0 0
+lxc.mount.entry = shm ${NFS_PREFIX}/global/root_base/dev/shm tmpfs size=65536k,nosuid,nodev,noexec 0 0
+
+lxc.mount.entry = /dev/random ${NFS_PREFIX}/global/root_base/dev/random none bind,ro 0 0
+lxc.mount.entry = /dev/urandom ${NFS_PREFIX}/global/root_base/dev/urandom none bind,ro 0 0
+lxc.mount.entry = /dev/null ${NFS_PREFIX}/global/root_base/dev/null none bind,ro 0 0
+
+lxc.mount.entry = ${NFS_PREFIX}/global/dockerenv ${NFS_PREFIX}/global/root_base/.dockerenv none bind,ro 0 0
+lxc.mount.entry = /usr/local/bin/dockerinit ${NFS_PREFIX}/global/root_base/.dockerinit none bind,ro 0 0
+lxc.mount.entry = /root ${NFS_PREFIX}/global/root_base/root none rbind,rw 0 0
+lxc.mount.entry = ${NFS_PREFIX} ${NFS_PREFIX}/global/root_base/mnt none rbind,rw 0 0
+lxc.mount.entry = /usr/local/lib/docklet-http ${NFS_PREFIX}/global/root_base/usr/local/lib/docklet-http none rbind,ro 0 0
+
+EOF
+	
+	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/core.lxc -- /.dockerinit -- bash -c "/usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}"
+	
 else
-	docker start ${UUID} >/dev/null 2>&1
-fi
-
-LXCID=$(docker inspect ${UUID} | grep Id.: | awk -F\" '{print $4}')
-if [[ "${LXCID}" != "" ]] && [[ -e "/sys/fs/cgroup/cpu/lxc/${LXCID}/tasks" ]]; then
-	NSPID=$(cat "/sys/fs/cgroup/cpu/lxc/${LXCID}/tasks" | head -n 1)
-	mkdir -p /var/run/netns
-	rm -f /var/run/netns/$NSPID
-	ln -s /proc/$NSPID/ns/net /var/run/netns/$NSPID
-		
-	LOCAL_IFNAME=vethl$NSPID
-	GUEST_IFNAME=vethg$NSPID
-	ip link add name $LOCAL_IFNAME type veth peer name $GUEST_IFNAME
-	ip link set $LOCAL_IFNAME up
-	ip link set $GUEST_IFNAME netns $NSPID
-	ip netns exec $NSPID ip link set $GUEST_IFNAME name eth0
-	ip netns exec $NSPID ip addr add ${IPADDR}/8 dev eth0
-	ip netns exec $NSPID ip link set eth0 up
-	brctl addif ovs-bridge $LOCAL_IFNAME
-		
-	rm -f /var/run/netns/$NSPID
+	false
 fi
 

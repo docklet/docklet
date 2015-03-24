@@ -1,15 +1,5 @@
 #!/bin/bash
 
-# Example:
-# WORK_ON=192.168.4.231 USER_NAME=root IMAGE=ssh NATIVE_IP=10.0.0.254 BRIDGE_IP=192.168.4.200 BRIDGE_GW=192.168.4.2 BRIDGE_DEV=br1 cave
-# WORK_ON=192.168.4.231 USER_NAME=root IMAGE=ssh NATIVE_IP=10.0.0.1 cave
-# WORK_ON=192.168.4.232 USER_NAME=root IMAGE=ssh NATIVE_IP=10.0.0.2 cave
-#
-#
-# ssh root@192.168.4.200
-# >> spark-shell --master spark://nat-master:7077
-# use: /home/docker/root/.ssh/id_rsa
-
 . /etc/docklet/docklet.conf
 
 HOME_PREF=${NFS_PREFIX}
@@ -24,19 +14,23 @@ HOME_PREF=${NFS_PREFIX}
 [[ "${WORK_ON}" == "" ]] && echo "WORK_ON not specified!" && exit 1
 
 HOST_PROP=$(echo ${NATIVE_IP} | awk -F. '{print $4}')
-MASTER_IP=$(basename ${NATIVE_IP} ${HOST_PROP})"254"
+MASTER_IP=$(basename ${NATIVE_IP} ${HOST_PROP})"0"
+
+OPER=slave
 
 if [[ "${HOST_NAME}" == "nat-master" ]]; then
 	[[ "${BRIDGE_IP}" == "" ]] && echo "BRIDGE_IP not specified!" && exit 1
 	[[ "${BRIDGE_GW}" == "" ]] && echo "BRIDGE_GW not specified!" && exit 1
 	[[ "${BRIDGE_DEV}" == "" ]] && echo "BRIDGE_DEV not specified!" && exit 1
-	
-	NET_CONF="--lxc-conf=\"lxc.network.type=veth\" --lxc-conf=\"lxc.network.ipv4=${BRIDGE_IP}/24\" --lxc-conf=\"lxc.network.ipv4.gateway=${BRIDGE_GW}\" --lxc-conf=\"lxc.network.link=${BRIDGE_DEV}\" --lxc-conf=\"lxc.network.name=ethex\" --lxc-conf=\"lxc.network.flags=up\""
+	OPER=master
+	NET_CONF="--lxc-conf=\"lxc.network.type=veth\" --lxc-conf=\"lxc.network.ipv4=${BRIDGE_IP}\" --lxc-conf=\"lxc.network.ipv4.gateway=${BRIDGE_GW}\" --lxc-conf=\"lxc.network.link=${BRIDGE_DEV}\" --lxc-conf=\"lxc.network.name=ethex\" --lxc-conf=\"lxc.network.flags=up\""
 fi
 
 NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null
 
-FOLK_FLAG="--lxc-conf=\"lxc.cgroup.memory.kmem.limit_in_bytes=${FOLK_BOMB_SPACE}\" --lxc-conf=\"lxc.cgroup.cpu.cfs_quota_us=${CPU_SHARE_QUOTA_US}\""
+nohup ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} "docklet-weave ${OPER} ${NAME} ${NATIVE_IP} ${BRIDGE_IP}/24 ${BRIDGE_DEV} ${BRIDGE_GW} ${IMAGE}" >/dev/null 2>&1 &
+
+exit
 
 nohup ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} " \
   lockfile-create /tmp/docklet-images-load; \
@@ -44,9 +38,5 @@ nohup ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} " \
   lockfile-remove /tmp/docklet-images-load; \
   docklet-weave run ${NATIVE_IP} ${NAME} \
     -v ${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}:/etc/hosts:ro \
-    -v /usr/local/sbin/container-init:/sbin/initctl:ro \
-    -v /usr/local/sbin/container-docklet:/usr/bin/docklet:ro \
-    -v ${HOME_PREF}/${USER_NAME}/home:/root \
-    -v ${HOME_PREF}/${USER_NAME}/ssh_keys:/root/.ssh:ro \
-    -m ${TOTAL_MEMORY_LIMIT} -it --net=none ${NET_CONF} -h ${HOST_NAME} ${FOLK_FLAG} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP} " >/dev/null 2>&1 &
+    -m ${TOTAL_MEMORY_LIMIT} -it --net=none ${NET_CONF} -h ${HOST_NAME} ${FOLK_FLAG} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP}" >/dev/null 2>&1 &
 

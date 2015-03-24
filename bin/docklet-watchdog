@@ -6,21 +6,15 @@ if [[ "`whoami`" == "root" ]] && [[ "${HOST}" != "" ]]; then
 	
 	LEADER=$(curl -L http://0.0.0.0:4001/v2/stats/leader 2>/dev/null | python -m json.tool 2>/dev/null | grep leader | awk -F\" '{print $4}')
 	
-	USER_NAME=root ham pull_2v root_base
+	# USER_NAME=root ham pull_2v root_base
 	
 	if [[ "${LEADER}" == "${HOST}" ]]; then
 		echo "* ${HOST}: I'm leader" > /dev/stderr
-		if ! docker inspect core_service 2>/dev/null | grep Running | grep true >/dev/null ; then
-			echo "* ${HOST}: starting core_service .." > /dev/stderr
+		if ! docklet-weave find core-service ; then
+			echo "* ${HOST}: starting core-service .." > /dev/stderr
 			
-			NET_CONF="--lxc-conf=\"lxc.network.type=veth\" --lxc-conf=\"lxc.network.ipv4=${PORTAL_HTTP}/24\" --lxc-conf=\"lxc.network.ipv4.gateway=${PORTAL_GATEWAY}\" --lxc-conf=\"lxc.network.link=${PORTAL_BRIDGE}\" --lxc-conf=\"lxc.network.name=eth0\" --lxc-conf=\"lxc.network.flags=up\""
+			HOST=${HOST} docklet-weave bridge core-service
 			
-			docker rm core_service >/dev/null 2>&1 || true
-			docker run --net=none ${NET_CONF} --name=core_service \
-				-v /root:/root:rw \
-				-v ${NFS_PREFIX}:/mnt:rw \
-				-v /usr/local/lib/docklet-http:/usr/local/lib/docklet-http:ro \
-				-d -h docklet-core root_base /usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}
 		fi
 		sleep 20
 	else

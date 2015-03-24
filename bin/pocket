@@ -36,7 +36,7 @@ def main(command):
 				NAT_ID += 1
 			sys_call('KEY="/docklet/instances/%d" VALUE="active" etcdemu set' % NAT_ID)
 			
-			MASTER_IP = '10.%d.%d.254' % (NAT_ID >> 8, NAT_ID & 255)
+			MASTER_IP = '10.%d.%d.0' % (NAT_ID >> 8, NAT_ID & 255)
 			HOST_NAME = 'nat-master'
 			
 			sys_call('mkdir -p %s/%s/home' % (HOME_PREF, USER_NAME))
@@ -56,20 +56,6 @@ def main(command):
 			sys_call('KEY="/docklet/instances/%d" VALUE="%s|%s|%s|%s:%s:%s:%s" etcdemu set' % (NAT_ID, USER_NAME, IMAGE, BRIDGE_IP, WORK_ON, CONTAINER_ID, MASTER_IP, HOST_NAME))
 			print(NAT_ID)
 		
-	elif command == 'remove':
-		[USER_NAME, NAT_ID, HOME_PREF] = get_environ(["USER_NAME", "NAT_ID", "NFS_PREFIX"])
-		
-		[OWNER, USE_IMAGE, BRIDGE_IP, DOCKER_LIST] = sys_call('KEY="/docklet/instances/%s" etcdemu get' % NAT_ID).split('|')
-		if USER_NAME == OWNER:
-			DOCKER_NODES = DOCKER_LIST.strip().split()
-			for DOCKER_NODE in DOCKER_NODES:
-				[DOCKER_IP, DOCKER_ID, NATIVE_IP, HOST_NAME] = DOCKER_NODE.split(':')
-				sys_call('nohup ssh -o StrictHostKeyChecking=no %s "docker stop %s; docker rm %s" >/dev/null 2>&1 &' % (DOCKER_IP, DOCKER_ID, DOCKER_ID))
-				
-			sys_call('KEY="/docklet/portal/%s/%s" VALUE="inactive" etcdemu set' % (USER_NAME, BRIDGE_IP))
-			sys_call('KEY="/docklet/instances/%s" etcdemu rm' % NAT_ID)
-			os.remove('%s/%s/hosts-%s' % (HOME_PREF, USER_NAME, NAT_ID))
-		
 	elif command == 'list':
 		[USER_NAME] = get_environ(["USER_NAME"])
 		
@@ -87,8 +73,22 @@ def main(command):
 		
 		print(sys_call('USER_NAME=%s ham list_3v' % USER_NAME))
 		
+	elif command == 'remove':
+		[USER_NAME, NAT_ID, HOME_PREF] = get_environ(["USER_NAME", "NAT_ID", "NFS_PREFIX"])
+		
+		[OWNER, USE_IMAGE, BRIDGE_IP, DOCKER_LIST] = sys_call('KEY="/docklet/instances/%s" etcdemu get' % NAT_ID).split('|')
+		if USER_NAME == OWNER:
+			DOCKER_NODES = DOCKER_LIST.strip().split()
+			for DOCKER_NODE in DOCKER_NODES:
+				[DOCKER_IP, DOCKER_ID, NATIVE_IP, HOST_NAME] = DOCKER_NODE.split(':')
+				sys_call('ssh -o StrictHostKeyChecking=no %s "docklet-weave stop %s"' % (DOCKER_IP, DOCKER_ID))
+			sys_call('nohup ssh -o StrictHostKeyChecking=no %s "docklet-weave purge %s-%s" >/dev/null 2>&1 &' % (DOCKER_IP, USER_NAME, NAT_ID))
+			sys_call('KEY="/docklet/portal/%s/%s" VALUE="inactive" etcdemu set' % (USER_NAME, BRIDGE_IP))
+			sys_call('KEY="/docklet/instances/%s" etcdemu rm' % NAT_ID)
+			os.remove('%s/%s/hosts-%s' % (HOME_PREF, USER_NAME, NAT_ID))
+		
 	elif command == 'save':
-		[USER_NAME, NAT_ID, IMAGE_NAME] = get_environ(["USER_NAME", "NAT_ID", "IMAGE_NAME"])
+		[USER_NAME, NAT_ID, IMAGE_NAME, HOME_PREF] = get_environ(["USER_NAME", "NAT_ID", "IMAGE_NAME", "NFS_PREFIX"])
 		
 		if not re.match('^[0-9,a-z,\-]{1,20}$', IMAGE_NAME):
 			raise Exception("image name not allowed")
@@ -98,11 +98,13 @@ def main(command):
 		[OWNER, USE_IMAGE, BRIDGE_IP, DOCKER_LIST] = sys_call('KEY="/docklet/instances/%s" etcdemu get' % NAT_ID).split('|')
 		if OWNER != USER_NAME:
 			raise Exception("wrong container owners")
-		for NODE in DOCKER_LIST.strip().split():
-			[ON, ID, NAT_IP, HOST_NAME] = NODE.split(':')
-			if HOST_NAME == 'nat-master':
-				sys_call('nohup ssh -o StrictHostKeyChecking=no %s "docker commit %s %s && ( lockfile-create /tmp/docklet-images-save; ham push_2v %s; lockfile-remove /tmp/docklet-images-save; )" >/dev/null 2>&1 &' % (ON, ID, GENERATE, GENERATE))
-				break
+		for DOCKER_NODE in DOCKER_LIST.strip().split():
+			[DOCKER_IP, DOCKER_ID, NATIVE_IP, HOST_NAME] = DOCKER_NODE.split(':')
+			sys_call('ssh -o StrictHostKeyChecking=no %s "docklet-weave stop %s"' % (DOCKER_IP, DOCKER_ID))
+		sys_call('nohup ssh -o StrictHostKeyChecking=no %s "docklet-weave commit %s-%s %s; docklet-weave purge %s-%s" >/dev/null 2>&1 &' % (DOCKER_IP, USER_NAME, NAT_ID, IMAGE_NAME, USER_NAME, NAT_ID))
+		sys_call('KEY="/docklet/portal/%s/%s" VALUE="inactive" etcdemu set' % (USER_NAME, BRIDGE_IP))
+		sys_call('KEY="/docklet/instances/%s" etcdemu rm' % NAT_ID)
+		os.remove('%s/%s/hosts-%s' % (HOME_PREF, USER_NAME, NAT_ID))
 		
 	elif command == 'portal':
 		[USER_NAME] = get_environ(["USER_NAME"])
