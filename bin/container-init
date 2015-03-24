@@ -9,11 +9,10 @@
 function init {
 
 	service ssh start
-	ssh 0.0.0.0 true >/dev/null 2>&1
 
-	#while true; do
-	#	sleep 10 #ping ${MASTER_IP} -c 1 -w 2 && break
-	#done
+	while true; do
+		ping docklet-cloud -c 1 -w 2 && break
+	done
 
 	if [[ "`hostname`" == "nat-master" ]]; then
 		true

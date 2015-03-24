@@ -194,11 +194,11 @@ elif [[ "${TYPE}" == "restart" ]]; then
 elif [[ "${TYPE}" == "stop" ]]; then
 	lxc-stop -k -n ${UUID}
 elif [[ "${TYPE}" == "purge" ]]; then
-	umount -l ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}
+	umount -l ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID} || true
 	rm -rf ${NFS_PREFIX}/global/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}
 elif [[ "${TYPE}" == "commit" ]]; then
 	IMAGE_NAME=$1 ; shift
-	umount -l ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}
+	umount -l ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID} || true
 	mv ${NFS_PREFIX}/global/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/images/self_${USER_NAME}_${IMAGE_NAME}
 	rm -rf ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}
 elif [[ "${TYPE}" == "find" ]]; then
