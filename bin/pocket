@@ -39,10 +39,10 @@ def main(command):
 			MASTER_IP = '10.%d.%d.0' % (NAT_ID >> 8, NAT_ID & 255)
 			HOST_NAME = 'nat-master'
 			
-			sys_call('mkdir -p %s/%s/home' % (HOME_PREF, USER_NAME))
-			COMMON_HOST = '%s/%s/hosts-%d' % (HOME_PREF, USER_NAME, NAT_ID)
+			sys_call('mkdir -p %s/users/%s/home' % (HOME_PREF, USER_NAME))
+			COMMON_HOST = '%s/users/%s/hosts-%d' % (HOME_PREF, USER_NAME, NAT_ID)
 			
-			host = open('%s/%s/hosts-%d' % (HOME_PREF, USER_NAME, NAT_ID), "w")
+			host = open(COMMON_HOST, "w")
 			host.write('127.0.0.1 localhost\n')
 			host.write('%s docklet-cloud\n' % PORTAL_HTTP)
 			host.write('%s host-%d_%s\n' % (BRIDGE_IP, NAT_ID, USER_NAME))
@@ -85,7 +85,7 @@ def main(command):
 			sys_call('nohup ssh -o StrictHostKeyChecking=no %s "docklet-weave purge %s-%s" >/dev/null 2>&1 &' % (DOCKER_IP, USER_NAME, NAT_ID))
 			sys_call('KEY="/docklet/portal/%s/%s" VALUE="inactive" etcdemu set' % (USER_NAME, BRIDGE_IP))
 			sys_call('KEY="/docklet/instances/%s" etcdemu rm' % NAT_ID)
-			os.remove('%s/%s/hosts-%s' % (HOME_PREF, USER_NAME, NAT_ID))
+			os.remove('%s/users/%s/hosts-%s' % (HOME_PREF, USER_NAME, NAT_ID))
 		
 	elif command == 'save':
 		[USER_NAME, NAT_ID, IMAGE_NAME, HOME_PREF] = get_environ(["USER_NAME", "NAT_ID", "IMAGE_NAME", "NFS_PREFIX"])
@@ -104,7 +104,7 @@ def main(command):
 		sys_call('nohup ssh -o StrictHostKeyChecking=no %s "docklet-weave commit %s-%s %s; docklet-weave purge %s-%s" >/dev/null 2>&1 &' % (DOCKER_IP, USER_NAME, NAT_ID, IMAGE_NAME, USER_NAME, NAT_ID))
 		sys_call('KEY="/docklet/portal/%s/%s" VALUE="inactive" etcdemu set' % (USER_NAME, BRIDGE_IP))
 		sys_call('KEY="/docklet/instances/%s" etcdemu rm' % NAT_ID)
-		os.remove('%s/%s/hosts-%s' % (HOME_PREF, USER_NAME, NAT_ID))
+		os.remove('%s/users/%s/hosts-%s' % (HOME_PREF, USER_NAME, NAT_ID))
 		
 	elif command == 'portal':
 		[USER_NAME] = get_environ(["USER_NAME"])

@@ -92,7 +92,7 @@ if [[ "${NFS_MOUNT_CMD}" != "" ]]; then
 	`${NFS_MOUNT_CMD}`
 fi
 
-mkdir -p ${NFS_PREFIX}/global/volumes/ ${NFS_PREFIX}/global/mounts/ ${NFS_PREFIX}/global/images/pub_root_base
+mkdir -p ${NFS_PREFIX}/users ${NFS_PREFIX}/global/volumes/ ${NFS_PREFIX}/global/mounts/ ${NFS_PREFIX}/global/images/pub_root_base
 
 HOSTS="`blink ${MACHINE_CIDR}`"
 PEERS=""
@@ -104,7 +104,7 @@ for MIP in $HOSTS; do
         fi
 done
 
-mkdir -p ${NFS_PREFIX}/global/images && cd ${NFS_PREFIX}/global
+cd ${NFS_PREFIX}/global
 echo '["HOME=/root","PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin","TERM=xterm"]' > ./dockerenv
 
 if [[ "${PEERS}" == "" ]]; then

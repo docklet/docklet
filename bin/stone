@@ -9,21 +9,21 @@ HOME_PREF=${NFS_PREFIX}
 
 [[ "${USER_NAME}" == "" ]] && echo "USER_NAME not specified!" && exit 1
 
-mkdir -p ${HOME_PREF}/${USER_NAME}/home/.ssh/ ${HOME_PREF}/${USER_NAME}/ssh_keys
+mkdir -p ${HOME_PREF}/users/${USER_NAME}/home/.ssh/ ${HOME_PREF}/users/${USER_NAME}/ssh_keys
 
-if [[ ! -e "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa" ]] || [[ "$@" == "update" ]]; then
-	rm -rf ${HOME_PREF}/${USER_NAME}/ssh_keys/*
-	echo -e '\n' | ssh-keygen -t rsa -P '' -f "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa" >/dev/null 2>&1
-	mv "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa.pub" "${HOME_PREF}/${USER_NAME}/ssh_keys/authorized_keys"
-	which puttygen >/dev/null 2>&1 && puttygen "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa" -o "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa.ppk"
+if [[ ! -e "${HOME_PREF}/users/${USER_NAME}/ssh_keys/id_rsa" ]] || [[ "$@" == "update" ]]; then
+	rm -rf ${HOME_PREF}/users/${USER_NAME}/ssh_keys/*
+	echo -e '\n' | ssh-keygen -t rsa -P '' -f "${HOME_PREF}/users/${USER_NAME}/ssh_keys/id_rsa" >/dev/null 2>&1
+	mv "${HOME_PREF}/users/${USER_NAME}/ssh_keys/id_rsa.pub" "${HOME_PREF}/users/${USER_NAME}/ssh_keys/authorized_keys"
+	which puttygen >/dev/null 2>&1 && puttygen "${HOME_PREF}/users/${USER_NAME}/ssh_keys/id_rsa" -o "${HOME_PREF}/users/${USER_NAME}/ssh_keys/id_rsa.ppk"
 fi
 
-# mkdir -p ${HOME_PREF}/${USER_NAME}/home/.vnc/
-# if [[ ! -e "${HOME_PREF}/${USER_NAME}/home/.vnc/passwd" ]] || [[ "$@" == "reset" ]]; then
-# 	echo '0000000: 4940 15f9 a35e 8b22' | xxd -r > "${HOME_PREF}/${USER_NAME}/home/.vnc/passwd"
-# 	chmod 0600 "${HOME_PREF}/${USER_NAME}/home/.vnc/passwd"
+# mkdir -p ${HOME_PREF}/users/${USER_NAME}/home/.vnc/
+# if [[ ! -e "${HOME_PREF}/users/${USER_NAME}/home/.vnc/passwd" ]] || [[ "$@" == "reset" ]]; then
+# 	echo '0000000: 4940 15f9 a35e 8b22' | xxd -r > "${HOME_PREF}/users/${USER_NAME}/home/.vnc/passwd"
+# 	chmod 0600 "${HOME_PREF}/users/${USER_NAME}/home/.vnc/passwd"
 # fi
 
-cat "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa"
+cat "${HOME_PREF}/users/${USER_NAME}/ssh_keys/id_rsa"
 echo -n "========"
-cat "${HOME_PREF}/${USER_NAME}/ssh_keys/id_rsa.ppk"
+cat "${HOME_PREF}/users/${USER_NAME}/ssh_keys/id_rsa.ppk"

@@ -25,9 +25,9 @@ if [[ "${TYPE}" == "master" ]]; then
 	IPDEV=$1 ; shift
 	IPGW=$1 ; shift
 	IMAGE=$1 ; shift
-	mkdir -p ${NFS_PREFIX}/${USER_NAME}
+	mkdir -p ${NFS_PREFIX}/users/${USER_NAME}
 	
-	cat <<EOF > ${NFS_PREFIX}/${USER_NAME}/${UUID}.lxc
+	cat <<EOF > ${NFS_PREFIX}/users/${USER_NAME}/${UUID}.lxc
 lxc.pts = 1024
 lxc.console = none
 lxc.tty = 1
@@ -84,9 +84,9 @@ lxc.mount.entry = /usr/local/bin/dockerinit ${TARGET}/.dockerinit none bind,ro 0
 lxc.mount.entry = /usr/local/sbin/container-init ${TARGET}/init none bind,ro 0 0
 lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet none bind,ro 0 0
 
-lxc.mount.entry = ${NFS_PREFIX}/${USER_NAME}/home ${TARGET}/root none rbind,rw 0 0
-lxc.mount.entry = ${NFS_PREFIX}/${USER_NAME}/ssh_keys ${TARGET}/root/.ssh none rbind,ro 0 0
-lxc.mount.entry = ${NFS_PREFIX}/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/users/${USER_NAME}/home ${TARGET}/root none rbind,rw 0 0
+lxc.mount.entry = ${NFS_PREFIX}/users/${USER_NAME}/ssh_keys ${TARGET}/root/.ssh none rbind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
 
 EOF
 	LAYER="${NFS_PREFIX}/global/volumes/${USER_NAME}-${NAT_ID}"
@@ -107,7 +107,7 @@ EOF
 	fi
 	mount -t aufs -o dirs=${LAYER}=rw:${NFS_PREFIX}/global/root_base=ro unionfs ${TARGET}/
 	
-	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
+	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 	
 	# NSPID=$(cat "/sys/fs/cgroup/cpu/lxc/${UUID}/tasks" 2>/dev/null | head -n 1)
 	# [[ "${NSPID}" == "" ]] && false
@@ -129,8 +129,8 @@ EOF
 elif [[ "${TYPE}" == "slave" ]]; then
 	NATADDR=$1 ; shift
 	
-	mkdir -p ${NFS_PREFIX}/${USER_NAME}
-	cat <<EOF > ${NFS_PREFIX}/${USER_NAME}/${UUID}.lxc
+	mkdir -p ${NFS_PREFIX}/users/${USER_NAME}
+	cat <<EOF > ${NFS_PREFIX}/users/${USER_NAME}/${UUID}.lxc
 lxc.pts = 1024
 lxc.console = none
 lxc.tty = 1
@@ -181,16 +181,16 @@ lxc.mount.entry = /usr/local/bin/dockerinit ${TARGET}/.dockerinit none bind,ro 0
 lxc.mount.entry = /usr/local/sbin/container-init ${TARGET}/init none bind,ro 0 0
 lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet none bind,ro 0 0
 
-lxc.mount.entry = ${NFS_PREFIX}/${USER_NAME}/home ${TARGET}/root none rbind,rw 0 0
-lxc.mount.entry = ${NFS_PREFIX}/${USER_NAME}/ssh_keys ${TARGET}/root/.ssh none rbind,ro 0 0
-lxc.mount.entry = ${NFS_PREFIX}/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/users/${USER_NAME}/home ${TARGET}/root none rbind,rw 0 0
+lxc.mount.entry = ${NFS_PREFIX}/users/${USER_NAME}/ssh_keys ${TARGET}/root/.ssh none rbind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
 
 EOF
 	
-	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
+	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 elif [[ "${TYPE}" == "restart" ]]; then
 	lxc-stop -k -n ${UUID}
-	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
+	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 elif [[ "${TYPE}" == "stop" ]]; then
 	lxc-stop -k -n ${UUID}
 elif [[ "${TYPE}" == "purge" ]]; then

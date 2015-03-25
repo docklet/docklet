@@ -3,8 +3,6 @@
 
 . /etc/docklet/docklet.conf
 
-HOME_PREF=${NFS_PREFIX}
-
 [[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
 
 [[ "${NAT_ID}" == "" ]] && echo "NAT_ID not specified!" && exit 1
@@ -51,7 +49,7 @@ else
 	
 	HOST_NAME=nat-slave${OFFSET}
 
-	COMMON_HOST="${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}"
+	COMMON_HOST="${NFS_PREFIX}/users/${USER_NAME}/hosts-${NAT_ID}"
 	
 	if [[ "${CMD}" == "push" ]]; then
 		[[ "`echo ${SLAVES} | wc -w`" == "${SLAVE_LIMIT}" ]] && exit 1

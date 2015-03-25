@@ -2,8 +2,6 @@
 
 . /etc/docklet/docklet.conf
 
-HOME_PREF=${NFS_PREFIX}
-
 [[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
 
 [[ "${NAT_ID}" == "" ]] && echo "NAT_ID not specified!" && exit 1
@@ -29,14 +27,4 @@ fi
 NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null
 
 nohup ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} "docklet-weave ${OPER} ${NAME} ${NATIVE_IP} ${BRIDGE_IP}/24 ${BRIDGE_DEV} ${BRIDGE_GW} ${IMAGE}" >/dev/null 2>&1 &
-
-exit
-
-nohup ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${WORK_ON} " \
-  lockfile-create /tmp/docklet-images-load; \
-  USER_NAME=${USER_NAME} ham pull_2v ${IMAGE}; \
-  lockfile-remove /tmp/docklet-images-load; \
-  docklet-weave run ${NATIVE_IP} ${NAME} \
-    -v ${HOME_PREF}/${USER_NAME}/hosts-${NAT_ID}:/etc/hosts:ro \
-    -m ${TOTAL_MEMORY_LIMIT} -it --net=none ${NET_CONF} -h ${HOST_NAME} ${FOLK_FLAG} ${IMAGE} /sbin/initctl ${NATIVE_IP} ${MASTER_IP}" >/dev/null 2>&1 &
 

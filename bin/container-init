@@ -1,11 +1,5 @@
 #!/bin/bash
 
-#[[ "$#" != "2" ]] && exit
-
-#export NODE_IP=$1
-#export MASTER_IP=$2
-#export HOME=/root
-
 function init {
 
 	service ssh start
