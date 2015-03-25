@@ -145,6 +145,7 @@ for HOST in ${LIVE_HOSTS}; do
 
         ovs-vsctl add-port ovs-link gre-${HOST} -- set interface gre-${HOST} type=gre options:remote_ip=${HOST}
         ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no ${HOST} ovs-vsctl add-port ovs-link gre-${MY_IP} -- set interface gre-${MY_IP} type=gre options:remote_ip=${MY_IP} || true
+	break
 done
 
 log_msg "INFO" "Finish all initialization .."
