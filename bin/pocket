@@ -52,7 +52,8 @@ def main(command):
 			WORK_ON = TOTAL_MACHINE[NAT_ID % len(TOTAL_MACHINE)]
 			CONTAINER_ID = '%s-%d-0' % (USER_NAME, NAT_ID)
 			
-			sys_call('BRIDGE_DEV=%s BRIDGE_GW=%s BRIDGE_IP=%s USER_NAME=%s IMAGE=%s HOST_NAME=%s WORK_ON=%s NATIVE_IP=%s NAT_ID=%d NAME=%s cave' % (BRIDGE_DEV, BRIDGE_GW, BRIDGE_IP, USER_NAME, IMAGE, HOST_NAME, WORK_ON, MASTER_IP, NAT_ID, CONTAINER_ID))
+			sys_call('nohup ssh -o StrictHostKeyChecking=no %s docklet-weave master %s %s/24 %s %s %s >/dev/null 2>&1 &' % (WORK_ON, CONTAINER_ID, BRIDGE_IP, BRIDGE_DEV, BRIDGE_GW, IMAGE))
+			
 			sys_call('KEY="/docklet/instances/%d" VALUE="%s|%s|%s|%s:%s:%s:%s" etcdemu set' % (NAT_ID, USER_NAME, IMAGE, BRIDGE_IP, WORK_ON, CONTAINER_ID, MASTER_IP, HOST_NAME))
 			print(NAT_ID)
 		

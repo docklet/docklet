@@ -56,8 +56,10 @@ else
 
 		echo "${NATIVE_IP} ${HOST_NAME}" >> ${COMMON_HOST}
 
-		CONTAINER_ID=${USER_NAME}-${NAT_ID}-${OFFSET}
-		HOST_NAME=${HOST_NAME} WORK_ON=${WORK_ON} NATIVE_IP=${NATIVE_IP} NAME=${CONTAINER_ID} NAT_ID=${NAT_ID} cave >/dev/null 2>&1
+		CONTAINER_ID=${USER_NAME}-${NAT_ID}-${OFFSET}\
+		
+		nohup ssh -o StrictHostKeyChecking=no ${WORK_ON} docklet-weave slave ${CONTAINER_ID} >/dev/null 2>&1 &
+		
 		NEW_CLUSTER="${SLAVES}${WORK_ON}:${CONTAINER_ID}:${NATIVE_IP}:${HOST_NAME} ${MASTER}"
 		NEW_STATE=$(echo ${STATE} | awk -F\| '{$NF="";print}' | tr \  \|)${NEW_CLUSTER}
 		KEY=/docklet/instances/${NAT_ID} VALUE=${NEW_STATE} etcdemu set

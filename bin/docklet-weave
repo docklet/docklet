@@ -20,7 +20,10 @@ TARGET="${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}"
 
 if [[ "${TYPE}" == "master" ]]; then
 	
-	NATADDR=$1 ; shift
+	NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null 2>&1 || true
+
+	NATADDR=10.0.${NAT_ID}.${NODE_ID}
+	
 	IPADDR=$1 ; shift
 	IPDEV=$1 ; shift
 	IPGW=$1 ; shift
@@ -127,8 +130,11 @@ EOF
 	# rm -f /var/run/netns/$NSPID
 	
 elif [[ "${TYPE}" == "slave" ]]; then
-	NATADDR=$1 ; shift
 	
+	NATADDR=10.0.${NAT_ID}.${NODE_ID}
+	
+	NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null 2>&1 || true
+
 	mkdir -p ${NFS_PREFIX}/users/${USER_NAME}
 	cat <<EOF > ${NFS_PREFIX}/users/${USER_NAME}/${UUID}.lxc
 lxc.pts = 1024
@@ -189,6 +195,8 @@ EOF
 	
 	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 elif [[ "${TYPE}" == "restart" ]]; then
+	NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null 2>&1 || true
+
 	lxc-stop -k -n ${UUID}
 	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 elif [[ "${TYPE}" == "stop" ]]; then
