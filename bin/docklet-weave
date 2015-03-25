@@ -89,8 +89,8 @@ lxc.mount.entry = ${NFS_PREFIX}/users/${USER_NAME}/ssh_keys ${TARGET}/root/.ssh 
 lxc.mount.entry = ${NFS_PREFIX}/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
 
 EOF
-	LAYER="${NFS_PREFIX}/global/volumes/${USER_NAME}-${NAT_ID}"
-	mkdir -p ${TARGET}
+	mkdir -p ${TARGET} /home/sdb/native/layers
+	LAYER="/home/sdb/native/layers/${USER_NAME}-${NAT_ID}"
 	rm -rf ${LAYER}
 	
 	if [[ -e "${NFS_PREFIX}/global/images/pub_${IMAGE}" ]]; then
@@ -105,7 +105,7 @@ EOF
 	else
 		false
 	fi
-	mount -t aufs -o dirs=${LAYER}=rw:${NFS_PREFIX}/global/root_base=ro unionfs ${TARGET}/
+	mount -t aufs -o dirs=${LAYER}=rw:/docklet=ro unionfs ${TARGET}/
 	
 	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 	
@@ -195,11 +195,12 @@ elif [[ "${TYPE}" == "stop" ]]; then
 	lxc-stop -k -n ${UUID}
 elif [[ "${TYPE}" == "purge" ]]; then
 	umount -l ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID} || true
-	rm -rf ${NFS_PREFIX}/global/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}
+	rm -rf /home/sdb/native/layers/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}
 elif [[ "${TYPE}" == "commit" ]]; then
 	IMAGE_NAME=$1 ; shift
 	umount -l ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID} || true
-	mv ${NFS_PREFIX}/global/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/images/self_${USER_NAME}_${IMAGE_NAME}
+	mv /home/sdb/native/layers/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/self_${USER_NAME}_${IMAGE_NAME}
+	mv ${NFS_PREFIX}/global/self_${USER_NAME}_${IMAGE_NAME} ${NFS_PREFIX}/global/images/self_${USER_NAME}_${IMAGE_NAME}
 	rm -rf ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}
 elif [[ "${TYPE}" == "find" ]]; then
 	lxc-info -n ${UUID} 2>/dev/null | grep RUNNING >/dev/null
