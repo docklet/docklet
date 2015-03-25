@@ -27,7 +27,7 @@ done
 echo
 
 echo "[User Images]"
-for ITEM in `USER_NAME=root ham list_3v`; do
-	echo "* ${ITEM}" | awk -F\: '{ print $1 }'
+for ITEM in `USER_NAME=root pocket images`; do
+	echo "* ${ITEM}"
 done
 echo "=============================================="

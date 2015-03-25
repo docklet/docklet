@@ -109,9 +109,7 @@ echo '["HOME=/root","PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbi
 
 if [[ "${PEERS}" == "" ]]; then
 	rm -rf ${NFS_PREFIX}/global/etcd
-	# if [[ "`USER_NAME=root ham list_3v | grep pub_root_base`" == "" ]]; then
-	# 	curl -L "${RES_URL}/pub_root_base.tgz" > ${NFS_PREFIX}/global/images/pub_root_base.tgz
-	# fi
+	# prepare pub_root_base
 fi
 
 log_msg "WARN" "etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS}"

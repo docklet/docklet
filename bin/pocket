@@ -70,9 +70,12 @@ def main(command):
 					print('%s|%s' % (NAT_ID, DATAS))
 		
 	elif command == 'images':
-		[USER_NAME] = get_environ(["USER_NAME"])
+		[USER_NAME, HOME_PREF] = get_environ(["USER_NAME", "NFS_PREFIX"])
 		
-		print(sys_call('USER_NAME=%s ham list_3v' % USER_NAME))
+		for image in sys_call('ls -F %s/global/images/ 2>/dev/null | grep /$' % HOME_PREF).strip().split():
+			[mod, owner, img] = image.split('_')
+			if mod == 'pub' or USER_NAME == 'root' or USER_NAME == owner: 
+				print(image[:-1])
 		
 	elif command == 'remove':
 		[USER_NAME, NAT_ID, HOME_PREF] = get_environ(["USER_NAME", "NAT_ID", "NFS_PREFIX"])
@@ -94,7 +97,7 @@ def main(command):
 		if not re.match('^[0-9,a-z,\-]{1,20}$', IMAGE_NAME):
 			raise Exception("image name not allowed")
 		GENERATE='%s_%s' % (USER_NAME, IMAGE_NAME)
-		if sys_call('USER_NAME=%s ham list_3v | grep %s' % (USER_NAME, GENERATE)) != None:
+		if sys_call('USER_NAME=%s pocket images | grep %s$' % (USER_NAME, GENERATE)) != None:
 			raise Exception("image already exists")
 		[OWNER, USE_IMAGE, BRIDGE_IP, DOCKER_LIST] = sys_call('KEY="/docklet/instances/%s" etcdemu get' % NAT_ID).split('|')
 		if OWNER != USER_NAME:

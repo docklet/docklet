@@ -9,30 +9,7 @@ mkdir -p ${HOME_PREF}/images
 [[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
 
 
-if [[ "$1" == "push_2v" ]]; then
-	[[ -e ${HOME_PREF}/images/pub_$2.tgz ]] && exit 1
-	[[ -e ${HOME_PREF}/images/self_$2.tgz ]] && exit 1
-	[[ "`docker inspect "$2" 2>/dev/null`" == "[]" ]] && exit 1
-	
-	lockfile-create /tmp/docklet-commit.lock
-	rm -rf /tmp/docklet-commit-layers/ && mkdir -p /tmp/docklet-commit-layers/
-	docker save "$2" | tar xvf - --exclude="1e868fd4a983baa2b698e29c86fced779eb993f88f89df55882c5814ff0697be/*" -C /tmp/docklet-commit-layers/
-	cd /tmp/docklet-commit-layers/ && tar czvf ${HOME_PREF}/images/self_$2.tgz *
-	rm -rf /tmp/docklet-commit-layers/
-	lockfile-remove /tmp/docklet-commit.lock
-elif [[ "$1" == "pull_2v" ]]; then
-	[[ -e ${HOME_PREF}/images/pub_$2.tgz ]] && MOD=pub
-	[[ -e ${HOME_PREF}/images/self_$2.tgz ]] && MOD=self
-	[[ "${MOD}" == "" ]] && exit 1
-	
-	OWNER=$(echo $2 | awk -F\_ '{print $1}')
-	
-	[[ "${USER_NAME}" != "${OWNER}" ]] && [[ "${MOD}" == "self" ]] && exit 1
-	
-	[[ "`docker images | grep $2`" != "" ]] && exit 0
-	docker load < ${HOME_PREF}/images/${MOD}_$2.tgz
-	
-elif [[ "$1" == "drop_2v" ]]; then
+if [[ "$1" == "drop_2v" ]]; then
 	if [[ -e ${HOME_PREF}/images/pub_$2 ]] || [[ -e ${HOME_PREF}/images/self_$2 ]]; then
 		rm -rf ${HOME_PREF}/images/pub_$2 ${HOME_PREF}/images/self_$2
 	else
@@ -46,20 +23,5 @@ elif [[ "$1" == "switch_2v" ]]; then
 	OWN="`echo $2 | awk -F\_ '{ print $1 }'`"
 	IMG="`echo $2 | awk -F\_ '{ print $2 }'`"
 	mv ${HOME_PREF}/images/${MOD}_${OWN}_${IMG} ${HOME_PREF}/images/${NEW_MOD}_${OWN}_${IMG}
-elif [[ "$1" == "list_3v" ]]; then
-	[[ "${USER_NAME}" == "" ]] && echo "USER_NAME (like, root) not specified!" && exit 1
-	
-	IMAGES=$(ls -F ${HOME_PREF}/images 2>/dev/null | grep /$)
-	
-	[[ "${IMAGES}" == "" ]] && exit 0
-	
-	for ITEM in ${IMAGES}; do
-		IMAGE=$(basename ${ITEM})
-		MOD="`echo ${IMAGE} | awk -F\_ '{ print $1 }'`"
-		OWN="`echo ${IMAGE} | awk -F\_ '{ print $2 }'`"
-		if [[ "${MOD}" == "pub" ]] || [[ "${OWN}" == "${USER_NAME}" ]] || [[ "root" == "${USER_NAME}" ]]; then
-			echo "${IMAGE}:-"
-		fi
-	done
 fi
 
