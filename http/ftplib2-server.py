@@ -14,7 +14,7 @@ class PamAuthorizer(DummyAuthorizer):
                 raise AuthenticationFailed(msg)
         elif not pam.authenticate(username, password):
                 raise AuthenticationFailed(msg)
-        homedir = '/mnt/%s/home' % username
+        homedir = '/mnt/users/%s/home' % username
         os.system('mkdir -p %s' % homedir)
         self.user_table[username] = {}
         self.user_table[username]['msg_login'] = 'Login successful.'

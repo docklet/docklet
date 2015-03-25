@@ -188,7 +188,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		form = cgi.FieldStorage(fp=self.rfile, headers=self.headers,environ={'REQUEST_METHOD':'POST','CONTENT_TYPE': "text/html"})
 
 		try:
-			if form['key'].file.read().strip() != commands.getoutput("cat /mnt/%s/ssh_keys/id_rsa" % form['user'].value).strip():
+			if form['key'].file.read().strip() != commands.getoutput("cat /mnt/users/%s/ssh_keys/id_rsa" % form['user'].value).strip():
 				raise Exception("user's key not matched")
 			context = self.path.split('?')[0]
 			if not context.endswith("/"):
