@@ -199,8 +199,7 @@ elif [[ "${TYPE}" == "purge" ]]; then
 elif [[ "${TYPE}" == "commit" ]]; then
 	IMAGE_NAME=$1 ; shift
 	umount -l ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID} || true
-	mv /home/sdb/native/layers/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/self_${USER_NAME}_${IMAGE_NAME}
-	mv ${NFS_PREFIX}/global/self_${USER_NAME}_${IMAGE_NAME} ${NFS_PREFIX}/global/images/self_${USER_NAME}_${IMAGE_NAME}
+	mv /home/sdb/native/layers/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/images/self_${USER_NAME}_${IMAGE_NAME}
 	rm -rf ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}
 elif [[ "${TYPE}" == "find" ]]; then
 	lxc-info -n ${UUID} 2>/dev/null | grep RUNNING >/dev/null
