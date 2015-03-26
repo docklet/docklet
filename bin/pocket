@@ -76,6 +76,23 @@ def main(command):
 			[mod, owner, img] = image.split('_')
 			if mod == 'pub' or USER_NAME == 'root' or USER_NAME == owner: 
 				print(image[:-1])
+	
+	elif command == 'rmi':
+		[USER_NAME, HOME_PREF, IMAGE] = get_environ(["USER_NAME", "NFS_PREFIX", "IMAGE"])
+		if not re.match('^[0-9,a-z,\-]{1,20}$', IMAGE):
+			raise Exception("image name not allowed")
+		sys_call('rm -rf %s/global/images/*_%s_%s' % (HOME_PREF, USER_NAME, IMAGE))
+	
+	elif command == 'chi':
+		[USER_NAME, HOME_PREF, IMAGE] = get_environ(["USER_NAME", "NFS_PREFIX", "IMAGE"])
+		if not re.match('^[0-9,a-z,\-]{1,20}$', IMAGE):
+			raise Exception("image name not allowed")
+		origin = sys_call('echo %s/global/images/*_%s_%s 2>/dev/null' % (HOME_PREF, USER_NAME, IMAGE))
+		if origin == None or origin.find('*')!=-1:
+			raise Exception("image not exists")
+		mod = origin.split('/')[-1].split('_')[0]
+		new_mod = 'pub' if mod == 'self' else 'self'
+		sys_call('mv %s/global/images/%s_%s_%s %s/global/images/%s_%s_%s 2>/dev/null' % (HOME_PREF, mod, USER_NAME, IMAGE, HOME_PREF, new_mod, USER_NAME, IMAGE))
 		
 	elif command == 'remove':
 		[USER_NAME, NAT_ID, HOME_PREF] = get_environ(["USER_NAME", "NAT_ID", "NFS_PREFIX"])

@@ -153,8 +153,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				for item in output:
 					if len(item)==0:
 						continue
-					[name, size] = item.split(':')
-					[mod, owner, iden] = name.split('_')
+					[mod, owner, iden] = item.split('_')
 					images.append({"name":iden, "owner":owner, "access":mod })
 				return {'images': images }
 			else:
@@ -162,7 +161,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				if len(parts)==3:
 					[image, op, null] = parts
 					if op == "drop" or op == "switch":
-						if self.execute('ham %s_2v %s_%s' % (op, user, image)) == None:
+						if self.execute('USER_NAME=%s IMAGE=%s pocket %s' % (user, image, 'chi' if op=='switch' else 'rmi')) == None:
 							raise Exception("image not found")
 						return {}
 		elif context == "/portals/":
