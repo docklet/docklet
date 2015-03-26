@@ -49,7 +49,7 @@ else
 	
 	HOST_NAME=nat-slave${OFFSET}
 
-	COMMON_HOST="${NFS_PREFIX}/users/${USER_NAME}/hosts-${NAT_ID}"
+	COMMON_HOST="${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID}"
 	
 	if [[ "${CMD}" == "push" ]]; then
 		[[ "`echo ${SLAVES} | wc -w`" == "${SLAVE_LIMIT}" ]] && exit 1

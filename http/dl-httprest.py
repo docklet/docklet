@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, subprocess, pam, json, commands, sys
+import os, subprocess, pam, json, commands, sys, httplib
 import posixpath, BaseHTTPServer, urllib, cgi, shutil, mimetypes
 from StringIO import StringIO
 
@@ -23,9 +23,9 @@ curl -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key -F saveas=aaa "http:/
 
 class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		
-	def execute(self, command):
-		sys.stderr.write("[RPC] %s\n" % ("%s %s 2>/dev/null" % (self.WORK_ON, command)))
-		(status, output) = commands.getstatusoutput("%s %s 2>/dev/null" % (self.WORK_ON, command))
+	def execute(self, command, node = os.environ['WORK_ON']):
+		sys.stderr.write("[RPC] ssh %s %s 2>/dev/null\n" % (node, command))
+		(status, output) = commands.getstatusoutput("ssh %s %s 2>/dev/null" % (node, command))
 		return output if status==0 else None
 
 	def on_get_request(self, context, request):
@@ -64,6 +64,15 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		self.wfile.write('\n')
 		self.wfile.close()
 		return
+	
+	def etcd_http_database(self, path):
+		conn = httplib.HTTPConnection("%s:4001" % os.environ['WORK_ON'])
+		conn.request(method="GET",url='/v2/keys%s' % path)
+		stri = conn.getresponse().read()
+		obj = json.loads(stri)
+		if 'errorCode' in obj:
+			raise Exception("etcd undetermized")
+		return obj
 
 	def on_post_request(self, context, user, form):
 		if context.startswith('/clusters/'):
@@ -82,9 +91,16 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			if parts[0]=="create":
 				image = form['image'].value
 				portal = form['portal'].value
-				if self.execute('BRIDGE_IP=%s USER_NAME=%s IMAGE=%s pocket create' % (portal, user, image)) == None:
+				
+				obj = self.etcd_http_database('/_etcd/machines')
+				nodes = obj['node']['nodes']
+				[a, b, c, d] = portal.split('.')
+				ind = ((int(a)<<24)|(int(b)<<16)|(int(c)<<8)|(int(d)))%len(nodes)
+				WORK_ON = nodes[ind]['key'].split('/')[-1]
+				
+				if self.execute('THIS_HOST=%s BRIDGE_IP=%s USER_NAME=%s IMAGE=%s pocket create' % (WORK_ON, portal, user, image), WORK_ON) == None:
 					raise Exception("create operation failed")
-				return {}
+				return {'workon': WORK_ON, 'portal': portal}
 			
 			clusterInt = int(parts[0])
 			op = parts[1]
@@ -123,14 +139,13 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				if self.execute('USER_NAME=%s NAT_ID=%s CMD=restart docklet-regen' % (user, clusterInt))==None:
 					raise Exception("restart operation failed")
 				return {}
-			elif op == "remove":
-				if self.execute('USER_NAME=%s NAT_ID=%s pocket remove' % (user, clusterInt))==None:
-					raise Exception("remove operation failed")
-				return {}
 			elif op == "commit":
-				if self.execute('USER_NAME=%s NAT_ID=%s IMAGE_NAME=%s pocket save' % (user, clusterInt, form['saveas'].value))==None:
-					raise Exception("commit operation failed")
-				return {}
+				obj = self.etcd_http_database('/docklet/instances/%s' % clusterInt)
+				WORK_ON = obj['node']['value'].strip().split('|')[-1].strip().split()[-1].strip().split(':')[0]
+				saveas = ('IMAGE_NAME=%s' % form['saveas'].value) if 'saveas' in form else ''
+				if self.execute('USER_NAME=%s NAT_ID=%s %s pocket save' % (user, clusterInt, saveas), WORK_ON)==None:
+					raise Exception("exit operation failed")
+				return {'master': WORK_ON, 'natid': clusterInt}
 			else:
 				nodeRank = op
 				nodes = self.execute('KEY=/docklet/instances/%s etcdemu get' % clusterInt)
@@ -187,7 +202,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		form = cgi.FieldStorage(fp=self.rfile, headers=self.headers,environ={'REQUEST_METHOD':'POST','CONTENT_TYPE': "text/html"})
 
 		try:
-			if form['key'].file.read().strip() != commands.getoutput("cat /mnt/users/%s/ssh_keys/id_rsa" % form['user'].value).strip():
+			if form['key'].file.read().strip() != commands.getoutput("cat /mnt/global/users/%s/ssh_keys/id_rsa" % form['user'].value).strip():
 				raise Exception("user's key not matched")
 			context = self.path.split('?')[0]
 			if not context.endswith("/"):
@@ -219,6 +234,5 @@ if __name__ == '__main__':
 		DockletHTTPRequestHandler.ALLOW_ROOT = len(os.environ['NIS'])<=1
 	except:
 		DockletHTTPRequestHandler.ALLOW_ROOT = True
-	DockletHTTPRequestHandler.WORK_ON = "ssh root@%s " % os.environ['WORK_ON']
 	BaseHTTPServer.test(DockletHTTPRequestHandler, BaseHTTPServer.HTTPServer)
 

@@ -7,15 +7,15 @@
 
 [[ "${USER_NAME}" == "" ]] && echo "USER_NAME not specified!" && exit 1
 
-mkdir -p ${NFS_PREFIX}/users/${USER_NAME}/home/.ssh/ ${NFS_PREFIX}/users/${USER_NAME}/ssh_keys
+mkdir -p ${NFS_PREFIX}/global/users/${USER_NAME}/home/.ssh/ ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys
 
-if [[ ! -e "${NFS_PREFIX}/users/${USER_NAME}/ssh_keys/id_rsa" ]] || [[ "$@" == "update" ]]; then
-	rm -rf ${NFS_PREFIX}/users/${USER_NAME}/ssh_keys/*
-	echo -e '\n' | ssh-keygen -t rsa -P '' -f "${NFS_PREFIX}/users/${USER_NAME}/ssh_keys/id_rsa" >/dev/null 2>&1
-	mv "${NFS_PREFIX}/users/${USER_NAME}/ssh_keys/id_rsa.pub" "${NFS_PREFIX}/users/${USER_NAME}/ssh_keys/authorized_keys"
-	which puttygen >/dev/null 2>&1 && puttygen "${NFS_PREFIX}/users/${USER_NAME}/ssh_keys/id_rsa" -o "${NFS_PREFIX}/users/${USER_NAME}/ssh_keys/id_rsa.ppk"
+if [[ ! -e "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa" ]] || [[ "$@" == "update" ]]; then
+	rm -rf ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/*
+	echo -e '\n' | ssh-keygen -t rsa -P '' -f "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa" >/dev/null 2>&1
+	mv "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa.pub" "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys"
+	which puttygen >/dev/null 2>&1 && puttygen "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa" -o "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa.ppk"
 fi
 
-cat "${NFS_PREFIX}/users/${USER_NAME}/ssh_keys/id_rsa"
+cat "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa"
 echo -n "========"
-cat "${NFS_PREFIX}/users/${USER_NAME}/ssh_keys/id_rsa.ppk"
+cat "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa.ppk"

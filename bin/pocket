@@ -25,7 +25,7 @@ def get_environ(names, quit=True):
 
 def main(command):
 	if command == 'create':
-		[BRIDGE_DEV, BRIDGE_GW, IMAGE, BRIDGE_IP, USER_NAME, HOME_PREF, PORTAL_HTTP] = get_environ(["PORTAL_BRIDGE", "PORTAL_GATEWAY", "IMAGE", "BRIDGE_IP", "USER_NAME", "NFS_PREFIX", "PORTAL_HTTP"])
+		[THIS_HOST, BRIDGE_DEV, BRIDGE_GW, IMAGE, BRIDGE_IP, USER_NAME, HOME_PREF, PORTAL_HTTP] = get_environ(["THIS_HOST", "PORTAL_BRIDGE", "PORTAL_GATEWAY", "IMAGE", "BRIDGE_IP", "USER_NAME", "NFS_PREFIX", "PORTAL_HTTP"])
 		
 		if sys_call('KEY="/docklet/portal/%s/%s" etcdemu get 2>/dev/null' % (USER_NAME, BRIDGE_IP)) == 'inactive':
 			
@@ -39,22 +39,21 @@ def main(command):
 			MASTER_IP = '10.%d.%d.0' % (NAT_ID >> 8, NAT_ID & 255)
 			HOST_NAME = 'nat-master'
 			
-			sys_call('mkdir -p %s/users/%s/home' % (HOME_PREF, USER_NAME))
-			COMMON_HOST = '%s/users/%s/hosts-%d' % (HOME_PREF, USER_NAME, NAT_ID)
+			sys_call('mkdir -p %s/global/users/%s/home' % (HOME_PREF, USER_NAME))
+			COMMON_HOST = '%s/global/users/%s/hosts-%d' % (HOME_PREF, USER_NAME, NAT_ID)
 			
 			host = open(COMMON_HOST, "w")
 			host.write('127.0.0.1 localhost\n')
 			host.write('%s docklet-cloud\n' % PORTAL_HTTP)
 			host.write('%s host-%d_%s\n' % (BRIDGE_IP, NAT_ID, USER_NAME))
 			host.write('%s %s\n' % (MASTER_IP, HOST_NAME))
-			 
-			TOTAL_MACHINE = sys_call('KEY="/_etcd/machines" etcdemu ls | awk -F\/ \'{print $NF}\'').split()
-			WORK_ON = TOTAL_MACHINE[NAT_ID % len(TOTAL_MACHINE)]
+			host.close()
+			
 			CONTAINER_ID = '%s-%d-0' % (USER_NAME, NAT_ID)
 			
-			sys_call('nohup ssh -o StrictHostKeyChecking=no %s docklet-weave master %s %s/24 %s %s %s >/dev/null 2>&1 &' % (WORK_ON, CONTAINER_ID, BRIDGE_IP, BRIDGE_DEV, BRIDGE_GW, IMAGE))
+			sys_call('docklet-weave master %s %s/24 %s %s %s >/dev/null 2>&1' % (CONTAINER_ID, BRIDGE_IP, BRIDGE_DEV, BRIDGE_GW, IMAGE))
 			
-			sys_call('KEY="/docklet/instances/%d" VALUE="%s|%s|%s|%s:%s:%s:%s" etcdemu set' % (NAT_ID, USER_NAME, IMAGE, BRIDGE_IP, WORK_ON, CONTAINER_ID, MASTER_IP, HOST_NAME))
+			sys_call('KEY="/docklet/instances/%d" VALUE="%s|%s|%s|%s:%s:%s:%s" etcdemu set' % (NAT_ID, USER_NAME, IMAGE, BRIDGE_IP, THIS_HOST, CONTAINER_ID, MASTER_IP, HOST_NAME))
 			print(NAT_ID)
 		
 	elif command == 'list':
@@ -72,60 +71,57 @@ def main(command):
 	elif command == 'images':
 		[USER_NAME, HOME_PREF] = get_environ(["USER_NAME", "NFS_PREFIX"])
 		
-		for image in sys_call('ls -F %s/global/images/ 2>/dev/null | grep /$' % HOME_PREF).strip().split():
+		for image in sys_call('ls %s/global/images/ 2>/dev/null' % HOME_PREF).strip().split():
 			[mod, owner, img] = image.split('_')
 			if mod == 'pub' or USER_NAME == 'root' or USER_NAME == owner: 
-				print(image[:-1])
+				print(image[:-4])
 	
 	elif command == 'rmi':
 		[USER_NAME, HOME_PREF, IMAGE] = get_environ(["USER_NAME", "NFS_PREFIX", "IMAGE"])
 		if not re.match('^[0-9,a-z,\-]{1,20}$', IMAGE):
 			raise Exception("image name not allowed")
-		sys_call('rm -rf %s/global/images/*_%s_%s' % (HOME_PREF, USER_NAME, IMAGE))
+		sys_call('rm -rf %s/global/images/*_%s_%s.tgz' % (HOME_PREF, USER_NAME, IMAGE))
 	
 	elif command == 'chi':
 		[USER_NAME, HOME_PREF, IMAGE] = get_environ(["USER_NAME", "NFS_PREFIX", "IMAGE"])
 		if not re.match('^[0-9,a-z,\-]{1,20}$', IMAGE):
 			raise Exception("image name not allowed")
-		origin = sys_call('echo %s/global/images/*_%s_%s 2>/dev/null' % (HOME_PREF, USER_NAME, IMAGE))
+		origin = sys_call('echo %s/global/images/*_%s_%s.tgz 2>/dev/null' % (HOME_PREF, USER_NAME, IMAGE))
 		if origin == None or origin.find('*')!=-1:
 			raise Exception("image not exists")
 		mod = origin.split('/')[-1].split('_')[0]
 		new_mod = 'pub' if mod == 'self' else 'self'
-		sys_call('mv %s/global/images/%s_%s_%s %s/global/images/%s_%s_%s 2>/dev/null' % (HOME_PREF, mod, USER_NAME, IMAGE, HOME_PREF, new_mod, USER_NAME, IMAGE))
-		
-	elif command == 'remove':
-		[USER_NAME, NAT_ID, HOME_PREF] = get_environ(["USER_NAME", "NAT_ID", "NFS_PREFIX"])
-		
-		[OWNER, USE_IMAGE, BRIDGE_IP, DOCKER_LIST] = sys_call('KEY="/docklet/instances/%s" etcdemu get' % NAT_ID).split('|')
-		if USER_NAME == OWNER:
-			DOCKER_NODES = DOCKER_LIST.strip().split()
-			for DOCKER_NODE in DOCKER_NODES:
-				[DOCKER_IP, DOCKER_ID, NATIVE_IP, HOST_NAME] = DOCKER_NODE.split(':')
-				sys_call('ssh -o StrictHostKeyChecking=no %s "docklet-weave stop %s"' % (DOCKER_IP, DOCKER_ID))
-			sys_call('nohup ssh -o StrictHostKeyChecking=no %s "docklet-weave purge %s-%s" >/dev/null 2>&1 &' % (DOCKER_IP, USER_NAME, NAT_ID))
-			sys_call('KEY="/docklet/portal/%s/%s" VALUE="inactive" etcdemu set' % (USER_NAME, BRIDGE_IP))
-			sys_call('KEY="/docklet/instances/%s" etcdemu rm' % NAT_ID)
-			os.remove('%s/users/%s/hosts-%s' % (HOME_PREF, USER_NAME, NAT_ID))
+		sys_call('mv %s/global/images/%s_%s_%s.tgz %s/global/images/%s_%s_%s.tgz 2>/dev/null' % (HOME_PREF, mod, USER_NAME, IMAGE, HOME_PREF, new_mod, USER_NAME, IMAGE))
 		
 	elif command == 'save':
-		[USER_NAME, NAT_ID, IMAGE_NAME, HOME_PREF] = get_environ(["USER_NAME", "NAT_ID", "IMAGE_NAME", "NFS_PREFIX"])
+		[USER_NAME, NAT_ID, HOME_PREF] = get_environ(["USER_NAME", "NAT_ID", "NFS_PREFIX"])
 		
-		if not re.match('^[0-9,a-z,\-]{1,20}$', IMAGE_NAME):
-			raise Exception("image name not allowed")
-		GENERATE='%s_%s' % (USER_NAME, IMAGE_NAME)
-		if sys_call('USER_NAME=%s pocket images | grep %s$' % (USER_NAME, GENERATE)) != None:
-			raise Exception("image already exists")
+		try:
+			[IMAGE_NAME] = get_environ(["IMAGE_NAME"])
+		except:
+			IMAGE_NAME = None
+		
+		if IMAGE_NAME != None:
+			if not re.match('^[0-9,a-z,\-]{1,20}$', IMAGE_NAME):
+				raise Exception("image name not allowed")
+			GENERATE='%s_%s' % (USER_NAME, IMAGE_NAME)
+			if sys_call('USER_NAME=%s pocket images | grep %s$' % (USER_NAME, GENERATE)) != None:
+				raise Exception("image already exists")
+		
 		[OWNER, USE_IMAGE, BRIDGE_IP, DOCKER_LIST] = sys_call('KEY="/docklet/instances/%s" etcdemu get' % NAT_ID).split('|')
 		if OWNER != USER_NAME:
 			raise Exception("wrong container owners")
+		
 		for DOCKER_NODE in DOCKER_LIST.strip().split():
 			[DOCKER_IP, DOCKER_ID, NATIVE_IP, HOST_NAME] = DOCKER_NODE.split(':')
-			sys_call('ssh -o StrictHostKeyChecking=no %s "docklet-weave stop %s"' % (DOCKER_IP, DOCKER_ID))
-		sys_call('nohup ssh -o StrictHostKeyChecking=no %s "docklet-weave commit %s-%s %s; docklet-weave purge %s-%s" >/dev/null 2>&1 &' % (DOCKER_IP, USER_NAME, NAT_ID, IMAGE_NAME, USER_NAME, NAT_ID))
+			sys_call('docklet-weave stop %s' % DOCKER_ID)
+		if IMAGE_NAME != None:
+			sys_call('docklet-weave commit %s-%s %s' % (USER_NAME, NAT_ID, IMAGE_NAME))
+		sys_call('docklet-weave purge %s-%s' % (USER_NAME, NAT_ID))
+		
 		sys_call('KEY="/docklet/portal/%s/%s" VALUE="inactive" etcdemu set' % (USER_NAME, BRIDGE_IP))
 		sys_call('KEY="/docklet/instances/%s" etcdemu rm' % NAT_ID)
-		os.remove('%s/users/%s/hosts-%s' % (HOME_PREF, USER_NAME, NAT_ID))
+		os.remove('%s/global/users/%s/hosts-%s' % (HOME_PREF, USER_NAME, NAT_ID))
 		
 	elif command == 'portal':
 		[USER_NAME] = get_environ(["USER_NAME"])
@@ -156,11 +152,11 @@ if __name__ == '__main__' and subprocess.getoutput("whoami") == 'root':
 	try:
 		etcd_lock()
 		main(sys.argv[1])
-		exit(0)
+		code = 0
 	except Exception as ex:
 		print(str(ex))
-		exit(1)
+		code = 1
 	finally:
 		etcd_unlock()
-
+	sys.exit(code)
 

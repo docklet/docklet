@@ -16,7 +16,7 @@ USER_NAME=$(echo ${UUID} | awk -F\- '{print $1}')
 NAT_ID=$(echo ${UUID} | awk -F\- '{print $2}')
 NODE_ID=$(echo ${UUID} | awk -F\- '{print $3}')
 
-TARGET="${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}"
+TARGET="${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID}"
 
 if [[ "${TYPE}" == "master" ]]; then
 	
@@ -28,9 +28,8 @@ if [[ "${TYPE}" == "master" ]]; then
 	IPDEV=$1 ; shift
 	IPGW=$1 ; shift
 	IMAGE=$1 ; shift
-	mkdir -p ${NFS_PREFIX}/users/${USER_NAME}
 	
-	cat <<EOF > ${NFS_PREFIX}/users/${USER_NAME}/${UUID}.lxc
+	cat <<EOF > ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc
 lxc.pts = 1024
 lxc.console = none
 lxc.tty = 1
@@ -87,30 +86,25 @@ lxc.mount.entry = /usr/local/bin/dockerinit ${TARGET}/.dockerinit none bind,ro 0
 lxc.mount.entry = /usr/local/sbin/container-init ${TARGET}/init none bind,ro 0 0
 lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet none bind,ro 0 0
 
-lxc.mount.entry = ${NFS_PREFIX}/users/${USER_NAME}/home ${TARGET}/root none rbind,rw 0 0
-lxc.mount.entry = ${NFS_PREFIX}/users/${USER_NAME}/ssh_keys ${TARGET}/root/.ssh none rbind,ro 0 0
-lxc.mount.entry = ${NFS_PREFIX}/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home ${TARGET}/root none rbind,rw 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys ${TARGET}/root/.ssh none rbind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
 
 EOF
-	mkdir -p ${TARGET} /home/sdb/native/layers
-	LAYER="/home/sdb/native/layers/${USER_NAME}-${NAT_ID}"
-	rm -rf ${LAYER}
+	LAYER="${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}"
+	mkdir -p ${TARGET} ${LAYER}
 	
-	if [[ -e "${NFS_PREFIX}/global/images/pub_${IMAGE}" ]]; then
-		cp -r "${NFS_PREFIX}/global/images/pub_${IMAGE}" ${LAYER}
-	elif [[ -e "${NFS_PREFIX}/global/images/self_${IMAGE}" ]]; then
-		OWNER=$(echo ${IMAGE} | awk -F\_ '{print $1}')
-		if [[ "${USER_NAME}" == "root" ]] || [[ "${USER_NAME}" == "${OWNER}" ]]; then
-			cp -r "${NFS_PREFIX}/global/images/self_${IMAGE}" ${LAYER}
-		else
-			false
-		fi
-	else
-		false
+	[[ -e "${NFS_PREFIX}/global/images/pub_${IMAGE}.tgz" ]] && MOD="pub"
+	[[ -e "${NFS_PREFIX}/global/images/self_${IMAGE}.tgz" ]] && MOD="self"
+	[[ -e "${NFS_PREFIX}/global/images/${MOD}_${IMAGE}.tgz" ]]
+	
+	tar xvf "${NFS_PREFIX}/global/images/${MOD}_${IMAGE}.tgz" -C ${LAYER} >/dev/null
+	if mountpoint -q ${TARGET}; then
+		umount -l ${TARGET}
 	fi
-	mount -t aufs -o dirs=${LAYER}=rw:/docklet=ro unionfs ${TARGET}/
+	mount -t aufs -o dirs=${LAYER}=rw:${NFS_PREFIX}/local/filesystem=ro unionfs ${TARGET}/
 	
-	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
+	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 	
 	# NSPID=$(cat "/sys/fs/cgroup/cpu/lxc/${UUID}/tasks" 2>/dev/null | head -n 1)
 	# [[ "${NSPID}" == "" ]] && false
@@ -135,8 +129,8 @@ elif [[ "${TYPE}" == "slave" ]]; then
 	
 	NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null 2>&1 || true
 
-	mkdir -p ${NFS_PREFIX}/users/${USER_NAME}
-	cat <<EOF > ${NFS_PREFIX}/users/${USER_NAME}/${UUID}.lxc
+	mkdir -p ${NFS_PREFIX}/global/users/${USER_NAME}
+	cat <<EOF > ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc
 lxc.pts = 1024
 lxc.console = none
 lxc.tty = 1
@@ -187,28 +181,29 @@ lxc.mount.entry = /usr/local/bin/dockerinit ${TARGET}/.dockerinit none bind,ro 0
 lxc.mount.entry = /usr/local/sbin/container-init ${TARGET}/init none bind,ro 0 0
 lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet none bind,ro 0 0
 
-lxc.mount.entry = ${NFS_PREFIX}/users/${USER_NAME}/home ${TARGET}/root none rbind,rw 0 0
-lxc.mount.entry = ${NFS_PREFIX}/users/${USER_NAME}/ssh_keys ${TARGET}/root/.ssh none rbind,ro 0 0
-lxc.mount.entry = ${NFS_PREFIX}/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home ${TARGET}/root none rbind,rw 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys ${TARGET}/root/.ssh none rbind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
 
 EOF
 	
-	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
+	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 elif [[ "${TYPE}" == "restart" ]]; then
 	NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null 2>&1 || true
 
 	lxc-stop -k -n ${UUID}
-	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
+	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 elif [[ "${TYPE}" == "stop" ]]; then
 	lxc-stop -k -n ${UUID}
 elif [[ "${TYPE}" == "purge" ]]; then
-	umount -l ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID} || true
-	rm -rf /home/sdb/native/layers/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}
+	umount -l ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} || true
+	rm -rf ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID}
 elif [[ "${TYPE}" == "commit" ]]; then
 	IMAGE_NAME=$1 ; shift
-	umount -l ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID} || true
-	mv /home/sdb/native/layers/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/images/self_${USER_NAME}_${IMAGE_NAME}
-	rm -rf ${NFS_PREFIX}/global/mounts/${USER_NAME}-${NAT_ID}
+	umount -l ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} || true
+	cd ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}
+	tar czvf ${NFS_PREFIX}/global/images/self_${USER_NAME}_${IMAGE_NAME}.tgz ./
+	cd ../.. && rm -rf ./mounts/${USER_NAME}-${NAT_ID} ./volumes/${USER_NAME}-${NAT_ID}
 elif [[ "${TYPE}" == "find" ]]; then
 	lxc-info -n ${UUID} 2>/dev/null | grep RUNNING >/dev/null
 elif [[ "${TYPE}" == "bridge" ]]; then
@@ -220,7 +215,7 @@ lxc.pts = 1024
 lxc.console = none
 lxc.tty = 1
 lxc.pivotdir = lxc_putold
-lxc.rootfs = ${NFS_PREFIX}/global/root_base
+lxc.rootfs = ${NFS_PREFIX}/local/filesystem
 lxc.utsname = core-service
 
 lxc.network.type = veth
@@ -252,20 +247,20 @@ lxc.cgroup.memory.soft_limit_in_bytes = 4294967296
 lxc.cgroup.memory.memsw.limit_in_bytes = 8589934592
 lxc.cgroup.cpu.cfs_quota_us = 1000000
 
-lxc.mount.entry = proc ${NFS_PREFIX}/global/root_base/proc proc nosuid,nodev,noexec 0 0
-lxc.mount.entry = sysfs ${NFS_PREFIX}/global/root_base/sys sysfs nosuid,nodev,noexec 0 0
-lxc.mount.entry = devpts ${NFS_PREFIX}/global/root_base/dev/pts devpts newinstance,ptmxmode=0666,nosuid,noexec 0 0
-lxc.mount.entry = shm ${NFS_PREFIX}/global/root_base/dev/shm tmpfs size=65536k,nosuid,nodev,noexec 0 0
+lxc.mount.entry = proc ${NFS_PREFIX}/local/filesystem/proc proc nosuid,nodev,noexec 0 0
+lxc.mount.entry = sysfs ${NFS_PREFIX}/local/filesystem/sys sysfs nosuid,nodev,noexec 0 0
+lxc.mount.entry = devpts ${NFS_PREFIX}/local/filesystem/dev/pts devpts newinstance,ptmxmode=0666,nosuid,noexec 0 0
+lxc.mount.entry = shm ${NFS_PREFIX}/local/filesystem/dev/shm tmpfs size=65536k,nosuid,nodev,noexec 0 0
 
-lxc.mount.entry = /dev/random ${NFS_PREFIX}/global/root_base/dev/random none bind,ro 0 0
-lxc.mount.entry = /dev/urandom ${NFS_PREFIX}/global/root_base/dev/urandom none bind,ro 0 0
-lxc.mount.entry = /dev/null ${NFS_PREFIX}/global/root_base/dev/null none bind,ro 0 0
+lxc.mount.entry = /dev/random ${NFS_PREFIX}/local/filesystem/dev/random none bind,ro 0 0
+lxc.mount.entry = /dev/urandom ${NFS_PREFIX}/local/filesystem/dev/urandom none bind,ro 0 0
+lxc.mount.entry = /dev/null ${NFS_PREFIX}/local/filesystem/dev/null none bind,ro 0 0
 
-lxc.mount.entry = ${NFS_PREFIX}/global/dockerenv ${NFS_PREFIX}/global/root_base/.dockerenv none bind,ro 0 0
-lxc.mount.entry = /usr/local/bin/dockerinit ${NFS_PREFIX}/global/root_base/.dockerinit none bind,ro 0 0
-lxc.mount.entry = /root ${NFS_PREFIX}/global/root_base/root none rbind,rw 0 0
-lxc.mount.entry = ${NFS_PREFIX} ${NFS_PREFIX}/global/root_base/mnt none rbind,rw 0 0
-lxc.mount.entry = /usr/local/lib/docklet-http ${NFS_PREFIX}/global/root_base/usr/local/lib/docklet-http none rbind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/dockerenv ${NFS_PREFIX}/local/filesystem/.dockerenv none bind,ro 0 0
+lxc.mount.entry = /usr/local/bin/dockerinit ${NFS_PREFIX}/local/filesystem/.dockerinit none bind,ro 0 0
+lxc.mount.entry = /root ${NFS_PREFIX}/local/filesystem/root none rbind,rw 0 0
+lxc.mount.entry = ${NFS_PREFIX} ${NFS_PREFIX}/local/filesystem/mnt none rbind,rw 0 0
+lxc.mount.entry = /usr/local/lib/docklet-http ${NFS_PREFIX}/local/filesystem/usr/local/lib/docklet-http none rbind,ro 0 0
 
 EOF
 	
