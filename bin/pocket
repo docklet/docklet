@@ -104,8 +104,9 @@ def main(command):
 		if IMAGE_NAME != None:
 			if not re.match('^[0-9,a-z,\-]{1,20}$', IMAGE_NAME):
 				raise Exception("image name not allowed")
-			GENERATE='%s_%s' % (USER_NAME, IMAGE_NAME)
-			if sys_call('USER_NAME=%s pocket images | grep %s$' % (USER_NAME, GENERATE)) != None:
+			GENERATE = '%s_%s' % (USER_NAME, IMAGE_NAME)
+			LOCALTION = '%s/global/images/%s_%s.tgz' % (HOME_PREF, '%s', GENERATE)
+			if os.path.exists(LOCALTION % 'pub') or os.path.exists(LOCALTION % 'self'):
 				raise Exception("image already exists")
 		
 		[OWNER, USE_IMAGE, BRIDGE_IP, DOCKER_LIST] = sys_call('KEY="/docklet/instances/%s" etcdemu get' % NAT_ID).split('|')
