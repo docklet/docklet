@@ -4,30 +4,55 @@ set -e
 
 . /etc/docklet/docklet.conf
 
+function log {
+	echo -e "\033[34m$@\033[0m\n"
+}
+
+clear
+
+log "# this is standard login interface .."
 curl "http://${PORTAL_HTTP}:8000/user/login?name=root&pass=any"
-read -p "# this is standard login interface .."
 
-curl -F user=root -F key=@${NFS_PREFIX}/global/users/root/ssh_keys/id_rsa "http://${PORTAL_HTTP}:8000/portals"
-read -p "# this is portals list .."
+curl "http://${PORTAL_HTTP}:8000/user/login?name=root&pass=any" 2>/dev/null | python -mjson.tool | grep openssh.: | awk -F\" '{print $4}' > ${HOME}/root.key
+sed -i 's/\\n/\n/g' ${HOME}/root.key
+chmod go-rw ${HOME}/root.key
 
-curl -F image=root_base -F portal=172.31.0.128 -F user=root -F key=@${NFS_PREFIX}/global/users/root/ssh_keys/id_rsa "http://${PORTAL_HTTP}:8000/clusters/create"
-read -p "# creating clusters .."
+read ; clear
 
-curl -F user=root -F key=@${NFS_PREFIX}/global/users/root/ssh_keys/id_rsa "http://${PORTAL_HTTP}:8000/clusters/1"
-read -p "# cluster information .."
+log "# this is portals list .."
+curl -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/portals"
+read ; clear
 
-curl -F user=root -F key=@${NFS_PREFIX}/global/users/root/ssh_keys/id_rsa "http://${PORTAL_HTTP}:8000/clusters/1/scaleup"
-read -p "# scaling clusters .."
+log "# this is images list .."
+curl -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/images"
+read ; clear
 
-ssh root@172.31.0.128 -i ${NFS_PREFIX}/global/users/root/ssh_keys/id_rsa
-read -p "# after login clusters 1 times.."
+log "# creating clusters .."
+curl -F image=root_base -F portal=172.31.0.128 -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/clusters/create"
+read ; clear
 
-curl -F user=root -F key=@${NFS_PREFIX}/global/users/root/ssh_keys/id_rsa "http://${PORTAL_HTTP}:8000/clusters/1/restart"
-read -p "# restart clusters .."
+log "# cluster information .."
+curl -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/clusters/1"
+read ; clear
 
-ssh root@172.31.0.128 -i ${NFS_PREFIX}/global/users/root/ssh_keys/id_rsa
-read -p "# after login clusters 2 times.."
+log "# scaling clusters .."
+curl -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/clusters/1/scaleup"
+read ; clear
 
-curl -F user=root -F key=@${NFS_PREFIX}/global/users/root/ssh_keys/id_rsa "http://${PORTAL_HTTP}:8000/clusters/1/remove"
-read -p "# remove clusters .."
+log "# try login clusters 1 times, nodes size should be 2.."
+ssh root@172.31.0.128 -i ${HOME}/root.key
+clear
 
+log "# restart clusters .."
+curl -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/clusters/1/restart"
+read ; clear
+
+log "# try login clusters 2 times, nodes size should be 2.."
+ssh root@172.31.0.128 -i ${HOME}/root.key
+clear
+
+log "# remove clusters .."
+curl -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/clusters/1/commit"
+read ; clear
+
+echo "All tests done."
