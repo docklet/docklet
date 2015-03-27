@@ -23,7 +23,7 @@ log_msg "INFO" "Docklet Cluster for Ubuntu distribution x86_64."
 . /etc/docklet/docklet.conf
 
 if [[ "`which etcd 2>/dev/null`" == "" ]]; then
-	apt-get install -y cgroup-lite lxc ethtool bridge-utils libapparmor1 nmap curl sshfs netcat-openbsd net-tools openssh-server openvswitch-switch
+	apt-get install -y cgroup-lite lxc ethtool bridge-utils libapparmor1 nmap curl sshfs netcat-openbsd net-tools openssh-server openvswitch-switch python
 	curl -L "${RES_URL}/docklet-bin-latest.tar.gz" > /tmp/docklet-bin.tgz
 	
 	cd /usr/local/bin
@@ -36,7 +36,7 @@ if [[ "`cat /proc/cmdline | grep cgroup`" == "" ]]; then
 		echo 'GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1"' >> /etc/default/grub
 		update-grub > /dev/stderr
 	fi
-	log_msg "ERROR" "Memory limit will be enabled after your next reboot, you should reboot system and run dl-join again. Otherwise memory limit will not work."
+	log_msg "ERROR" "###### PLEASE REBOOT YOUR SYSTEM AND RUN 'sudo dl-join' AGAIN! ######\n\nMemory limit will be enabled after your next reboot, you should reboot system and run dl-join again."
 fi
 
 ip link delete lxcbr0 >/dev/null 2>&1 || true

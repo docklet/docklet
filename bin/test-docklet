@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 . /etc/docklet/docklet.conf
 
 function log {
@@ -48,7 +46,7 @@ curl -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/clusters/
 read ; clear
 
 log "# try login clusters 2 times, nodes size should be 2.."
-ssh root@172.31.0.128 -i ${HOME}/root.key
+sleep 3; ssh root@172.31.0.128 -i ${HOME}/root.key
 clear
 
 log "# remove clusters .."
