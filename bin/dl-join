@@ -83,8 +83,6 @@ log_msg "INFO" "Make sure all resources are released .."
 
 mkdir -p ${NFS_PREFIX}/global ${NFS_PREFIX}/local
 
-mkdir -p ${NFS_PREFIX}/global/users ${NFS_PREFIX}/global/images
-
 mkdir -p ${NFS_PREFIX}/local/volumes/ ${NFS_PREFIX}/local/mounts/
 
 if [[ "${NFS_MOUNT_CMD}" != "" ]]; then
@@ -94,6 +92,8 @@ if [[ "${NFS_MOUNT_CMD}" != "" ]]; then
 	fi
 	`${NFS_MOUNT_CMD}`
 fi
+
+mkdir -p ${NFS_PREFIX}/global/users ${NFS_PREFIX}/global/images
 
 HOSTS="`blink ${MACHINE_CIDR}`"
 PEERS=""
