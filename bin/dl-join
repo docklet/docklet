@@ -85,7 +85,7 @@ mkdir -p ${NFS_PREFIX}/global ${NFS_PREFIX}/local
 
 mkdir -p ${NFS_PREFIX}/global/users ${NFS_PREFIX}/global/images
 
-mkdir -p ${NFS_PREFIX}/local/filesystem ${NFS_PREFIX}/local/volumes/ ${NFS_PREFIX}/local/mounts/
+mkdir -p ${NFS_PREFIX}/local/volumes/ ${NFS_PREFIX}/local/mounts/
 
 if [[ "${NFS_MOUNT_CMD}" != "" ]]; then
 	if mountpoint ${NFS_PREFIX}/global -q; then
@@ -105,6 +105,26 @@ for MIP in $HOSTS; do
         fi
 done
 
+if [[ ! -e "${NFS_PREFIX}/local/filesystem" ]]; then
+	mkdir -p ${NFS_PREFIX}/local/filesystem ${NFS_PREFIX}/global/images
+	cd ${NFS_PREFIX}/local/filesystem
+	touch .dockerenv .dockerinit
+	tar czvf ${NFS_PREFIX}/global/images/pub_root_base.tgz ./
+	curl -L "${RES_URL}/filesystem.tgz" > /tmp/filesystem.tgz
+	tar xvf /tmp/filesystem.tgz
+	rm -f /tmp/filesystem.tgz
+	cd ${NFS_PREFIX}/local/filesystem/dev
+	
+	rm random urandom tty tty1 null ptmx zero null console -f
+	mknod -m 622 console c 5 1
+	mknod -m 666 null c 1 3
+	mknod -m 666 zero c 1 5
+	mknod -m 666 ptmx c 5 2
+	mknod -m 666 tty c 5 0
+	mknod -m 444 random c 1 8
+	mknod -m 444 urandom c 1 9
+fi
+
 cd ${NFS_PREFIX}/global
 echo '["HOME=/root","PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin","TERM=xterm"]' > ./dockerenv
 
@@ -119,7 +139,6 @@ etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name 
 log_msg "INFO" "Waiting etcd to get ready .." && sleep 2
 
 domainname $(echo ${NIS_SERVER} | awk '{print $2}') >/dev/null 2>&1
-
 
 iptables -F
 iptables -t nat -F
