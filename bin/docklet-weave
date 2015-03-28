@@ -70,7 +70,7 @@ lxc.cgroup.memory.kmem.limit_in_bytes = 512m
 lxc.cgroup.memory.limit_in_bytes = 4294967296
 lxc.cgroup.memory.soft_limit_in_bytes = 4294967296
 lxc.cgroup.memory.memsw.limit_in_bytes = 8589934592
-lxc.cgroup.cpu.cfs_quota_us = 1000000
+lxc.cgroup.cpu.cfs_quota_us = 100000
 
 lxc.mount.entry = proc ${TARGET}/proc proc nosuid,nodev,noexec 0 0
 lxc.mount.entry = sysfs ${TARGET}/sys sysfs nosuid,nodev,noexec 0 0
@@ -165,7 +165,7 @@ lxc.cgroup.memory.kmem.limit_in_bytes = 512m
 lxc.cgroup.memory.limit_in_bytes = 4294967296
 lxc.cgroup.memory.soft_limit_in_bytes = 4294967296
 lxc.cgroup.memory.memsw.limit_in_bytes = 8589934592
-lxc.cgroup.cpu.cfs_quota_us = 1000000
+lxc.cgroup.cpu.cfs_quota_us = 100000
 
 lxc.mount.entry = proc ${TARGET}/proc proc nosuid,nodev,noexec 0 0
 lxc.mount.entry = sysfs ${TARGET}/sys sysfs nosuid,nodev,noexec 0 0
@@ -245,7 +245,7 @@ lxc.cgroup.memory.kmem.limit_in_bytes = 512m
 lxc.cgroup.memory.limit_in_bytes = 4294967296
 lxc.cgroup.memory.soft_limit_in_bytes = 4294967296
 lxc.cgroup.memory.memsw.limit_in_bytes = 8589934592
-lxc.cgroup.cpu.cfs_quota_us = 1000000
+lxc.cgroup.cpu.cfs_quota_us = 100000
 
 lxc.mount.entry = proc ${NFS_PREFIX}/local/filesystem/proc proc nosuid,nodev,noexec 0 0
 lxc.mount.entry = sysfs ${NFS_PREFIX}/local/filesystem/sys sysfs nosuid,nodev,noexec 0 0
