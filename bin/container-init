@@ -8,6 +8,8 @@ function init {
 		ping docklet-cloud -c 1 -w 2 && break
 	done
 
+	ssh nat-master true
+
 	if [[ "`hostname`" == "nat-master" ]]; then
 		true
 	else

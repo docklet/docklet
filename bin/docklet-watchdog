@@ -17,7 +17,7 @@ if [[ "`whoami`" == "root" ]] && [[ "${HOST}" != "" ]]; then
 		sleep 20
 	else
 		echo "* ${HOST}: I'm not leader" > /dev/stderr
-		
+		lxc-stop -k -n core-service >/dev/null 2>&1 || true
 		sleep 10
 	fi
 	
