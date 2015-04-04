@@ -28,7 +28,11 @@ function init {
 		bash ${FOLDER}/${FILE} >> ${LOGS}/${NODE_IP}-${FILE}-stdout 2>> ${LOGS}/${NODE_IP}-${FILE}-stderr
 	done
 
-	cd /root && bash
+	cd /root
+	
+	while true; do
+		sleep 10
+	done
 }
 
 init && exit
