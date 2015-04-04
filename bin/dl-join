@@ -126,7 +126,7 @@ if [[ ! -e "${NFS_PREFIX}/local/filesystem" ]]; then
 fi
 
 cd ${NFS_PREFIX}/global
-echo '["HOME=/root","PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin","TERM=xterm"]' > ./dockerenv
+echo '["HOME=/root","PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin","TERM=xterm"]' > ${NFS_PREFIX}/local/dockerenv
 
 if [[ "${PEERS}" == "" ]]; then
 	rm -rf ./etcd

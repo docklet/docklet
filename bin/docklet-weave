@@ -80,7 +80,7 @@ lxc.mount.entry = /dev/random ${TARGET}/dev/random none bind,ro 0 0
 lxc.mount.entry = /dev/urandom ${TARGET}/dev/urandom none bind,ro 0 0
 lxc.mount.entry = /dev/null ${TARGET}/dev/null none bind,ro 0 0
 
-lxc.mount.entry = ${NFS_PREFIX}/global/dockerenv ${TARGET}/.dockerenv none bind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/local/dockerenv ${TARGET}/.dockerenv none bind,ro 0 0
 lxc.mount.entry = /usr/local/bin/dockerinit ${TARGET}/.dockerinit none bind,ro 0 0
 lxc.mount.entry = /usr/local/sbin/container-init ${TARGET}/init none bind,ro 0 0
 lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet none bind,ro 0 0
@@ -174,7 +174,7 @@ lxc.mount.entry = /dev/random ${TARGET}/dev/random none bind,ro 0 0
 lxc.mount.entry = /dev/urandom ${TARGET}/dev/urandom none bind,ro 0 0
 lxc.mount.entry = /dev/null ${TARGET}/dev/null none bind,ro 0 0
 
-lxc.mount.entry = ${NFS_PREFIX}/global/dockerenv ${TARGET}/.dockerenv none bind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/local/dockerenv ${TARGET}/.dockerenv none bind,ro 0 0
 lxc.mount.entry = /usr/local/bin/dockerinit ${TARGET}/.dockerinit none bind,ro 0 0
 lxc.mount.entry = /usr/local/sbin/container-init ${TARGET}/init none bind,ro 0 0
 lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet none bind,ro 0 0
@@ -195,7 +195,7 @@ elif [[ "${TYPE}" == "stop" ]]; then
 	lxc-stop -k -n ${UUID}
 elif [[ "${TYPE}" == "purge" ]]; then
 	umount -l ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} || true
-	rm -rf ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID}
+	rm -rf ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc
 elif [[ "${TYPE}" == "commit" ]]; then
 	IMAGE_NAME=$1 ; shift
 	umount -l ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} || true
@@ -253,7 +253,7 @@ lxc.mount.entry = /dev/random ${NFS_PREFIX}/local/filesystem/dev/random none bin
 lxc.mount.entry = /dev/urandom ${NFS_PREFIX}/local/filesystem/dev/urandom none bind,ro 0 0
 lxc.mount.entry = /dev/null ${NFS_PREFIX}/local/filesystem/dev/null none bind,ro 0 0
 
-lxc.mount.entry = ${NFS_PREFIX}/global/dockerenv ${NFS_PREFIX}/local/filesystem/.dockerenv none bind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/local/dockerenv ${NFS_PREFIX}/local/filesystem/.dockerenv none bind,ro 0 0
 lxc.mount.entry = /usr/local/bin/dockerinit ${NFS_PREFIX}/local/filesystem/.dockerinit none bind,ro 0 0
 lxc.mount.entry = /root ${NFS_PREFIX}/local/filesystem/root none rbind,rw 0 0
 lxc.mount.entry = ${NFS_PREFIX} ${NFS_PREFIX}/local/filesystem/mnt none rbind,rw 0 0
