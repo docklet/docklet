@@ -101,7 +101,7 @@ EOF
 	if mountpoint -q ${TARGET}; then
 		umount -l ${TARGET}
 	fi
-	mount -t aufs -o br=${LAYER}=rw:${NFS_PREFIX}/local/filesystem=ro none ${TARGET}/
+	mount -t aufs -o br=${LAYER}=rw:${NFS_PREFIX}/local/filesystem=ro+wh none ${TARGET}/
 	
 	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 	
