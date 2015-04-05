@@ -92,6 +92,7 @@ lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARG
 EOF
 	LAYER="${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}"
 	mkdir -p ${TARGET} ${LAYER}
+	mount tmpfs ${LAYER} -t tmpfs -o size=2048m
 	
 	[[ -e "${NFS_PREFIX}/global/images/pub_${IMAGE}.tgz" ]] && MOD="pub"
 	[[ -e "${NFS_PREFIX}/global/images/self_${IMAGE}.tgz" ]] && MOD="self"
@@ -195,13 +196,16 @@ elif [[ "${TYPE}" == "stop" ]]; then
 	lxc-stop -k -n ${UUID}
 elif [[ "${TYPE}" == "purge" ]]; then
 	umount -l ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} || true
+	umount -l ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} || true
 	rm -rf ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc
 elif [[ "${TYPE}" == "commit" ]]; then
 	IMAGE_NAME=$1 ; shift
 	umount -l ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} || true
+	umount -l ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} || true
+
 	cd ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}
 	tar czvf ${NFS_PREFIX}/global/images/self_${USER_NAME}_${IMAGE_NAME}.tgz ./
-	cd ../.. && rm -rf ./mounts/${USER_NAME}-${NAT_ID} ./volumes/${USER_NAME}-${NAT_ID}
+	rm -rf ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc
 elif [[ "${TYPE}" == "find" ]]; then
 	lxc-info -n ${UUID} 2>/dev/null | grep RUNNING >/dev/null
 elif [[ "${TYPE}" == "bridge" ]]; then
