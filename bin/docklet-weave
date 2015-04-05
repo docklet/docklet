@@ -200,12 +200,9 @@ elif [[ "${TYPE}" == "purge" ]]; then
 	rm -rf ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc
 elif [[ "${TYPE}" == "commit" ]]; then
 	IMAGE_NAME=$1 ; shift
-	umount -l ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} || true
-	umount -l ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} || true
-
 	cd ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}
 	tar czvf ${NFS_PREFIX}/global/images/self_${USER_NAME}_${IMAGE_NAME}.tgz ./
-	rm -rf ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc
+	docklet-weave purge ${USER_NAME}-${NAT_ID}
 elif [[ "${TYPE}" == "find" ]]; then
 	lxc-info -n ${UUID} 2>/dev/null | grep RUNNING >/dev/null
 elif [[ "${TYPE}" == "bridge" ]]; then
