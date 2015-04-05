@@ -92,7 +92,7 @@ lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARG
 EOF
 	LAYER="${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}"
 	mkdir -p ${TARGET} ${LAYER}
-	mount tmpfs ${LAYER} -t tmpfs -o size=2048m
+	mount tmpfs ${LAYER} -t tmpfs -o size=4096m
 	
 	[[ -e "${NFS_PREFIX}/global/images/pub_${IMAGE}.tgz" ]] && MOD="pub"
 	[[ -e "${NFS_PREFIX}/global/images/self_${IMAGE}.tgz" ]] && MOD="self"
@@ -201,6 +201,7 @@ elif [[ "${TYPE}" == "purge" ]]; then
 elif [[ "${TYPE}" == "commit" ]]; then
 	IMAGE_NAME=$1 ; shift
 	cd ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}
+	rm -rf ./tmp ./var/cache/apt ./var/lib/apt
 	tar czvf ${NFS_PREFIX}/global/images/self_${USER_NAME}_${IMAGE_NAME}.tgz ./
 	docklet-weave purge ${USER_NAME}-${NAT_ID}
 elif [[ "${TYPE}" == "find" ]]; then
