@@ -194,10 +194,12 @@ elif [[ "${TYPE}" == "restart" ]]; then
 	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 elif [[ "${TYPE}" == "stop" ]]; then
 	lxc-stop -k -n ${UUID}
+	rm -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc
 elif [[ "${TYPE}" == "purge" ]]; then
 	umount -l ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} || true
 	umount -l ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} || true
-	rm -rf ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc
+	rm -rf ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID}
+	rm -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc
 elif [[ "${TYPE}" == "commit" ]]; then
 	IMAGE_NAME=$1 ; shift
 	cd ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}

@@ -78,7 +78,7 @@ else
 		WIPE_CONTENT=`cat ${COMMON_HOST} | head -n -1`
 		echo "${WIPE_CONTENT}" > ${COMMON_HOST}
 
-		nohup ssh -o StrictHostKeyChecking=no ${SAT} "lxc-stop -n ${ID} -k" >/dev/null 2>&1 &
+		nohup ssh -o StrictHostKeyChecking=no ${SAT} "docklet-weave stop ${ID}" >/dev/null 2>&1 &
 		
 		NEW_STATE=$(echo ${STATE} | awk -F\| '{$NF="";print}' | tr \  \|)$(echo ${SLAVES} | awk '{$NF=""; print}')${MASTER}
 		KEY=/docklet/instances/${NAT_ID} VALUE=${NEW_STATE} etcdemu set >/dev/null 2>&1
