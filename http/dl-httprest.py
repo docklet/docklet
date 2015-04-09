@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import traceback
 import os, subprocess, pam, json, commands, sys, httplib
 import posixpath, BaseHTTPServer, urllib, cgi, shutil, mimetypes
 from StringIO import StringIO
@@ -54,7 +55,8 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				[key, value] = param.split('=')
 				params[key] = value
 			obj = {'success':True, 'data': self.on_get_request(context, params)}
-		except Exception as e:
+		except Exception, e:
+			sys.stderr.write(traceback.format_exc())
 			obj = {'success':False, 'message': str(e)}
 		
 		self.send_response(200)
@@ -208,7 +210,8 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			if not context.endswith("/"):
 				context = context + "/"
 			obj = {'success':True, 'data': self.on_post_request(context, form['user'].value, form)}
-		except Exception as e:
+		except Exception, e:
+			sys.stderr.write(traceback.format_exc())
 			obj = {'success':False, 'message': str(e)}
 		
 		self.send_response(200)

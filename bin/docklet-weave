@@ -261,7 +261,8 @@ lxc.mount.entry = /dev/null ${NFS_PREFIX}/local/filesystem/dev/null none bind,ro
 
 lxc.mount.entry = ${NFS_PREFIX}/local/dockerenv ${NFS_PREFIX}/local/filesystem/.dockerenv none bind,ro 0 0
 lxc.mount.entry = /usr/local/bin/dockerinit ${NFS_PREFIX}/local/filesystem/.dockerinit none bind,ro 0 0
-lxc.mount.entry = /root ${NFS_PREFIX}/local/filesystem/root none rbind,rw 0 0
+lxc.mount.entry = /root/.ssh/id_rsa ${NFS_PREFIX}/local/filesystem/.id_rsa none bind,ro 0 0
+lxc.mount.entry = /root/.ssh/authorized_keys ${NFS_PREFIX}/local/filesystem/.authorized_keys none bind,ro 0 0
 lxc.mount.entry = ${NFS_PREFIX} ${NFS_PREFIX}/local/filesystem/mnt none rbind,rw 0 0
 lxc.mount.entry = /usr/local/lib/docklet-http ${NFS_PREFIX}/local/filesystem/usr/local/lib/docklet-http none rbind,ro 0 0
 

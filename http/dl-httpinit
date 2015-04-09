@@ -21,5 +21,5 @@ fi
 
 NIS="${LOCAL_NIS}" /usr/local/lib/docklet-http/ftplib2-server.py &
 
-WORK_ON="$1" NIS="${LOCAL_NIS}" /usr/local/lib/docklet-http/dl-httprest.py > ${HOME}/.docklet-httprest.log 2>&1
+WORK_ON="$1" NIS="${LOCAL_NIS}" /usr/local/lib/docklet-http/dl-httprest.py > ${HOME}/.docklet-httprest-stdout.log 2> ${HOME}/.docklet-httprest-stderr.log 
 
