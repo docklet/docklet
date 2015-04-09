@@ -19,7 +19,7 @@ NODE_ID=$(echo ${UUID} | awk -F\- '{print $3}')
 TARGET="${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID}"
 
 if [[ "${TYPE}" == "master" ]]; then
-	
+
 	NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null 2>&1 || true
 
 	NATADDR=10.0.${NAT_ID}.${NODE_ID}
@@ -86,8 +86,8 @@ lxc.mount.entry = /usr/local/sbin/container-init ${TARGET}/init none bind,ro 0 0
 lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet none bind,ro 0 0
 
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home ${TARGET}/nfs none rbind,rw 0 0
-lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/.id_rsa none bind,ro 0 0
-lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/.authorized_keys none bind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/root/.ssh/id_rsa none bind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/root/.ssh/authorized_keys none bind,ro 0 0
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
 
 EOF
@@ -182,8 +182,8 @@ lxc.mount.entry = /usr/local/sbin/container-init ${TARGET}/init none bind,ro 0 0
 lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet none bind,ro 0 0
 
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home ${TARGET}/nfs none rbind,rw 0 0
-lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/.id_rsa none bind,ro 0 0
-lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/.authorized_keys none bind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/root/.ssh/id_rsa none bind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/root/.ssh/authorized_keys none bind,ro 0 0
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
 
 EOF
@@ -261,8 +261,8 @@ lxc.mount.entry = /dev/null ${NFS_PREFIX}/local/filesystem/dev/null none bind,ro
 
 lxc.mount.entry = ${NFS_PREFIX}/local/dockerenv ${NFS_PREFIX}/local/filesystem/.dockerenv none bind,ro 0 0
 lxc.mount.entry = /usr/local/bin/dockerinit ${NFS_PREFIX}/local/filesystem/.dockerinit none bind,ro 0 0
-lxc.mount.entry = /root/.ssh/id_rsa ${NFS_PREFIX}/local/filesystem/.id_rsa none bind,ro 0 0
-lxc.mount.entry = /root/.ssh/authorized_keys ${NFS_PREFIX}/local/filesystem/.authorized_keys none bind,ro 0 0
+lxc.mount.entry = /root/.ssh/id_rsa ${NFS_PREFIX}/local/filesystem/root/.ssh/id_rsa none bind,ro 0 0
+lxc.mount.entry = /root/.ssh/authorized_keys ${NFS_PREFIX}/local/filesystem/root/.ssh/authorized_keys none bind,ro 0 0
 lxc.mount.entry = ${NFS_PREFIX} ${NFS_PREFIX}/local/filesystem/mnt none rbind,rw 0 0
 lxc.mount.entry = /usr/local/lib/docklet-http ${NFS_PREFIX}/local/filesystem/usr/local/lib/docklet-http none rbind,ro 0 0
 
