@@ -85,8 +85,9 @@ lxc.mount.entry = /usr/local/bin/dockerinit ${TARGET}/.dockerinit none bind,ro 0
 lxc.mount.entry = /usr/local/sbin/container-init ${TARGET}/init none bind,ro 0 0
 lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet none bind,ro 0 0
 
-lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home ${TARGET}/root none rbind,rw 0 0
-lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys ${TARGET}/root/.ssh none rbind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home ${TARGET}/nfs none rbind,rw 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/.id_rsa none bind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/.authorized_keys none bind,ro 0 0
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
 
 EOF
@@ -180,8 +181,9 @@ lxc.mount.entry = /usr/local/bin/dockerinit ${TARGET}/.dockerinit none bind,ro 0
 lxc.mount.entry = /usr/local/sbin/container-init ${TARGET}/init none bind,ro 0 0
 lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet none bind,ro 0 0
 
-lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home ${TARGET}/root none rbind,rw 0 0
-lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys ${TARGET}/root/.ssh none rbind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home ${TARGET}/nfs none rbind,rw 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/.id_rsa none bind,ro 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/.authorized_keys none bind,ro 0 0
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
 
 EOF
