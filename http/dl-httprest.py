@@ -32,6 +32,8 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 	def on_get_request(self, context, request):
 		if context=='/user/login/':
 			username = request['name']
+			if re.match('^[a-z0-9]{1,20}$',username)==None:
+				raise Exception('illegal name!')
 			password = request['pass']
 			if username=='root':
 				loggedIn = self.ALLOW_ROOT
@@ -93,6 +95,10 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			if parts[0]=="create":
 				image = form['image'].value
 				portal = form['portal'].value
+				if re.match('^[a-z0-9]{1,10}_[a-z0-9\-]{1,20}$', image)==None:
+					raise Exception("illegal image format, should like: owner_abc123-def")
+				if re.match('^[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}$', portal)==None:
+					raise Exception("illegal portal format, should like: 1.2.3.4")
 				
 				obj = self.etcd_http_database('/_etcd/machines')
 				nodes = obj['node']['nodes']
@@ -142,9 +148,12 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 					raise Exception("restart operation failed")
 				return {}
 			elif op == "commit":
+				img = form['saveas'].value
+				if img!='' and re.match('^[a-z0-9\-]{1,20}$', img)==None:
+					raise Exception("illegal image format")
 				obj = self.etcd_http_database('/docklet/instances/%s' % clusterInt)
 				WORK_ON = obj['node']['value'].strip().split('|')[-1].strip().split()[-1].strip().split(':')[0]
-				saveas = ('IMAGE_NAME=%s' % form['saveas'].value) if 'saveas' in form else ''
+				saveas = ('IMAGE_NAME=%s' % img) if 'saveas' in form else ''
 				if self.execute('USER_NAME=%s NAT_ID=%s %s pocket save' % (user, clusterInt, saveas), WORK_ON)==None:
 					raise Exception("exit operation failed")
 				return {'master': WORK_ON, 'natid': clusterInt}
@@ -177,6 +186,8 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				parts = context.split("/")
 				if len(parts)==3:
 					[image, op, null] = parts
+					if re.match('^[a-z0-9\-]{1,20}$',image)==None:
+						raise Exception("illegal image name")
 					if op == "drop" or op == "switch":
 						if self.execute('USER_NAME=%s IMAGE=%s pocket %s' % (user, image, 'chi' if op=='switch' else 'rmi')) == None:
 							raise Exception("image not found")
@@ -204,12 +215,15 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		form = cgi.FieldStorage(fp=self.rfile, headers=self.headers,environ={'REQUEST_METHOD':'POST','CONTENT_TYPE': "text/html"})
 
 		try:
-			if form['key'].file.read().strip() != commands.getoutput("cat /mnt/global/users/%s/ssh_keys/id_rsa" % form['user'].value).strip():
+			username = form['user'].value
+			if re.match('^[a-z0-9]{1,20}$',username)==None:
+				raise Exception('illegal name!')
+			if form['key'].file.read().strip() != commands.getoutput("cat /mnt/global/users/%s/ssh_keys/id_rsa" % username).strip():
 				raise Exception("user's key not matched")
 			context = self.path.split('?')[0]
 			if not context.endswith("/"):
 				context = context + "/"
-			obj = {'success':True, 'data': self.on_post_request(context, form['user'].value, form)}
+			obj = {'success':True, 'data': self.on_post_request(context, username, form)}
 		except Exception, e:
 			sys.stderr.write(traceback.format_exc())
 			obj = {'success':False, 'message': str(e)}
