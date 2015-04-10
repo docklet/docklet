@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import traceback
+import traceback, re
 import os, subprocess, pam, json, commands, sys, httplib
 import posixpath, BaseHTTPServer, urllib, cgi, shutil, mimetypes
 from StringIO import StringIO
@@ -148,12 +148,14 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 					raise Exception("restart operation failed")
 				return {}
 			elif op == "commit":
-				img = form['saveas'].value
-				if img!='' and re.match('^[a-z0-9\-]{1,20}$', img)==None:
-					raise Exception("illegal image format")
+				if 'saveas' in form:
+					saveas = 'IMAGE_NAME=' + form['saveas'].value
+					if re.match('^IMAGE_NAME=[a-z0-9\-]{1,20}$', saveas)==None:
+						raise Exception("illegal image format")
+				else:
+					saveas = ''
 				obj = self.etcd_http_database('/docklet/instances/%s' % clusterInt)
 				WORK_ON = obj['node']['value'].strip().split('|')[-1].strip().split()[-1].strip().split(':')[0]
-				saveas = ('IMAGE_NAME=%s' % img) if 'saveas' in form else ''
 				if self.execute('USER_NAME=%s NAT_ID=%s %s pocket save' % (user, clusterInt, saveas), WORK_ON)==None:
 					raise Exception("exit operation failed")
 				return {'master': WORK_ON, 'natid': clusterInt}
