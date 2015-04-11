@@ -6,8 +6,6 @@ function init {
 
 	while true; do ping docklet-cloud -c 1 -w 2 && break; done
 
-	[[ -e "/init" ]] && /init >/dev/null 2>&1 || true
-	
 	LOGS="/nfs/.docklet/logs"
 	cd /root && mkdir -p ${LOGS}
 	PREFIX=${LOGS}/$(docklet clusterid)-$(hostname)
