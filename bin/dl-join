@@ -113,6 +113,7 @@ if [[ ! -e "${NFS_PREFIX}/local/filesystem" ]]; then
 	curl -L "${RES_URL}/dependency/filesystem.tgz" > /tmp/filesystem.tgz
 	tar xvf /tmp/filesystem.tgz
 	rm -f /tmp/filesystem.tgz
+	mkdir ${NFS_PREFIX}/local/filesystem/nfs
 	cd ${NFS_PREFIX}/local/filesystem/dev
 	
 	rm random urandom tty tty1 null ptmx zero null console -f

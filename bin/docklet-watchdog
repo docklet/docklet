@@ -9,7 +9,7 @@ if [[ "`whoami`" == "root" ]] && [[ "${HOST}" != "" ]]; then
 	if [[ "${LEADER}" == "${HOST}" ]]; then
 		echo "* ${HOST}: I'm leader" > /dev/stderr
 		if ! docklet-weave find core-service ; then
-			echo "* ${HOST}: starting core-service .. (Try: curl 'http://${PORTAL_HTTP}:8000/user/login?name=root&pass=any' )" > /dev/stderr
+			echo "* ${HOST}: starting core-service .. (If service is in local deploy mode, try: test-docklet )" > /dev/stderr
 			
 			HOST=${HOST} docklet-weave bridge core-service
 			

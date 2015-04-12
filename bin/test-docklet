@@ -8,49 +8,56 @@ function log {
 
 clear
 
-log "# this is standard login interface .."
+log "# This is standard login interface:"
 curl "http://${PORTAL_HTTP}:8000/user/login?name=root&pass=any"
 
 curl "http://${PORTAL_HTTP}:8000/user/login?name=root&pass=any" 2>/dev/null | python -mjson.tool | grep openssh.: | awk -F\" '{print $4}' > ${HOME}/root.key
 sed -i 's/\\n/\n/g' ${HOME}/root.key
 chmod go-rw ${HOME}/root.key
 
-read ; clear
+echo ; read -p 'Press [Enter] to continue ..' ; clear
 
-log "# this is portals list .."
-curl -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/portals"
-read ; clear
+log "# This is portals list:"
+JSON_DATA=$(curl -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/portals" 2>/dev/null)
+echo "${JSON_DATA}"
+PORTAL=$(echo "${JSON_DATA}" | python -mjson.tool | grep ip | awk -F\" '{print $4}')
+echo "Get user portal for root: ${PORTAL}."
 
-log "# this is images list .."
+echo ; read -p 'Press [Enter] to continue ..' ; clear
+
+log "# This is images list:"
 curl -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/images"
-read ; clear
+echo ; read -p 'Press [Enter] to continue ..' ; clear
 
-log "# creating clusters .."
-curl -F image=root_base -F portal=172.31.0.128 -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/clusters/create"
-read ; clear
+log "# Creating clusters:"
+curl -F image=root_base -F portal=${PORTAL} -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/clusters/create"
+echo ; read -p 'Press [Enter] to continue ..' ; clear
 
-log "# cluster information .."
+log "# Cluster information:"
 curl -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/clusters/1"
-read ; clear
+echo ; read -p 'Press [Enter] to continue ..' ; clear
 
-log "# scaling clusters .."
+log "# Scaling clusters:"
 curl -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/clusters/1/scaleup"
-read ; clear
+echo ; read -p 'Press [Enter] to continue ..' ; clear
 
-log "# try login clusters 1 times, nodes size should be 2.."
-ssh root@172.31.0.128 -i ${HOME}/root.key
+log "# Try login clusters, nodes size should be 2:"
+ssh root@${PORTAL} -i ${HOME}/root.key docklet status
+ssh root@${PORTAL} -i ${HOME}/root.key
 clear
 
-log "# restart clusters .."
+log "# Restart clusters:"
 curl -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/clusters/1/restart"
-read ; clear
+echo ; read -p 'Press [Enter] to continue ..' ; clear
 
-log "# try login clusters 2 times, nodes size should be 2.."
-sleep 3; ssh root@172.31.0.128 -i ${HOME}/root.key
+log "# try login clusters for the second time, nodes size should be 2.."
+sleep 3
+ssh root@${PORTAL} -i ${HOME}/root.key docklet status
+ssh root@${PORTAL} -i ${HOME}/root.key
 clear
 
-log "# remove clusters .."
+log "# Remove clusters:"
 curl -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/clusters/1/commit"
-read ; clear
+echo ; read -p 'Press [Enter] to continue ..' ; clear
 
 echo "All tests done."
