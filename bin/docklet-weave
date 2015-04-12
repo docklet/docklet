@@ -133,6 +133,8 @@ elif [[ "${TYPE}" == "slave" ]]; then
 	mkdir -p ${TARGET}-${NODE_ID}
 	sshfs ${MASTER_LOC}:${TARGET} ${TARGET}-${NODE_ID}
 
+	TARGET=${TARGET}-${NODE_ID}
+
 	NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null 2>&1 || true
 
 	mkdir -p ${NFS_PREFIX}/global/users/${USER_NAME}
@@ -141,7 +143,7 @@ lxc.pts = 1024
 lxc.console = none
 lxc.tty = 1
 lxc.pivotdir = lxc_putold
-lxc.rootfs = ${TARGET}-${NODE_ID}
+lxc.rootfs = ${TARGET}
 lxc.utsname = nat-slave${NODE_ID}
 
 lxc.network.type = veth
