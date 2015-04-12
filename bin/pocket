@@ -113,7 +113,10 @@ def main(command):
 		if OWNER != USER_NAME:
 			raise Exception("wrong container owners")
 		
-		for DOCKER_NODE in DOCKER_LIST.strip().split():
+		nodes = DOCKER_LIST.strip().split()
+		if len(nodes)>1 or len(nodes[0].strip())==0:
+			raise Exception("not single master node")
+		for DOCKER_NODE in nodes:
 			[DOCKER_IP, DOCKER_ID, NATIVE_IP, HOST_NAME] = DOCKER_NODE.split(':')
 			sys_call('docklet-weave stop %s' % DOCKER_ID)
 		if IMAGE_NAME != None:

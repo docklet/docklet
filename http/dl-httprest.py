@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import traceback, re
+import traceback, re, random
 import os, subprocess, pam, json, commands, sys, httplib
 import posixpath, BaseHTTPServer, urllib, cgi, shutil, mimetypes
 from StringIO import StringIO
@@ -78,6 +78,18 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			raise Exception("etcd undetermized")
 		return obj
 
+	def etcd_get_clusters(self):
+		obj = self.etcd_http_database('/_etcd/machines')
+		clusters = []
+		for node in obj['node']['nodes']:
+			cluster = node['key'].split('/')[-1]
+			clusters.append(cluster)
+		return clusters
+
+	def etcd_get_random_cluster(self):
+		cl = self.etcd_get_clusters()
+		return cl[random.randint(0, len(cl)-1)]
+
 	def on_post_request(self, context, user, form):
 		if context.startswith('/clusters/'):
 			context = context[10:].strip()
@@ -128,7 +140,8 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 					nodes.append({'work_on':work_on, 'uuid':uuid, 'nat_id':nat_id, 'host_name':host_name})
 				return {'id': clusterInt, 'owner': owner, 'image': image, 'portal': portal, 'nodes': nodes}
 			elif op == "scaleup":
-				result = self.execute('USER_NAME=%s NAT_ID=%s CMD=push docklet-regen' % (user, clusterInt))
+				this_host = self.etcd_get_random_cluster()
+				result = self.execute('USER_NAME=%s NAT_ID=%s CMD=push THIS_HOST=%s docklet-regen' % (user, clusterInt, this_host), this_host)
 				if result==None:
 					raise Exception("nodes number exceed the upbound limit")
 				[ipaddr, workon, uuid, host] = result.split()

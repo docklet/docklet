@@ -58,12 +58,12 @@ else
 
 		CONTAINER_ID=${USER_NAME}-${NAT_ID}-${OFFSET}\
 		
-		nohup ssh -o StrictHostKeyChecking=no ${WORK_ON} docklet-weave slave ${CONTAINER_ID} >/dev/null 2>&1 &
+		docklet-weave slave ${CONTAINER_ID} ${WORK_ON}
 		
-		NEW_CLUSTER="${SLAVES}${WORK_ON}:${CONTAINER_ID}:${NATIVE_IP}:${HOST_NAME} ${MASTER}"
+		NEW_CLUSTER="${SLAVES}${THIS_HOST}:${CONTAINER_ID}:${NATIVE_IP}:${HOST_NAME} ${MASTER}"
 		NEW_STATE=$(echo ${STATE} | awk -F\| '{$NF="";print}' | tr \  \|)${NEW_CLUSTER}
 		KEY=/docklet/instances/${NAT_ID} VALUE=${NEW_STATE} etcdemu set
-		echo "${NATIVE_IP} ${WORK_ON} ${CONTAINER_ID} ${HOST_NAME}"
+		echo "${NATIVE_IP} ${THIS_HOST} ${CONTAINER_ID} ${HOST_NAME}"
 
 	elif [[ "${CMD}" == "pop" ]]; then
 
