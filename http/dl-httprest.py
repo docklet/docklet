@@ -117,10 +117,10 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				[a, b, c, d] = portal.split('.')
 				ind = ((int(a)<<24)|(int(b)<<16)|(int(c)<<8)|(int(d)))%len(nodes)
 				WORK_ON = nodes[ind]['key'].split('/')[-1]
-				
-				if self.execute('THIS_HOST=%s BRIDGE_IP=%s USER_NAME=%s IMAGE=%s pocket create' % (WORK_ON, portal, user, image), WORK_ON) == None:
+				NAT_ID = self.execute('THIS_HOST=%s BRIDGE_IP=%s USER_NAME=%s IMAGE=%s pocket create' % (WORK_ON, portal, user, image), WORK_ON)
+				if NAT_ID == None:
 					raise Exception("create operation failed")
-				return {'workon': WORK_ON, 'portal': portal}
+				return {'id': NAT_ID, 'workon': WORK_ON, 'portal': portal}
 			
 			clusterInt = int(parts[0])
 			op = parts[1]
