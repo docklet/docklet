@@ -83,6 +83,8 @@ log_msg "INFO" "Make sure all resources are released .."
 
 mkdir -p ${NFS_PREFIX}/global ${NFS_PREFIX}/local
 
+echo "${MY_IP}" > ${NFS_PREFIX}/local/network
+
 mkdir -p ${NFS_PREFIX}/local/volumes/ ${NFS_PREFIX}/local/mounts/
 
 if [[ "${NFS_MOUNT_CMD}" != "" ]]; then
@@ -170,7 +172,7 @@ done
 log_msg "INFO" "Finish all initialization .."
 
 while true; do
-	HOST=${MY_IP} docklet-watchdog
+	docklet-watchdog
 	sleep 5
 done
 

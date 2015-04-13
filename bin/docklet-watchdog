@@ -2,6 +2,8 @@
 
 . /etc/docklet/docklet.conf
 
+HOST=`cat ${NFS_PREFIX}/local/network 2>/dev/null`
+
 if [[ "`whoami`" == "root" ]] && [[ "${HOST}" != "" ]]; then
 	
 	LEADER=$(curl -L http://0.0.0.0:4001/v2/stats/leader 2>/dev/null | python -m json.tool 2>/dev/null | grep leader | awk -F\" '{print $4}')
