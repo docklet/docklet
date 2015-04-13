@@ -28,6 +28,8 @@ if [[ "${TYPE}" == "master" ]]; then
 	IPDEV=$1 ; shift
 	IPGW=$1 ; shift
 	IMAGE=$1 ; shift
+
+	mkdir -p ${NFS_PREFIX}/global/users/${USER_NAME}/home/.docklet/nodes/${NODE_ID} ${NFS_PREFIX}/global/users/${USER_NAME}/home/local
 	
 	cat <<EOF > ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc
 lxc.pts = 1024
@@ -88,6 +90,7 @@ lxc.mount.entry = /usr/local/sbin/container-init ${TARGET}/init none bind,ro 0 0
 lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet none bind,ro 0 0
 
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home ${TARGET}/nfs none rbind,rw 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home/.docklet/nodes/${NODE_ID} ${TARGET}/nfs/local none rbind,rw 0 0
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/root/.ssh/id_rsa none bind,ro 0 0
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/root/.ssh/authorized_keys none bind,ro 0 0
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
@@ -137,6 +140,8 @@ elif [[ "${TYPE}" == "slave" ]]; then
 	TARGET=${TARGET}-${NODE_ID}
 
 	NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null 2>&1 || true
+
+	mkdir -p ${NFS_PREFIX}/global/users/${USER_NAME}/home/.docklet/nodes/${NODE_ID} ${NFS_PREFIX}/global/users/${USER_NAME}/home/local
 
 	mkdir -p ${NFS_PREFIX}/global/users/${USER_NAME}
 	cat <<EOF > ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc
@@ -192,6 +197,7 @@ lxc.mount.entry = /usr/local/sbin/container-init ${TARGET}/init none bind,ro 0 0
 lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet none bind,ro 0 0
 
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home ${TARGET}/nfs none rbind,rw 0 0
+lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home/.docklet/nodes/${NODE_ID} ${TARGET}/nfs/local none rbind,rw 0 0
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/root/.ssh/id_rsa none bind,ro 0 0
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/root/.ssh/authorized_keys none bind,ro 0 0
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
