@@ -57,7 +57,7 @@ ssh root@${PORTAL} -i ${HOME}/root.key
 clear
 
 log "# Remove clusters:"
-curl -F user=root -F key=@${HOME}/root.key "http://${PORTAL_HTTP}:8000/clusters/1/commit"
+ssh root@${PORTAL} -i ${HOME}/root.key docklet remove
 echo ; read -p 'Press [Enter] to continue ..' ; clear
 
 echo "All tests done."
