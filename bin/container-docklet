@@ -18,22 +18,18 @@ elif [[ "$@" == "portal" ]]; then
 elif [[ "$@" == "status" ]]; then
 	for HOST in `cat /etc/hosts | grep \ nat- | awk '{print $2}'`; do
 		echo -n "* docklet ${HOST} : "
-		if ping -c 1 -w 5 ${HOST} >/dev/null 2>&1; then
-			echo "okay."
-		else
-			echo "no response."
-		fi
+		if ping -c 1 -w 5 ${HOST} >/dev/null 2>&1; then echo "okay."; else echo "no response."; fi
 	done
 elif [[ "$@" == "scaleup" ]]; then
-	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/scaleup 2>/dev/null | python -m json.tool
-	sleep 2
+	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/scaleup 2>/dev/null | python -m json.tool && sleep 2
 elif [[ "$@" == "scaledown" ]]; then
 	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/scaledown 2>/dev/null | python -m json.tool
-	sleep 2
 elif [[ "$1" == "commit" ]]; then
 	shift; if [[ "$@" == "" ]]; then exit 1; fi
+	while docklet scaledown | grep true >/dev/null; do true; done
 	curl -F user=$(docklet owner) -F saveas="$@" -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/commit 2>/dev/null | python -m json.tool
 elif [[ "$1" == "remove" ]]; then
+	while docklet scaledown | grep true >/dev/null; do true; done
         curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/commit 2>/dev/null | python -m json.tool
 elif [[ "$@" == "repair" ]]; then
 	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/repair 2>/dev/null | python -m json.tool
