@@ -29,24 +29,56 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		(status, output) = commands.getstatusoutput("ssh %s %s 2>/dev/null" % (node, command))
 		return output if status==0 else None
 
+	def authenticate_with_headers(self):
+		[username, password] = self.headers['Auth'].split('/', 1)
+		if re.match('^[a-z0-9]{1,20}$',username)==None:
+			raise Exception('illegal name!')
+		if username=='root':
+			loggedIn = self.ALLOW_ROOT
+		else:
+			loggedIn = pam.authenticate(username, password)
+		if not loggedIn:
+			raise Exception("authentication failed")
+		return username
+
 	def do_PUT(self):
+		try:
+			username = self.authenticate_with_headers()
+			[null, cmd, filename] = self.path.split('/', 2)
+			if cmd=='upload' or cmd=='upload-force':
+				if filename.find('/')!=-1 or filename.find('*')!=-1:
+					raise Exception('unsupported delimiter "/", "*" !')
+				if filename=='' or filename=='.' or filename=='..':
+					raise Exception('illegal filename "", ".", ".." !')
+				target = "/mnt/global/users/%s/home/%s" % (username, filename)
+				if os.path.exists(target) and cmd!='upload-force':
+					raise Exception('file with name %s already exists in your nfs directory, uploading cancelled (try upload-force)' % filename)
+				length = int(self.headers['content-length'])
+				host = open(target, "w")
+				read = 0
+				while read < length:
+					data = self.rfile.read(min(1000000, length - read))
+					host.write(data)
+					read += len(data)
+				host.close()
+				obj = {'success':True, 'file-location': "/nfs/%s" % filename}
+			else:
+				raise Exception('unsupported request!')
+		except Exception, e:
+			sys.stderr.write(traceback.format_exc())
+			obj = {'success':False, 'message': str(e)}
+		
 		self.send_response(200)
 		self.send_header("Content-type", "application/json")
 		self.end_headers()
-		self.wfile.write('{}\n')
+		self.wfile.write(json.dumps(obj))
+		self.wfile.write('\n')
 		self.wfile.close()
+		return
 
-	def on_get_request(self, context, request):
+	def on_get_request(self, context):
 		if context=='/user/login/':
-			[username, password] = self.headers['Auth'].split('/')
-			if re.match('^[a-z0-9]{1,20}$',username)==None:
-				raise Exception('illegal name!')
-			if username=='root':
-				loggedIn = self.ALLOW_ROOT
-			else:
-				loggedIn = pam.authenticate(username, password)
-			if not loggedIn:
-				raise Exception("authentication failed")
+			username = self.authenticate_with_headers()
 			obj = self.on_post_request("/keys/", username, None)
 			if len(self.on_post_request("/portals/", username, None)['portals'])==0:
 				self.execute("USER_NAME=%s CMD=app pocket portal" % username)
@@ -55,14 +87,10 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 	def do_GET(self):
 		try:
-			[context, args] = self.path.split('?')
+			context = self.path
 			if not context.endswith("/"):
 				context = context + "/"
-			params = {}
-			for param in args.split('&'):
-				[key, value] = param.split('=')
-				params[key] = value
-			obj = {'success':True, 'data': self.on_get_request(context, params)}
+			obj = {'success':True, 'data': self.on_get_request(context)}
 		except Exception, e:
 			sys.stderr.write(traceback.format_exc())
 			obj = {'success':False, 'message': str(e)}
