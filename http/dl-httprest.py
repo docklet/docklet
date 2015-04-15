@@ -29,12 +29,18 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		(status, output) = commands.getstatusoutput("ssh %s %s 2>/dev/null" % (node, command))
 		return output if status==0 else None
 
+	def do_PUT(self):
+		self.send_response(200)
+		self.send_header("Content-type", "application/json")
+		self.end_headers()
+		self.wfile.write('{}\n')
+		self.wfile.close()
+
 	def on_get_request(self, context, request):
 		if context=='/user/login/':
-			username = request['name']
+			[username, password] = self.headers['Auth'].split('/')
 			if re.match('^[a-z0-9]{1,20}$',username)==None:
 				raise Exception('illegal name!')
-			password = request['pass']
 			if username=='root':
 				loggedIn = self.ALLOW_ROOT
 			else:
