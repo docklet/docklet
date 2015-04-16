@@ -12,17 +12,14 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		(status, output) = commands.getstatusoutput("ssh %s %s 2>/dev/null" % (node, command))
 		return output if status==0 else None
 
-	def authenticate_with_headers(self):
-		try:
-			[username, password] = self.headers['Auth'].split('/', 1)
-		except:
-			[username, password] = self.path.split('=', 1)[1].split('/', 1)
+	def authenticate_with_headers(self, provider=None):
+		[username, password] = provider if provider!=None else self.headers['Auth'].split('/', 1)
 		if re.match('^[a-z0-9]{1,20}$',username)==None:
 			raise Exception('illegal name!')
 		if username=='root':
 			loggedIn = self.ALLOW_ROOT
 		else:
-			loggedIn = pam.authenticate(username, password)
+			loggedIn = (password == commands.getoutput("cat /mnt/global/users/%s/ssh_keys/id_rsa 2>/dev/null" % username).strip()) or pam.authenticate(username, password)
 		if not loggedIn:
 			raise Exception("authentication failed")
 		return username
@@ -249,23 +246,43 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 	
 	def do_POST(self):
 		try:
-			if self.path.startswith('/submit/'):
-				length = int(self.headers['content-length'])
-				if length>10000000:
-					raise Exception("file too large, submitting cancelled")
-				print str(dir(self.rfile))
-				return self.do_PUT()
-			form = cgi.FieldStorage(fp=self.rfile, headers=self.headers,environ={'REQUEST_METHOD':'POST','CONTENT_TYPE': "text/html"})
+			length = int(self.headers['content-length'])
+			if length>10000000:
+				raise Exception("data too large, submitting cancelled")
 			
-			username = form['user'].value
-			if re.match('^[a-z0-9]{1,20}$',username)==None:
-				raise Exception('illegal name!')
-			if form['key'].file.read().strip() != commands.getoutput("cat /mnt/global/users/%s/ssh_keys/id_rsa" % username).strip():
-				raise Exception("user's key not matched")
-			context = self.path.split('?')[0]
-			if not context.endswith("/"):
-				context = context + "/"
-			obj = {'success':True, 'data': self.on_post_request(context, username, form)}
+			if self.path=='/submit':
+				ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
+				if ctype != 'multipart/form-data':
+					raise Exception("data format not supported")
+				postvars = cgi.parse_multipart(self.rfile, pdict)
+				provider = ["\n".join(postvars['user']), "\n".join("\n".join(postvars['key']).split('\\n'))]
+				username = self.authenticate_with_headers(provider)
+				
+				filename = "".join(postvars['name'])
+				if filename.find('/')!=-1 or filename.find('*')!=-1:
+					raise Exception('unsupported delimiter "/", "*" !')
+				if filename=='' or filename=='.' or filename=='..':
+					raise Exception('illegal filename "", ".", ".." !')
+				
+				target = "/mnt/global/users/%s/home/%s" % (username, filename)
+				length = int(self.headers['content-length'])
+				host = open(target, "w")
+				host.write("\n".join(postvars['upload']))
+				host.close()
+				obj = {'success':True, 'file-location': "/nfs/%s" % filename}
+				
+				self.send_response(200)
+				self.end_headers()
+				self.wfile.close()
+				return
+			else:
+				form = cgi.FieldStorage(fp=self.rfile, headers=self.headers,environ={'REQUEST_METHOD':'POST','CONTENT_TYPE': "text/html"})
+			
+				username = self.authenticate_with_headers([form['user'].value, form['key'].file.read().strip()])
+				context = self.path.split('?')[0]
+				if not context.endswith("/"):
+					context = context + "/"
+				obj = {'success':True, 'data': self.on_post_request(context, username, form)}
 		except Exception, e:
 			sys.stderr.write(traceback.format_exc())
 			obj = {'success':False, 'message': str(e)}
