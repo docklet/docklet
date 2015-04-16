@@ -111,6 +111,7 @@ EOF
 	mkdir -p ${TARGET}/root/.ssh
 	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/root/.ssh/id_rsa
 	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/root/.ssh/authorized_keys
+	chmod go-rw ${TARGET}/root/.ssh/id_rsa
 	
 	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 	
