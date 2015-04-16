@@ -101,6 +101,7 @@ EOF
 
 #lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
 
+	mkdir -p "${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}/etc"
 	cat <<EOF > "${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}/etc/hosts"
 127.0.0.1 localhost
 192.168.192.10 docklet-cloud
