@@ -21,5 +21,7 @@ fi
 
 NIS="${LOCAL_NIS}" /usr/local/lib/docklet-http/ftplib2-server.py &
 
+# /usr/local/lib/docklet-http/wssh/dl-wssh -p 21 || true &
+
 WORK_ON="$1" NIS="${LOCAL_NIS}" /usr/local/lib/docklet-http/dl-httprest.py
 
