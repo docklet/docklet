@@ -91,12 +91,28 @@ lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet no
 
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home ${TARGET}/nfs none rbind,rw 0 0
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home/.docklet/nodes/${NODE_ID} ${TARGET}/nfs/local none rbind,rw 0 0
-lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
 
 EOF
 	LAYER="${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}"
 	mkdir -p ${TARGET} ${LAYER}
 	mount tmpfs ${LAYER} -t tmpfs -o size=4096m
+	
+	IP_CLEAN=$(echo ${IPADDR} | awk -F\/ '{print $1}')
+
+#lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
+
+	cat <<EOF > "${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}/etc/hosts"
+127.0.0.1 localhost
+192.168.192.10 docklet-cloud
+${IP_CLEAN} host-${NAT_ID}_${USER_NAME}
+10.0.${NAT_ID}.0 nat-master
+10.0.${NAT_ID}.1 nat-slave1
+10.0.${NAT_ID}.2 nat-slave2
+10.0.${NAT_ID}.3 nat-slave3
+10.0.${NAT_ID}.4 nat-slave4
+10.0.${NAT_ID}.5 nat-slave5
+10.0.${NAT_ID}.6 nat-slave6
+EOF
 	
 	[[ -e "${NFS_PREFIX}/global/images/pub_${IMAGE}.tgz" ]] && MOD="pub"
 	[[ -e "${NFS_PREFIX}/global/images/self_${IMAGE}.tgz" ]] && MOD="self"
@@ -201,9 +217,10 @@ lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet no
 
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home ${TARGET}/nfs none rbind,rw 0 0
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home/.docklet/nodes/${NODE_ID} ${TARGET}/nfs/local none rbind,rw 0 0
-lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
 
 EOF
+
+#lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
 	
 	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 elif [[ "${TYPE}" == "restart" ]]; then
