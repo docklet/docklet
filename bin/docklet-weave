@@ -91,8 +91,6 @@ lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet no
 
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home ${TARGET}/nfs none rbind,rw 0 0
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home/.docklet/nodes/${NODE_ID} ${TARGET}/nfs/local none rbind,rw 0 0
-lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/root/.ssh/id_rsa none bind,ro 0 0
-lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/root/.ssh/authorized_keys none bind,ro 0 0
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
 
 EOF
@@ -109,6 +107,10 @@ EOF
 		umount -l ${TARGET}
 	fi
 	mount -t aufs -o br=${LAYER}=rw:${NFS_PREFIX}/local/filesystem=ro+wh none ${TARGET}/
+	
+	mkdir -p ${TARGET}/root/.ssh
+	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/root/.ssh/id_rsa
+	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/root/.ssh/authorized_keys
 	
 	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 	
@@ -198,8 +200,6 @@ lxc.mount.entry = /usr/local/sbin/container-docklet ${TARGET}/usr/bin/docklet no
 
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home ${TARGET}/nfs none rbind,rw 0 0
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home/.docklet/nodes/${NODE_ID} ${TARGET}/nfs/local none rbind,rw 0 0
-lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/root/.ssh/id_rsa none bind,ro 0 0
-lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/root/.ssh/authorized_keys none bind,ro 0 0
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
 
 EOF
@@ -225,7 +225,7 @@ elif [[ "${TYPE}" == "purge" ]]; then
 elif [[ "${TYPE}" == "commit" ]]; then
 	IMAGE_NAME=$1 ; shift
 	cd ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}
-	rm -rf ./tmp ./var/cache/apt ./var/lib/apt
+	rm -rf ./tmp ./var/cache/apt ./var/lib/apt ./root/.ssh
 	tar czvf ${NFS_PREFIX}/global/images/self_${USER_NAME}_${IMAGE_NAME}.tgz ./
 	docklet-weave purge ${USER_NAME}-${NAT_ID}
 elif [[ "${TYPE}" == "find" ]]; then
