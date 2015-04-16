@@ -5,23 +5,6 @@ import os, subprocess, pam, json, commands, sys, httplib
 import posixpath, BaseHTTPServer, urllib, cgi, shutil, mimetypes
 from StringIO import StringIO
 
-"""
-curl "http://192.168.4.200:8000/user/login?name=cuiwei13&pass=<pass>" 2>/dev/null | python -mjson.tool | grep "\-\-\-" | awk -F\" '{ print $4}' | sed 's/\\n/\n/g' > cuiwei13.key
-
-curl -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key "http://192.168.4.200:8000/keys"
-curl -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key "http://192.168.4.200:8000/clusters"
-curl -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key "http://192.168.4.200:8000/portals"
-curl -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key "http://192.168.4.200:8000/images"
-
-curl -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key "http://192.168.4.200:8000/clusters"
-curl -F image=root_base -F portal=192.168.4.41 -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key "http://192.168.4.200:8000/clusters/create"
-
-curl -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key "http://192.168.4.200:8000/clusters/1"
-
-curl -F user=cuiwei13 -F key=@${HOME}/Desktop/cuiwei13.key -F saveas=aaa "http://192.168.4.200:8000/clusters/1/commit"
-
-"""
-
 class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		
 	def execute(self, command, node = os.environ['WORK_ON']):
@@ -30,7 +13,10 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		return output if status==0 else None
 
 	def authenticate_with_headers(self):
-		[username, password] = self.headers['Auth'].split('/', 1)
+		try:
+			[username, password] = self.headers['Auth'].split('/', 1)
+		except:
+			[username, password] = self.path.split('=', 1)[1].split('/', 1)
 		if re.match('^[a-z0-9]{1,20}$',username)==None:
 			raise Exception('illegal name!')
 		if username=='root':
@@ -45,6 +31,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		try:
 			username = self.authenticate_with_headers()
 			[null, cmd, filename] = self.path.split('/', 2)
+			filename=filename.split('?', 1)[0]
 			if cmd=='upload' or cmd=='upload-force':
 				if filename.find('/')!=-1 or filename.find('*')!=-1:
 					raise Exception('unsupported delimiter "/", "*" !')
@@ -261,9 +248,15 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		raise Exception('unsupported request!')
 	
 	def do_POST(self):
-		form = cgi.FieldStorage(fp=self.rfile, headers=self.headers,environ={'REQUEST_METHOD':'POST','CONTENT_TYPE': "text/html"})
-
 		try:
+			if self.path.startswith('/submit/'):
+				length = int(self.headers['content-length'])
+				if length>10000000:
+					raise Exception("file too large, submitting cancelled")
+				print str(dir(self.rfile))
+				return self.do_PUT()
+			form = cgi.FieldStorage(fp=self.rfile, headers=self.headers,environ={'REQUEST_METHOD':'POST','CONTENT_TYPE': "text/html"})
+			
 			username = form['user'].value
 			if re.match('^[a-z0-9]{1,20}$',username)==None:
 				raise Exception('illegal name!')

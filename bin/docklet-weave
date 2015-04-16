@@ -288,7 +288,7 @@ lxc.mount.entry = /usr/local/lib/docklet-http ${NFS_PREFIX}/local/filesystem/usr
 
 EOF
 	
-	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/core.lxc -- /.dockerinit -- bash -c "/usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}"
+	lxc-start -n ${UUID} -f ${NFS_PREFIX}/global/core.lxc -- /.dockerinit -- bash -c "/usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}"
 	
 else
 	false
