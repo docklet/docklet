@@ -80,10 +80,6 @@ lxc.mount.entry = sysfs ${TARGET}/sys sysfs nosuid,nodev,noexec 0 0
 lxc.mount.entry = devpts ${TARGET}/dev/pts devpts newinstance,ptmxmode=0666,nosuid,noexec 0 0
 lxc.mount.entry = shm ${TARGET}/dev/shm tmpfs size=65536k,nosuid,nodev,noexec 0 0
 
-lxc.mount.entry = /dev/random ${TARGET}/dev/random none bind,ro 0 0
-lxc.mount.entry = /dev/urandom ${TARGET}/dev/urandom none bind,ro 0 0
-lxc.mount.entry = /dev/null ${TARGET}/dev/null none bind,ro 0 0
-
 lxc.mount.entry = ${NFS_PREFIX}/local/dockerenv ${TARGET}/.dockerenv none bind,ro 0 0
 lxc.mount.entry = /usr/local/bin/dockerinit ${TARGET}/.dockerinit none bind,ro 0 0
 lxc.mount.entry = /usr/local/sbin/container-init ${TARGET}/init none bind,ro 0 0
@@ -208,10 +204,6 @@ lxc.mount.entry = sysfs ${TARGET}/sys sysfs nosuid,nodev,noexec 0 0
 lxc.mount.entry = devpts ${TARGET}/dev/pts devpts newinstance,ptmxmode=0666,nosuid,noexec 0 0
 lxc.mount.entry = shm ${TARGET}/dev/shm tmpfs size=65536k,nosuid,nodev,noexec 0 0
 
-lxc.mount.entry = /dev/random ${TARGET}/dev/random none bind,ro 0 0
-lxc.mount.entry = /dev/urandom ${TARGET}/dev/urandom none bind,ro 0 0
-lxc.mount.entry = /dev/null ${TARGET}/dev/null none bind,ro 0 0
-
 lxc.mount.entry = ${NFS_PREFIX}/local/dockerenv ${TARGET}/.dockerenv none bind,ro 0 0
 lxc.mount.entry = /usr/local/bin/dockerinit ${TARGET}/.dockerinit none bind,ro 0 0
 lxc.mount.entry = /usr/local/sbin/container-init ${TARGET}/init none bind,ro 0 0
@@ -293,10 +285,6 @@ lxc.mount.entry = proc ${NFS_PREFIX}/local/filesystem/proc proc nosuid,nodev,noe
 lxc.mount.entry = sysfs ${NFS_PREFIX}/local/filesystem/sys sysfs nosuid,nodev,noexec 0 0
 lxc.mount.entry = devpts ${NFS_PREFIX}/local/filesystem/dev/pts devpts newinstance,ptmxmode=0666,nosuid,noexec 0 0
 lxc.mount.entry = shm ${NFS_PREFIX}/local/filesystem/dev/shm tmpfs size=65536k,nosuid,nodev,noexec 0 0
-
-lxc.mount.entry = /dev/random ${NFS_PREFIX}/local/filesystem/dev/random none bind,ro 0 0
-lxc.mount.entry = /dev/urandom ${NFS_PREFIX}/local/filesystem/dev/urandom none bind,ro 0 0
-lxc.mount.entry = /dev/null ${NFS_PREFIX}/local/filesystem/dev/null none bind,ro 0 0
 
 lxc.mount.entry = ${NFS_PREFIX}/local/dockerenv ${NFS_PREFIX}/local/filesystem/.dockerenv none bind,ro 0 0
 lxc.mount.entry = /usr/local/bin/dockerinit ${NFS_PREFIX}/local/filesystem/.dockerinit none bind,ro 0 0
