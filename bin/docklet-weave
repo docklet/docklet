@@ -151,10 +151,17 @@ elif [[ "${TYPE}" == "slave" ]]; then
 	NATADDR=10.0.${NAT_ID}.${NODE_ID}
 
 	MASTER_LOC=$1 ; shift
-	mkdir -p ${TARGET}-${NODE_ID}
-	sshfs ${MASTER_LOC}:${TARGET} ${TARGET}-${NODE_ID}
+
+	LAYER="${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}"
+	mkdir -p ${TARGET}-${NODE_ID} ${LAYER}-${NODE_ID}
+
+	umount -l ${LAYER}-${NODE_ID} >/dev/null 2>&1 || true
+	umount -l ${TARGET}-${NODE_ID} >/dev/null 2>&1 || true
+	sshfs ${MASTER_LOC}:${LAYER} ${LAYER}-${NODE_ID}
+	mount -t aufs -o br=${LAYER}-${NODE_ID}=rw:${NFS_PREFIX}/local/filesystem=ro+wh none ${TARGET}-${NODE_ID}/
 
 	TARGET=${TARGET}-${NODE_ID}
+	LAYER=${LAYER}-${NODE_ID}
 
 	NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null 2>&1 || true
 
@@ -224,8 +231,11 @@ elif [[ "${TYPE}" == "restart" ]]; then
 elif [[ "${TYPE}" == "stop" ]]; then
 	lxc-stop -k -n ${UUID}
 	if [[ "${NODE_ID}" != "0" ]]; then
-		umount -l ${TARGET}-${NODE_ID}
-		rmdir ${TARGET}-${NODE_ID}
+		umount -l ${TARGET}-${NODE_ID} || true
+		rmdir ${TARGET}-${NODE_ID} || true
+		LAYER="${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}"
+		umount -l ${LAYER}-${NODE_ID} || true
+		rmdir ${LAYER}-${NODE_ID} || true
 	fi
 	rm -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc
 elif [[ "${TYPE}" == "purge" ]]; then
