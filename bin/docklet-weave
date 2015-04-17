@@ -312,6 +312,10 @@ lxc.mount.entry = sysfs ${NFS_PREFIX}/local/filesystem/sys sysfs nosuid,nodev,no
 lxc.mount.entry = devpts ${NFS_PREFIX}/local/filesystem/dev/pts devpts newinstance,ptmxmode=0666,nosuid,noexec 0 0
 lxc.mount.entry = shm ${NFS_PREFIX}/local/filesystem/dev/shm tmpfs size=65536k,nosuid,nodev,noexec 0 0
 
+lxc.mount.entry = /dev/random ${NFS_PREFIX}/local/filesystem/dev/random none bind,ro 0 0
+lxc.mount.entry = /dev/urandom ${NFS_PREFIX}/local/filesystem/dev/urandom none bind,ro 0 0
+lxc.mount.entry = /dev/null ${NFS_PREFIX}/local/filesystem/dev/null none bind,ro 0 0
+
 lxc.mount.entry = ${NFS_PREFIX}/local/dockerenv ${NFS_PREFIX}/local/filesystem/.dockerenv none bind,ro 0 0
 lxc.mount.entry = /usr/local/bin/dockerinit ${NFS_PREFIX}/local/filesystem/.dockerinit none bind,ro 0 0
 lxc.mount.entry = /root/.ssh/id_rsa ${NFS_PREFIX}/local/filesystem/root/.ssh/id_rsa none bind,ro 0 0
@@ -320,6 +324,8 @@ lxc.mount.entry = ${NFS_PREFIX} ${NFS_PREFIX}/local/filesystem/mnt none rbind,rw
 lxc.mount.entry = /usr/local/lib/docklet-http ${NFS_PREFIX}/local/filesystem/usr/local/lib/docklet-http none rbind,ro 0 0
 
 EOF
+	mkdir -p ${NFS_PREFIX}/local/filesystem/root/.ssh
+	touch ${NFS_PREFIX}/local/filesystem/root/.ssh/id_rsa ${NFS_PREFIX}/local/filesystem/root/.ssh/authorized_keys
 	
 	nohup lxc-start -n ${UUID} -f ${NFS_PREFIX}/global/core.lxc -- /.dockerinit -- bash -c "/usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}" > ${NFS_PREFIX}/dl-http.log 2>&1 &
 	
