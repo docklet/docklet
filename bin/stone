@@ -9,6 +9,8 @@
 
 mkdir -p ${NFS_PREFIX}/global/users/${USER_NAME}/home/.ssh/ ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys
 
+mkdir -p ${NFS_PREFIX}/global/users/${USER_NAME}/home/submit ${NFS_PREFIX}/global/users/${USER_NAME}/home/upload
+
 if [[ ! -e "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa" ]] || [[ "$@" == "update" ]]; then
 	rm -rf ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/*
 	echo -e '\n' | ssh-keygen -t rsa -P '' -f "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa" >/dev/null 2>&1

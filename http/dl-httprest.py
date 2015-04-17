@@ -264,12 +264,14 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				if filename=='' or filename=='.' or filename=='..':
 					raise Exception('illegal filename "", ".", ".." !')
 				
-				target = "/mnt/global/users/%s/home/%s" % (username, filename)
-				length = int(self.headers['content-length'])
+				if os.system('mkdir -p /mnt/global/users/%s/home/submit' % username)!=0:
+					raise Exception('cannot locate "/nfs/submit" directory!')
+				target = "/mnt/global/users/%s/home/submit/%s" % (username, filename)
+				
 				host = open(target, "w")
 				host.write("\n".join(postvars['upload']))
 				host.close()
-				obj = {'success':True, 'file-location': "/nfs/%s" % filename}
+				# obj = {'success':True, 'file-location': "/nfs/submit/%s" % filename}
 				
 				self.send_response(200)
 				self.end_headers()
