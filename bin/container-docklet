@@ -31,8 +31,8 @@ elif [[ "$1" == "commit" ]]; then
 elif [[ "$1" == "remove" ]]; then
 	while docklet scaledown | grep true >/dev/null; do true; done
         curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/commit 2>/dev/null | python -m json.tool
-elif [[ "$@" == "repair" ]]; then
-	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/repair 2>/dev/null | python -m json.tool
+elif [[ "$@" == "restart" ]]; then
+	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/restart 2>/dev/null | python -m json.tool
 elif [[ "$@" == "meter" ]]; then
 	LABEL="`hostname | cut -b 10-`"
 	[[ "${LABEL}" == "r" ]] && LABEL="0"
