@@ -157,11 +157,23 @@ elif [[ "${TYPE}" == "slave" ]]; then
 
 	umount -l ${LAYER}-${NODE_ID} >/dev/null 2>&1 || true
 	umount -l ${TARGET}-${NODE_ID} >/dev/null 2>&1 || true
-	sshfs ${MASTER_LOC}:${LAYER} ${LAYER}-${NODE_ID}
+
+
+
+	mount tmpfs ${LAYER}-${NODE_ID} -t tmpfs -o size=4096m
+	IMAGE=${MASTER_LOC}
+        [[ -e "${NFS_PREFIX}/global/images/pub_${IMAGE}.tgz" ]] && MOD="pub"
+        [[ -e "${NFS_PREFIX}/global/images/self_${IMAGE}.tgz" ]] && MOD="self"
+        [[ -e "${NFS_PREFIX}/global/images/${MOD}_${IMAGE}.tgz" ]]
+
+	tar xvf "${NFS_PREFIX}/global/images/${MOD}_${IMAGE}.tgz" -C ${LAYER}-${NODE_ID} >/dev/null
+	#sshfs ${MASTER_LOC}:${LAYER} ${LAYER}-${NODE_ID}
 	mount -t aufs -o br=${LAYER}-${NODE_ID}=rw:${NFS_PREFIX}/local/filesystem=ro+wh none ${TARGET}-${NODE_ID}/
 
 	TARGET=${TARGET}-${NODE_ID}
 	LAYER=${LAYER}-${NODE_ID}
+
+
 
 	NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null 2>&1 || true
 

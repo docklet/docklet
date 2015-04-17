@@ -58,7 +58,7 @@ else
 
 		CONTAINER_ID=${USER_NAME}-${NAT_ID}-${OFFSET}\
 		
-		docklet-weave slave ${CONTAINER_ID} ${WORK_ON}
+		docklet-weave slave ${CONTAINER_ID} ${IMAGE} # ${WORK_ON}
 		
 		NEW_CLUSTER="${SLAVES}${THIS_HOST}:${CONTAINER_ID}:${NATIVE_IP}:${HOST_NAME} ${MASTER}"
 		NEW_STATE=$(echo ${STATE} | awk -F\| '{$NF="";print}' | tr \  \|)${NEW_CLUSTER}
