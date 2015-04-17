@@ -9,9 +9,9 @@ function log {
 clear
 
 log "# This is standard login interface:"
-curl "http://${PORTAL_HTTP}:8000/user/login?name=root&pass=any"
+curl -H "Auth:root/any" "http://${PORTAL_HTTP}:8000/user/login"
 
-curl "http://${PORTAL_HTTP}:8000/user/login?name=root&pass=any" 2>/dev/null | python -mjson.tool | grep openssh.: | awk -F\" '{print $4}' > ${HOME}/root.key
+curl -H "Auth:root/any" "http://${PORTAL_HTTP}:8000/user/login" 2>/dev/null | python -mjson.tool | grep openssh.: | awk -F\" '{print $4}' > ${HOME}/root.key
 sed -i 's/\\n/\n/g' ${HOME}/root.key
 chmod go-rw ${HOME}/root.key
 
