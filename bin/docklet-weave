@@ -227,7 +227,7 @@ EOF
 elif [[ "${TYPE}" == "restart" ]]; then
 	NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null 2>&1 || true
 
-	lxc-stop -k -n ${UUID}
+	lxc-stop -k -n ${UUID} || true
 	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 elif [[ "${TYPE}" == "stop" ]]; then
 	lxc-stop -k -n ${UUID}
