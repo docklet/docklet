@@ -60,9 +60,8 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		self.wfile.close()
 		return
 
-	def on_get_request(self, context):
+	def on_get_request(self, context, username):
 		if context=='/user/login/':
-			username = self.authenticate_with_headers()
 			obj = self.on_post_request("/keys/", username, None)
 			if len(self.on_post_request("/portals/", username, None)['portals'])==0:
 				self.execute("USER_NAME=%s CMD=app pocket portal" % username)
@@ -71,10 +70,27 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 	def do_GET(self):
 		try:
+			username = self.authenticate_with_headers()
 			context = self.path
+			if context.startswith("/download/"):
+				filename = context[10:].strip()
+				if filename.find('/')!=-1 or filename.find('*')!=-1 or filename == "" or filename == "." or filename =="..":
+					raise Exception("Bad filename given!")
+				target = "/mnt/global/users/%s/home/%s" % (username, filename)
+				self.send_response(200)
+				self.end_headers()
+				host = open(target, "r")
+				BLOCK = 1024000
+				data = host.read(BLOCK)
+				while len(data)!=0:
+					self.wfile.write(data)
+					data = host.read(BLOCK)
+				host.close()
+				self.wfile.close()
+				return
 			if not context.endswith("/"):
 				context = context + "/"
-			obj = {'success':True, 'data': self.on_get_request(context)}
+			obj = {'success':True, 'data': self.on_get_request(context, username)}
 		except Exception, e:
 			sys.stderr.write(traceback.format_exc())
 			obj = {'success':False, 'message': str(e)}
