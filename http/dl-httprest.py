@@ -26,6 +26,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 	def do_PUT(self):
 		try:
+			raise Exception("not correct upload/download port")
 			username = self.authenticate_with_headers()
 			[null, cmd, filename] = self.path.split('/', 2)
 			filename=filename.split('?', 1)[0]
@@ -73,6 +74,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			username = self.authenticate_with_headers()
 			context = self.path
 			if context.startswith("/download/"):
+				raise Exception("not correct upload/download port")
 				filename = context[10:].strip()
 				if filename.find('/')!=-1 or filename.find('*')!=-1 or filename == "" or filename == "." or filename =="..":
 					raise Exception("Bad filename given!")
@@ -267,6 +269,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				raise Exception("data too large, submitting cancelled")
 			
 			if self.path=='/submit':
+				raise Exception("not correct upload/download port")
 				ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
 				if ctype != 'multipart/form-data':
 					raise Exception("data format not supported")
