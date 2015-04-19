@@ -183,7 +183,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 					raise Exception("illegal portal format, should like: 1.2.3.4")
 				
 				obj = self.etcd_http_database('/_etcd/machines')
-				nodes = obj['node']['nodes']
+				nodes = sorted(obj['node']['nodes'], key=lambda x:x['key'])
 				[a, b, c, d] = portal.split('.')
 				ind = ((int(a)<<24)|(int(b)<<16)|(int(c)<<8)|(int(d)))%len(nodes)
 				WORK_ON = nodes[ind]['key'].split('/')[-1]
