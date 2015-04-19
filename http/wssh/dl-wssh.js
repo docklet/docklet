@@ -88,8 +88,7 @@ WSSHClient.prototype.connect = function(options) {
         var data = JSON.parse(evt.data.toString());
         if (data.error !== undefined) {
             options.onError(data.error);
-        }
-        else {
+        } else if (data.heartbeat == undefined) {
             options.onData(data.data);
         }
     };

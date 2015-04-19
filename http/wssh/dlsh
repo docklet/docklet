@@ -695,6 +695,8 @@ def invoke_shell(endpoint):
 					if not data:
 						break
 					message = json.loads(data)
+					if 'heartbeat' in message:
+						continue
 					if 'error' in message:
 						raise ConnectionError(message['error'])
 					sys.stdout.write(message['data'])
