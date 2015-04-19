@@ -126,18 +126,52 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		cl = self.etcd_get_clusters()
 		return cl[random.randint(0, len(cl)-1)]
 
+	def etcd_list_clusters(self, user):
+		obj = self.etcd_http_database('/docklet/instances')
+		clusters = []
+		for item in obj['node']['nodes']:
+			datas = item['value']
+			[owner,image,portal,cluster] = datas.split('|')
+			if owner==user or user=='root':
+				nat_id = item['key'].split('/')[-1]
+				clusters.append({'id': int(nat_id), 'owner': owner, 'image': image, 'portal': portal, 'size':len(cluster.split())})
+		return clusters
+
+	def etcd_list_single_cluster(self, user, nat_id):
+		clusterInt = int(nat_id)
+		obj = self.etcd_http_database('/docklet/instances/%d' % clusterInt)
+		item = obj['node']
+		datas = item['value']
+		[owner,image,portal,cluster] = datas.split('|')
+		if owner==user or user=='root':
+			nat_id = item['key'].split('/')[-1]
+			nodes = []
+			for node in cluster.split():
+				[work_on, uuid, nat_id, host_name] = node.split(':')
+				nodes.append({'work_on':work_on, 'uuid':uuid, 'nat_id':nat_id, 'host_name':host_name})
+			return {'id': clusterInt, 'owner': owner, 'image': image, 'portal': portal, 'nodes': nodes}
+		raise Exception("cluster not found!")
+
+	def etcd_user_portals(self, user):
+		obj = self.etcd_http_database('/docklet/portal/%s' % user)
+		portals = []
+		for portal in obj['node']['nodes']:
+			portals.append({"ip":portal['key'].split('/')[-1], "status": portal['value'] })
+		return portals
+
 	def on_post_request(self, context, user, form):
 		if context.startswith('/clusters/'):
 			context = context[10:].strip()
 			if context == "":
-				detail = self.execute("USER_NAME=%s pocket list" % user)
+				return {'clusters': self.etcd_list_clusters(user)}
+				""" detail = self.execute("USER_NAME=%s pocket list" % user)
 				clusters = []
 				for item in detail.split('\n'):
 					if len(item)==0:
 						continue
-					nat_id = item.split('|')[0]
-					clusters.append(self.on_post_request("/clusters/%d/" % int(nat_id), user, form))
-				return {'clusters': clusters }
+					[nat_id,user,image,portal,cluster] = item.split('|')
+					clusters.append({'id': int(nat_id), 'owner': user, 'image': image, 'portal': portal, 'size':len(cluster.split())})
+				return {'clusters': clusters } """
 			
 			parts = context.split('/')
 			if parts[0]=="create":
@@ -161,7 +195,8 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			clusterInt = int(parts[0])
 			op = parts[1]
 			if op == "":
-				detail = self.execute('KEY=/docklet/instances/%d etcdemu get' % clusterInt)
+				return self.etcd_list_single_cluster(user, clusterInt)
+				"""detail = self.execute('KEY=/docklet/instances/%d etcdemu get' % clusterInt)
 				parts = detail.split('|')
 				if len(parts)!=4:
 					raise Exception("cluster not found")
@@ -174,7 +209,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 						continue
 					[work_on, uuid, nat_id, host_name] = node.split(':')
 					nodes.append({'work_on':work_on, 'uuid':uuid, 'nat_id':nat_id, 'host_name':host_name})
-				return {'id': clusterInt, 'owner': owner, 'image': image, 'portal': portal, 'nodes': nodes}
+				return {'id': clusterInt, 'owner': owner, 'image': image, 'portal': portal, 'nodes': nodes}"""
 			elif op == "scaleup":
 				this_host = self.etcd_get_random_cluster()
 				result = self.execute('USER_NAME=%s NAT_ID=%s CMD=push THIS_HOST=%s docklet-regen' % (user, clusterInt, this_host), this_host)
@@ -225,13 +260,18 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		elif context.startswith("/images/"):
 			context = context[8:]
 			if context == "":
-				output = self.execute('USER_NAME=%s pocket images' % user).split('\n')
+				#output = self.execute('USER_NAME=%s pocket images' % user).split('\n')
 				images = []
+				for image in os.listdir('/mnt/global/images'):
+					[mod, owner, img] = image.split('_')
+					if mod == 'pub' or user == 'root' or user == owner:
+						images.append({"name":img[:-4], "owner":owner, "access":mod })
+				"""images = []
 				for item in output:
 					if len(item)==0:
 						continue
 					[mod, owner, iden] = item.split('_')
-					images.append({"name":iden, "owner":owner, "access":mod })
+					images.append({"name":iden, "owner":owner, "access":mod })"""
 				return {'images': images }
 			else:
 				parts = context.split("/")
@@ -244,14 +284,15 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 							raise Exception("image not found")
 						return {}
 		elif context == "/portals/":
-			output = self.execute('USER_NAME=%s CMD=list pocket portal' % user).split('\n')
+			return {'portals': self.etcd_user_portals(user)}
+			"""output = self.execute('USER_NAME=%s CMD=list pocket portal' % user).split('\n')
 			portals = []
 			for item in output:
 				if len(item)==0:
 					continue
 				[portal, status] = item.split(':')
 				portals.append({"ip":portal, "status": status })
-			return {'portals': portals }
+			return {'portals': portals }"""
 		elif context.startswith("/keys/"):
 			context = context[6:]
 			context = context[:-1] if context.endswith("/") else context
