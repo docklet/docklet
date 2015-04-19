@@ -181,12 +181,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 					raise Exception("illegal image format, should like: owner_abc123-def")
 				if re.match('^[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}$', portal)==None:
 					raise Exception("illegal portal format, should like: 1.2.3.4")
-				
-				obj = self.etcd_http_database('/_etcd/machines')
-				nodes = sorted(obj['node']['nodes'], key=lambda x:x['key'])
-				[a, b, c, d] = portal.split('.')
-				ind = ((int(a)<<24)|(int(b)<<16)|(int(c)<<8)|(int(d)))%len(nodes)
-				WORK_ON = nodes[ind]['key'].split('/')[-1]
+				WORK_ON = self.etcd_get_random_cluster()
 				NAT_ID = self.execute('THIS_HOST=%s BRIDGE_IP=%s USER_NAME=%s IMAGE=%s pocket create' % (WORK_ON, portal, user, image), WORK_ON)
 				if NAT_ID == None:
 					raise Exception("create operation failed")
