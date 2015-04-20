@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import time
 from gevent import monkey
 monkey.patch_all()
 
@@ -111,6 +112,7 @@ class WSSHBridge(object):
 						data['resize'].get('height', 24))
 				if 'data' in data:
 					channel.send(data['data'])
+				time.sleep(0.01)
 		finally:
 			self.close()
 
@@ -123,6 +125,7 @@ class WSSHBridge(object):
 				if not len(data):
 					return
 				self._websocket.send(json.dumps({'data': data}))
+				time.sleep(0.1)
 		finally:
 			self.close()
 

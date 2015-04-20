@@ -621,16 +621,22 @@ class WebSocketApp(object):
 					_, _, tb = sys.exc_info()
 					traceback.print_tb(tb)
 
-
-# Usage: ./wssh --host proxyhost --port 5000 user@real-hostip --password
-
 import os, sys, signal, errno
-import select, json
-import termios, tty, fcntl, struct
+import select, json, struct
 import platform, argparse, getpass, urllib2
+
+try:
+	import termios, tty, fcntl
+except:
+	pass
+
 
 class ConnectionError(Exception):
 	pass
+
+if platform.system() == 'Windows':
+	import colorama
+	colorama.init()
 
 def _pty_size():
 	rows, cols = 24, 80
@@ -649,6 +655,38 @@ def _resize(ws):
 	ws.send(json.dumps({'resize': {'width': cols, 'height': rows}}))
 
 def input_table(ssh, data):
+	if platform.system() == 'Windows':
+		import msvcrt
+		while True:
+			try:
+				x = msvcrt.getch()
+				if ord(x) == 224:
+					direct = ord(msvcrt.getch())
+					if direct == 72: # DIRECTION
+						x = chr(27) + chr(91) + chr(65)
+					elif direct == 80: # DIRECTION
+						x = chr(27) + chr(91) + chr(66)
+					elif direct == 77: # DIRECTION
+						x = chr(27) + chr(91) + chr(67)
+					elif direct == 75: # DIRECTION
+						x = chr(27) + chr(91) + chr(68)
+					elif direct == 71: # HOME
+						x = chr(27) + chr(79) + chr(72)
+					elif direct == 79: # END
+						x = chr(27) + chr(79) + chr(70)
+					elif direct == 83: # DELETE
+						x = chr(27) + chr(91) + chr(51) + chr(126)
+					else:
+						raise Exception()
+				elif ord(x) >=128:
+					x += msvcrt.getch()
+					x = x.decode('gbk')
+				if len(x) > 0:
+					ssh.send(json.dumps({'data': x}))
+				else:
+					break
+			except:
+				print >>sys.stderr, "[ dlsh: Unsupported key ascii %d! Key Ignored ]" % ord(x)
 	while True:
 		c = sys.stdin.read(1)
 		if len(c) == 0 or c<'\xc0':
@@ -671,16 +709,21 @@ def input_table(ssh, data):
 def invoke_shell(endpoint):
 	ssh = create_connection(endpoint)
 	_resize(ssh)
-	oldtty = termios.tcgetattr(sys.stdin)
-	old_handler = signal.getsignal(signal.SIGWINCH)
-
 	def on_term_resize(signum, frame):
 		_resize(ssh)
-	signal.signal(signal.SIGWINCH, on_term_resize)
+	try:
+		oldtty = termios.tcgetattr(sys.stdin)
+		old_handler = signal.getsignal(signal.SIGWINCH)
+		signal.signal(signal.SIGWINCH, on_term_resize)
+	except:
+		pass
 
 	try:
-		tty.setraw(sys.stdin.fileno())
-		tty.setcbreak(sys.stdin.fileno())
+		try:
+			tty.setraw(sys.stdin.fileno())
+			tty.setcbreak(sys.stdin.fileno())
+		except:
+			pass
 
 		rows, cols = _pty_size()
 		ssh.send(json.dumps({'resize': {'width': cols, 'height': rows}}))
@@ -694,7 +737,11 @@ def invoke_shell(endpoint):
 					data = ssh.recv()
 					if not data:
 						break
-					message = json.loads(data)
+					try:
+						message = json.loads(data)
+					except:
+						print >>sys.stderr, "[ dlsh: fragment data received ! ]"
+						continue
 					if 'heartbeat' in message:
 						continue
 					if 'error' in message:
@@ -709,8 +756,11 @@ def invoke_shell(endpoint):
 	except WebSocketException:
 		raise
 	finally:
-		termios.tcsetattr(sys.stdin, termios.TCSADRAIN, oldtty)
-		signal.signal(signal.SIGWINCH, old_handler)
+		try:
+			termios.tcsetattr(sys.stdin, termios.TCSADRAIN, oldtty)
+			signal.signal(signal.SIGWINCH, old_handler)
+		except:
+			pass
 
 
 if __name__ == '__main__':
@@ -753,8 +803,6 @@ if __name__ == '__main__':
 
 	args = parser.parse_args()
 	
-	sys.stdout.write('( Please note that your ssh session would be auto-close after a long delay without any input and output ! )\r\n')
-
 	if '@' in args.destination:
 		(username, hostname) = args.destination.split('@', 1)
 	else:
