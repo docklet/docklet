@@ -860,6 +860,7 @@ try:
 					continue
 				conn = httplib.HTTPConnection(DEFAULT_URL)
 				try:
+					print "Pulling local file to nfs, please wait for a while (no process can be shown for HTTP proxy) .."
 					chunk = open(item, 'r')
 					conn.request("PUT", '/nfs/%s/%s' % ('upload' if typ=='put' else 'upload-force', item), chunk, {"Auth":"%s/%s" % (user, passwd) })
 					response = conn.getresponse().read()
