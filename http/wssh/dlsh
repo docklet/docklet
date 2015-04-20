@@ -797,7 +797,7 @@ try:
 				sys.stderr.write("Please specific key 's' for SSH or key 'n' for NFS!\n")
 			if len(sys.argv)==1:
 				sys.stderr.write('Portal Address (e.g. 192.168.193.240): ')
-				sys.argv.append('root@'+sys.stdin.readline().strip())
+				sys.argv.append(sys.stdin.readline().strip())
 				sys.stderr.write('Secret Key (e.g. D:\\user.key ): ')
 				keyfile = sys.stdin.readline().strip()
 				if keyfile.startswith('"'):
