@@ -765,6 +765,11 @@ def invoke_shell(endpoint):
 
 DEFAULT_URL = 'docklet.unias.org'
 
+def signal_handler(signal, frame):
+	sys.exit(1)
+
+signal.signal(signal.SIGINT, signal_handler)
+
 def list_files(user, passwd):
 	conn = httplib.HTTPConnection(DEFAULT_URL)
 	conn.request(method="GET",headers={"Auth":"%s/%s" % (user, passwd) },url='/nfs/list')
@@ -774,9 +779,14 @@ def list_files(user, passwd):
 		sys.exit(1)
 	print '\033[33m'+"  ".join(sorted(obj['files']))+'\033[0m'
 
+def list_local_files():
+	print '\033[34m'+"  ".join(sorted(os.listdir('.')))+'\033[0m'
+
 if platform.system() == 'Windows':
 	import colorama
 	colorama.init()
+else:
+	import readline
 
 def trim_comma(s):
 	if s.startswith('"'):
@@ -789,6 +799,8 @@ def trim_comma(s):
 		s = s[:-1]
 	return s
 
+MEGA_SIZE=1024 * 1024
+
 try:
 	print '\033[32m'+"(DLSH Version: %s)\n" % DLSH_VERSION+'\033[0m'
 	
@@ -798,8 +810,7 @@ try:
 		if len(sys.argv)==2 and sys.argv[1]=='-guide':
 			sys.argv.pop()
 			while True:
-				sys.stderr.write('(S)SH Session or (N)FS Session (S/n)? ')
-				line = sys.stdin.readline().strip()
+				line = raw_input('(S)SH Session or (N)FS Session (S/n)? ').strip()
 				if line=='n' or line=='N':
 					sys.argv.append('-nfs')
 					break
@@ -807,47 +818,51 @@ try:
 					break
 				sys.stderr.write("Please specific key 's' for SSH or key 'n' for NFS!\n")
 			if len(sys.argv)==1:
-				sys.stderr.write('Portal Address (e.g. 192.168.193.240): ')
-				sys.argv.append(sys.stdin.readline().strip())
-				sys.stderr.write('Secret Key (e.g. D:\\user.key ): ')
-				keyfile = sys.stdin.readline().strip()
+				sys.argv.append(raw_input('Portal Address (e.g. 192.168.193.240): ').strip())
+				keyfile = raw_input('Secret Key (e.g. D:\\user.key): ').strip()
 				keyfile = trim_comma(keyfile)
 				sys.argv.append('-i')
 				sys.argv.append(keyfile)
-		print "By command: ", sys.argv
+			print "By command: ", sys.argv
 	
 	if len(sys.argv)==2 and sys.argv[1]=='-nfs':
 		import httplib
 		
-		sys.stdout.write('Login NFS with username: ')
-		user = sys.stdin.readline().strip()
+		user = raw_input('Login NFS with username: ').strip()
 		passwd = getpass.getpass('Password for %s: ' % user)
 		
 		list_files(user, passwd)
+		homedir = os.path.expanduser('~')
+		os.chdir(homedir)
 		
-		sys.stdout.write('Available commands: get <file>, put <file>, put-force <file>, ls, exit.\n')
+		sys.stdout.write("Local working directory changed to '\033[31m%s\033[0m'!\n" % os.getcwd())
+		help = '\033[32mAvailable commands: get <file>, get-force <file>, put <file>, put-force <file>, ls, ls-local, exit.\033[0m\n'
+		sys.stdout.write(help)
 		while True:
-			sys.stdout.write('nfs> ')
-			cmd = sys.stdin.readline().strip()
+			cmd = raw_input('nfs> ').strip()
+			if cmd == '':
+				continue
 			if cmd == 'exit':
 				break
 			if cmd == 'ls':
 				list_files(user, passwd)
+			elif cmd == 'ls-local':
+				list_local_files()
 			elif len(user)==0 or len(passwd)==0:
 				print "Username and password not set, run 'auth <username>' first!"
-			elif cmd.startswith('get '):
-				item = cmd[4:].strip()
+			elif cmd.startswith('get ') or cmd.startswith('get-force '):
+				[typ, item] = cmd.split(' ', 1)
+				item = item.strip()
 				item = trim_comma(item)
-				if os.path.exists(item):
-					print "Local file named '%s' already exists, downloading cancelled!" % item
+				if os.path.exists(item) and typ!='get-force':
+					print "Local file named '%s' already exists, downloading cancelled (try 'get-force')!" % item
 					continue
 				conn = httplib.HTTPConnection(DEFAULT_URL)
 				conn.request(method="GET",headers={"Auth":"%s/%s" % (user, passwd) },url='/nfs/download/%s' % item)
 				resp = conn.getresponse()
-				MEGA_SIZE=1024 * 1024
 				prefix = resp.read(MEGA_SIZE)
 				data = prefix
-				fp = open(item, 'w')
+				fp = open(item, 'wb')
 				length = 0
 				while len(data)>0:
 					fp.write(data)
@@ -856,7 +871,7 @@ try:
 					data = resp.read(MEGA_SIZE)
 				fp.close()
 				sys.stderr.write('\n')
-				print '\033[33m' + "File '%s' was downloaded to current directory!" % item + '\033[0m'
+				print '\033[33m' + "File '%s' was downloaded to '%s'!" % (item, os.getcwd()) + '\033[0m'
 			elif cmd.startswith('put ') or cmd.startswith('put-force '):
 				[typ, item] = cmd.split(' ', 1)
 				item = item.strip()
@@ -866,21 +881,24 @@ try:
 				if not os.path.exists(item):
 					print "Local file named '%s' doesn't exist, uploading cancelled!" % item
 					continue
+				
 				conn = httplib.HTTPConnection(DEFAULT_URL)
 				try:
-					print "Pulling local file to nfs, please wait for a while (no progress can be shown for HTTP proxy) .."
-					chunk = open(item, 'r')
+					chunk = open(item, 'rb')
+					sys.stdout.write("Pulling local file to NFS (no progress in HTTP mode) ...")
+					sys.stdout.flush()
 					conn.request("PUT", '/nfs/%s/%s' % ('upload' if typ=='put' else 'upload-force', basename), chunk, {"Auth":"%s/%s" % (user, passwd) })
 					response = conn.getresponse().read()
+					conn.close()
 					try:
 						obj = json.loads(response)
 						if not obj['success']:
 							raise Exception(obj['message'])
-						print response
-					except:
-						raise Exception("File named '%s' already exists in nfs, uploading cancelled (try 'put-force <file>' to override file)!" % basename)
+						print "\n\nSuccessfully saved as: ", obj['file-location']
+					except Exception as e:
+						raise Exception("File named '%s' already exists in nfs, uploading cancelled (try 'put-force')!" % basename)
 				except Exception as e:
-					print >>sys.stderr, e
+					print "\n\n", e
 				finally:
 					try:
 						chunk.close()
@@ -888,6 +906,7 @@ try:
 						pass
 			else:
 				print "Error parsing commands!"
+				sys.stdout.write(help)
 		sys.exit(0)
 
 	parser = argparse.ArgumentParser(
