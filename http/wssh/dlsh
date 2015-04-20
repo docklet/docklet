@@ -778,6 +778,17 @@ if platform.system() == 'Windows':
 	import colorama
 	colorama.init()
 
+def trim_comma(s):
+	if s.startswith('"'):
+		s = s[1:]
+	if s.endswith('"'):
+		s = s[:-1]
+	if s.startswith("'"):
+		s = s[1:]
+	if s.endswith("'"):
+		s = s[:-1]
+	return s
+
 try:
 	print '\033[32m'+"(DLSH Version: %s)\n" % DLSH_VERSION+'\033[0m'
 	
@@ -800,14 +811,7 @@ try:
 				sys.argv.append(sys.stdin.readline().strip())
 				sys.stderr.write('Secret Key (e.g. D:\\user.key ): ')
 				keyfile = sys.stdin.readline().strip()
-				if keyfile.startswith('"'):
-					keyfile = keyfile[1:]
-				if keyfile.endswith('"'):
-					keyfile = keyfile[:-1]
-				if keyfile.startswith("'"):
-					keyfile = keyfile[1:]
-				if keyfile.endswith("'"):
-					keyfile = keyfile[:-1]
+				keyfile = trim_comma(keyfile)
 				sys.argv.append('-i')
 				sys.argv.append(keyfile)
 		print "By command: ", sys.argv
@@ -833,6 +837,7 @@ try:
 				print "Username and password not set, run 'auth <username>' first!"
 			elif cmd.startswith('get '):
 				item = cmd[4:].strip()
+				item = trim_comma(item)
 				if os.path.exists(item):
 					print "Local file named '%s' already exists, downloading cancelled!" % item
 					continue
@@ -855,6 +860,9 @@ try:
 			elif cmd.startswith('put ') or cmd.startswith('put-force '):
 				[typ, item] = cmd.split(' ', 1)
 				item = item.strip()
+				item = trim_comma(item)
+				basename = item[item.rfind('/')+1:]
+				basename = basename[basename.rfind('\\')+1:]
 				if not os.path.exists(item):
 					print "Local file named '%s' doesn't exist, uploading cancelled!" % item
 					continue
@@ -862,7 +870,7 @@ try:
 				try:
 					print "Pulling local file to nfs, please wait for a while (no progress can be shown for HTTP proxy) .."
 					chunk = open(item, 'r')
-					conn.request("PUT", '/nfs/%s/%s' % ('upload' if typ=='put' else 'upload-force', item), chunk, {"Auth":"%s/%s" % (user, passwd) })
+					conn.request("PUT", '/nfs/%s/%s' % ('upload' if typ=='put' else 'upload-force', basename), chunk, {"Auth":"%s/%s" % (user, passwd) })
 					response = conn.getresponse().read()
 					try:
 						obj = json.loads(response)
@@ -870,7 +878,7 @@ try:
 							raise Exception(obj['message'])
 						print response
 					except:
-						raise Exception("File named '%s' already exists in nfs, uploading cancelled (try 'put-force <file>' to override file)!" % item)
+						raise Exception("File named '%s' already exists in nfs, uploading cancelled (try 'put-force <file>' to override file)!" % basename)
 				except Exception as e:
 					print >>sys.stderr, e
 				finally:
