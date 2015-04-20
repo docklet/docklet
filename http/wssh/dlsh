@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+DLSH_VERSION = '1.0'
+
 import socket
 
 try:
@@ -521,6 +523,9 @@ class WebSocket(object):
 				raise WebSocketTimeoutException(e.message)
 			else:
 				raise
+		except Exception as e:
+			print >>sys.stderr, "Remote server closed connection for wrong idenification!"
+			sys.exit(1)
 		if not bytes:
 			raise WebSocketConnectionClosedException()
 		return bytes
@@ -633,10 +638,6 @@ except:
 
 class ConnectionError(Exception):
 	pass
-
-if platform.system() == 'Windows':
-	import colorama
-	colorama.init()
 
 def _pty_size():
 	rows, cols = 24, 80
@@ -762,13 +763,128 @@ def invoke_shell(endpoint):
 		except:
 			pass
 
+DEFAULT_URL = 'docklet.unias.org'
 
-if __name__ == '__main__':
+def list_files(user, passwd):
+	conn = httplib.HTTPConnection(DEFAULT_URL)
+	conn.request(method="GET",headers={"Auth":"%s/%s" % (user, passwd) },url='/nfs/list')
+	obj = json.loads(conn.getresponse().read())
+	if not obj['success']:
+		print 'Error: ', obj['message']
+		sys.exit(1)
+	print '\033[33m'+"  ".join(sorted(obj['files']))+'\033[0m'
+
+if platform.system() == 'Windows':
+	import colorama
+	colorama.init()
+
+try:
+	print '\033[32m'+"(DLSH Version: %s)\n" % DLSH_VERSION+'\033[0m'
+	
+	direct_quit = False
+	
+	if True:
+		if len(sys.argv)==2 and sys.argv[1]=='-guide':
+			sys.argv.pop()
+			while True:
+				sys.stderr.write('(S)SH Session or (N)FS Session (S/n)? ')
+				line = sys.stdin.readline().strip()
+				if line=='n' or line=='N':
+					sys.argv.append('-nfs')
+					break
+				elif line=='s' or line=='S' or line=='':
+					break
+				sys.stderr.write("Please specific key 's' for SSH or key 'n' for NFS!\n")
+			if len(sys.argv)==1:
+				sys.stderr.write('Portal Address (e.g. 192.168.193.240): ')
+				sys.argv.append('root@'+sys.stdin.readline().strip())
+				sys.stderr.write('Secret Key (e.g. D:\\user.key ): ')
+				keyfile = sys.stdin.readline().strip()
+				if keyfile.startswith('"'):
+					keyfile = keyfile[1:]
+				if keyfile.endswith('"'):
+					keyfile = keyfile[:-1]
+				if keyfile.startswith("'"):
+					keyfile = keyfile[1:]
+				if keyfile.endswith("'"):
+					keyfile = keyfile[:-1]
+				sys.argv.append('-i')
+				sys.argv.append(keyfile)
+		print "By command: ", sys.argv
+	
+	if len(sys.argv)==2 and sys.argv[1]=='-nfs':
+		import httplib
+		
+		sys.stdout.write('Login NFS with username: ')
+		user = sys.stdin.readline().strip()
+		passwd = getpass.getpass('Password for %s: ' % user)
+		
+		list_files(user, passwd)
+		
+		sys.stdout.write('Available commands: get <file>, put <file>, put-force <file>, ls, exit.\n')
+		while True:
+			sys.stdout.write('nfs> ')
+			cmd = sys.stdin.readline().strip()
+			if cmd == 'exit':
+				break
+			if cmd == 'ls':
+				list_files(user, passwd)
+			elif len(user)==0 or len(passwd)==0:
+				print "Username and password not set, run 'auth <username>' first!"
+			elif cmd.startswith('get '):
+				item = cmd[4:].strip()
+				if os.path.exists(item):
+					print "Local file named '%s' already exists, downloading cancelled!" % item
+					continue
+				conn = httplib.HTTPConnection(DEFAULT_URL)
+				conn.request(method="GET",headers={"Auth":"%s/%s" % (user, passwd) },url='/nfs/download/%s' % item)
+				resp = conn.getresponse()
+				MEGA_SIZE=1024 * 1024
+				prefix = resp.read(MEGA_SIZE)
+				data = prefix
+				fp = open(item, 'w')
+				length = 0
+				while len(data)>0:
+					fp.write(data)
+					length += 1
+					sys.stderr.write("\rDownloading file, %d M finished .." % length)
+					data = resp.read(MEGA_SIZE)
+				fp.close()
+				sys.stderr.write('\n')
+				print '\033[33m' + "File '%s' was downloaded to current directory!" % item + '\033[0m'
+			elif cmd.startswith('put ') or cmd.startswith('put-force '):
+				[typ, item] = cmd.split(' ', 1)
+				item = item.strip()
+				if not os.path.exists(item):
+					print "Local file named '%s' doesn't exist, uploading cancelled!" % item
+					continue
+				conn = httplib.HTTPConnection(DEFAULT_URL)
+				try:
+					chunk = open(item, 'r')
+					conn.request("PUT", '/nfs/%s/%s' % ('upload' if typ=='put' else 'upload-force', item), chunk, {"Auth":"%s/%s" % (user, passwd) })
+					response = conn.getresponse().read()
+					try:
+						obj = json.loads(response)
+						if not obj['success']:
+							raise Exception(obj['message'])
+						print response
+					except:
+						raise Exception("File named '%s' already exists in nfs, uploading cancelled (try 'put-force <file>' to override file)!" % item)
+				except Exception as e:
+					print >>sys.stderr, e
+				finally:
+					try:
+						chunk.close()
+					except:
+						pass
+			else:
+				print "Error parsing commands!"
+		sys.exit(0)
 
 	parser = argparse.ArgumentParser(
 		description='wssh - SSH Over WebSockets Client')
 
-	parser.add_argument('--host', '-H', default='docklet.unias.org')
+	parser.add_argument('--host', '-H', default=DEFAULT_URL)
 
 	parser.add_argument('--port', '-P', type=int, default=5000)
 
@@ -801,15 +917,20 @@ if __name__ == '__main__':
 		nargs='*',
 		help='optional command to be executed')
 
-	args = parser.parse_args()
-	
+	try:
+		args = parser.parse_args()
+	except:
+		direct_quit = True
+		print >>sys.stderr, '\n\033[33me.g. 1) dlsh -nfs ; 2) dlsh -guide ; 3) dlsh root@portal-ip [-i user.key]\033[0m'
+		sys.exit(1)
+
 	if '@' in args.destination:
 		(username, hostname) = args.destination.split('@', 1)
 	else:
 		(username, hostname) = ('root', args.destination)
 	
 	if args.password == '' or args.password == None and args.key == None:
-		password = getpass.getpass('Password: ')
+		password = getpass.getpass("Password for remote '%s': " % args.destination)
 	else:
 		password = args.password
 
@@ -862,3 +983,12 @@ if __name__ == '__main__':
 		print >>sys.stderr, 'wssh: {0}'.format(e.message or 'Connection error')
 	else:
 		print >>sys.stderr, 'Connection to {0} closed.'.format(hostname)
+		direct_quit = True
+
+except Exception as e:
+	print >>sys.stderr, 'Error: ', e.message
+finally:
+	if not direct_quit:
+		sys.stderr.write('\n\033[33mPress [Enter] to continue ..\033[0m')
+		sys.stdin.readline()
+
