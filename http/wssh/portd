@@ -8,8 +8,6 @@ echo "${USERNAME}" | grep '^[a-zA-Z0-9]\{1,20\}$' >/dev/null 2>&1
 
 read -p 'Password: ' -s PASSWORD
 
-echo ${PASSWORD}
-
 echo "${PASSWORD}" | grep '^[a-zA-Z0-9\-\_\.\@\(\)\=\+]\{1,20\}$' >/dev/null 2>&1
 
 echo -e "\033[34m* Detecting users portal ..\033[0m" > /dev/stderr
