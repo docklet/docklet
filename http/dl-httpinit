@@ -19,7 +19,7 @@ if [[ "$#" == "3" ]]; then
 	LOCAL_NIS="$2 $3"
 fi
 
-NIS="${LOCAL_NIS}" /usr/local/lib/docklet-http/ftplib2-server.py &
+# NIS="${LOCAL_NIS}" /usr/local/lib/docklet-http/ftplib2-server.py &
 
 # /usr/local/lib/docklet-http/wssh/dl-wssh -p 21 || true &
 
