@@ -65,56 +65,65 @@ done
 
 log_msg "INFO" "IP of this host is ${MY_IP}."
 
-lxc-stop -n core-service -k 2>/dev/null || true
+lxc-stop -n core-service -k >/dev/null 2>&1 || true
 
 killall lxc-start >/dev/null 2>&1 || true
 killall etcd >/dev/null 2>&1 || true
 
 log_msg "INFO" "Make sure all resources are released .."
 
-mkdir -p ${NFS_PREFIX}/global ${NFS_PREFIX}/local
-
-echo "${MY_IP}" > ${NFS_PREFIX}/local/network
-
-if [[ ! -e "${NFS_PREFIX}/local/filesystem" ]]; then
-	mkdir -p ${NFS_PREFIX}/local/filesystem ${NFS_PREFIX}/global/images
-	cd ${NFS_PREFIX}/local/filesystem
-	tar czvf ${NFS_PREFIX}/global/images/pub_root_base.tgz ./
-	
-	touch .dockerenv .dockerinit
-	tar xzvf /usr/share/docklet-rootfs/filesystem.tgz >/dev/null
-	mkdir ${NFS_PREFIX}/local/filesystem/nfs
-fi
-
-mkdir -p ${NFS_PREFIX}/local/volumes/ ${NFS_PREFIX}/local/mounts/
-
 if [[ "${NFS_MOUNT_CMD}" != "" ]]; then
+	mkdir -p mountpoint ${NFS_PREFIX}/global
 	if mountpoint ${NFS_PREFIX}/global -q; then
-		log_msg "INFO" "Remounting Commong NFS ${NFS_PREFIX}/global .."
+		log_msg "INFO" "Remounting NFS ${NFS_PREFIX}/global .."
 		umount -l ${NFS_PREFIX}/global
 	fi
 	`${NFS_MOUNT_CMD}`
 fi
 
-mkdir -p ${NFS_PREFIX}/global/users ${NFS_PREFIX}/global/images
+
+log_msg "INFO" "Setting up for global .."
+
+mkdir -p ${NFS_PREFIX}/global/images ${NFS_PREFIX}/global/users
+
+
+log_msg "INFO" "Setting up for local .."
+
+umount -l ${NFS_PREFIX}/local/volumes/* ${NFS_PREFIX}/local/mounts/* >/dev/null 2>&1 || true
+
+mkdir -p ${NFS_PREFIX}/local/volumes/ ${NFS_PREFIX}/local/mounts/
+
+echo "${MY_IP}" > ${NFS_PREFIX}/local/network
+
+echo '["HOME=/root","PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin","TERM=xterm"]' > ${NFS_PREFIX}/local/dockerenv
+
+if [[ ! -e "${NFS_PREFIX}/local/filesystem" ]]; then
+	mkdir -p ${NFS_PREFIX}/local/filesystem/nfs
+	tar xzvf /usr/share/docklet-rootfs/filesystem.tgz -C ${NFS_PREFIX}/local/filesystem >/dev/null
+fi
+
+cd ${NFS_PREFIX}/local/filesystem
+touch ./.dockerenv ./.dockerinit
+tar czvf ${NFS_PREFIX}/global/images/pub_root_base.tgz .dockerinit >/dev/null
+
+echo "LANG=en_US.UTF-8" >> /etc/default/locale
+
+
 
 HOSTS="`blink ${MACHINE_CIDR}`"
 PEERS=""
 for MIP in $HOSTS; do
-        if nc -q 0 $MIP 7001 </dev/null >/dev/null 2>&1; then
-                PEERS="--peers $MIP:7001"
+	if nc -q 0 $MIP 7001 </dev/null >/dev/null 2>&1; then
+		PEERS="--peers $MIP:7001"
 		log_msg "INFO" "Machine discovery: ${MIP}"
-                break
-        fi
+		break
+	fi
 done
 
 cd ${NFS_PREFIX}/global
-echo '["HOME=/root","PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin","TERM=xterm"]' > ${NFS_PREFIX}/local/dockerenv
 
-if [[ "${PEERS}" == "" ]]; then
-	rm -rf ./etcd
-	# prepare pub_root_base
-fi
+[[ "${PEERS}" == "" ]] && rm -rf ./etcd
+
 
 log_msg "WARN" "etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS}"
 etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS} >/dev/null 2>&1 &

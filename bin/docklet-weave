@@ -9,6 +9,8 @@ set -e
 
 . /etc/docklet/docklet.conf
 
+OS_CODENAME=$(cat /etc/lsb-release | grep ^DISTRIB_CODENAME= | cut -b 18-)
+
 TYPE=$1 ; shift
 UUID=$1 ; shift
 
@@ -110,7 +112,7 @@ EOF
 	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/root/.ssh/authorized_keys
 	chmod go-rw ${TARGET}/root/.ssh/id_rsa
 	
-	if [[ "`lsb_release -c -s`" != "trusty" ]]; then
+	if [[ "${OS_CODENAME}" != "trusty" ]]; then
 		nohup lxc-execute -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init >/dev/null 2>&1 &
 	else
 		lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
@@ -215,12 +217,13 @@ lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/home/.docklet/nodes/${
 lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARGET}/etc/hosts none bind,ro 0 0
 
 EOF
-        mkdir -p ${TARGET}/root/.ssh
-        cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/root/.ssh/id_rsa
-        cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/root/.ssh/authorized_keys
-        chmod go-rw ${TARGET}/root/.ssh/id_rsa
 
-	if [[ "`lsb_release -c -s`" != "trusty" ]]; then
+	mkdir -p ${TARGET}/root/.ssh
+	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/root/.ssh/id_rsa
+	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/root/.ssh/authorized_keys
+	chmod go-rw ${TARGET}/root/.ssh/id_rsa
+
+	if [[ "${OS_CODENAME}" != "trusty" ]]; then
 		nohup lxc-execute -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init >/dev/null 2>&1 &
 	else
 		lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
@@ -315,7 +318,7 @@ EOF
 	mkdir -p ${NFS_PREFIX}/local/filesystem/root/.ssh
 	touch ${NFS_PREFIX}/local/filesystem/root/.ssh/id_rsa ${NFS_PREFIX}/local/filesystem/root/.ssh/authorized_keys
 	
-	if [[ "`lsb_release -c -s`" != "trusty" ]]; then
+	if [[ "${OS_CODENAME}" != "trusty" ]]; then
 		nohup lxc-execute -n ${UUID} -f ${NFS_PREFIX}/global/core.lxc -- /.dockerinit -- bash -c "/usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}" > ${NFS_PREFIX}/dl-http.log 2>&1 &
 	else
 		nohup lxc-start -n ${UUID} -f ${NFS_PREFIX}/global/core.lxc -- /.dockerinit -- bash -c "/usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}" > ${NFS_PREFIX}/dl-http.log 2>&1 &

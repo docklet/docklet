@@ -11,10 +11,13 @@ function wrong_arch {
 
 [[ "`getconf LONG_BIT`" != "64" ]] && wrong_arch
 
-[[ "`lsb_release -d -s`" != "Ubuntu 12.04.5 LTS" ]] && \
-	[[ "`lsb_release -c -s`" != "trusty" ]] && \
-		[[ "`lsb_release -c -s`" != "utopic" ]] && \
-			[[ "`lsb_release -c -s`" != "vivid" ]] && \
+OS_VERSION=$(cat /etc/lsb-release | grep ^DISTRIB_RELEASE= | cut -b 17-)
+OS_CODENAME=$(cat /etc/lsb-release | grep ^DISTRIB_CODENAME= | cut -b 18-)
+
+[[ "${OS_VERSION}" != "Ubuntu 12.04.5 LTS" ]] && \
+	[[ "${OS_CODENAME}" != "trusty" ]] && \
+		[[ "${OS_CODENAME}" != "utopic" ]] && \
+			[[ "${OS_CODENAME}" != "vivid" ]] && \
 				wrong_arch
 
 if [[ "`cat /proc/cmdline | grep 'cgroup_enable=memory'`" == "" ]]; then
@@ -38,11 +41,11 @@ mkdir -p /usr/share/docklet-rootfs
 curl -L "http://docklet.unias.org/dependency/docklet-bin-latest.tar.gz" | tar xzvf - -C /usr/local/bin >/dev/null
 curl -L "http://docklet.unias.org/dependency/filesystem.tgz" > /usr/share/docklet-rootfs/filesystem.tgz
 
-echo "SUCCEEDED: Finish installion, just run 'dl-join' to boot docklet!" > /dev/stderr
-
 echo "INFO: Current docklet configurations are: " > /dev/stderr
 
 cat /etc/docklet/docklet.conf > /dev/stderr
+
+echo "SUCCEEDED: Finish installion, just run 'dl-join' to boot docklet!" > /dev/stderr
 
 
 
