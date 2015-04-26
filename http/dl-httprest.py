@@ -153,10 +153,13 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		raise Exception("cluster not found!")
 
 	def etcd_user_portals(self, user):
-		obj = self.etcd_http_database('/docklet/portal/%s' % user)
 		portals = []
-		for portal in obj['node']['nodes']:
-			portals.append({"ip":portal['key'].split('/')[-1], "status": portal['value'] })
+		try:
+			obj = self.etcd_http_database('/docklet/portal/%s' % user)
+			for portal in obj['node']['nodes']:
+				portals.append({"ip":portal['key'].split('/')[-1], "status": portal['value'] })
+		except:
+			pass
 		return portals
 
 	def on_post_request(self, context, user, form):
