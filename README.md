@@ -1,83 +1,75 @@
-[ Docklet ] git clone http://git.unias.org/docklet.git
+# docklet-core
+
+A light-weighted manager for lxc-cluster based on lxc/ovs/aufs/docker/.. , with elasticity, availability, live-upgradable rootfs, live-join machines ..
+
+* Version: 0.2.0
+
+* OS Required: Ubuntu 14.04.* (LTS) x86_64, or Ubuntu 15.04 x86_64
 
 ==============================================================
 
-[Setup]
+# Preinstallation on Machines
 
-sudo apt-get install git make
+* git clone https://github.com/maverickplusplus/docklet-core
+* cd docklet-core
+* sudo ./docklet-installer.sh
 
-git clone http://git.unias.org/docklet.git
+(Reboot is needed if cgroup memory account is not enabled)
 
-cd ./docklet
+# Installation: Single-Node Mode (Default)
 
-sudo make install
+[Quickly startup the docklet daemon]
+* sudo dl-join
 
-# edit /etc/docklet/docklet.conf for self-defined configuration
+[Open another non-sudo terminal, and test creating a first user cluster]
+* test-docklet
 
-sudo dl-join (download dependencies only for the first time)
+# Installation: Multi-Node Cluster Mode
 
-firefox http://localhost/ (using native PAM，then create clusters, like 172.31.0.3)
+[For cluster configuration]
+* sudo gedit /etc/docklet/docklet.conf
 
-Finally, ssh root@172.31.0.3 (initial password: 123456)
+Note: Keep same config file among all physical machines!
 
-==============================================================
+[SSH-autologin configuration]
+* sudo ssh-keygen -t rsa -P ''
+* sudo echo ${HOME}/.ssh/id_rsa | sudo tee -a ${HOME}/.ssh/authorized_keys
 
-[Multi host bridge settings: /etc/network/interfaces]
-auto eth0
-iface eth0 inet manual
+Note: Keep no-pass login among any pair of physical machines!
 
-auto br1
-iface br1 inet static
-	address 192.168.192.11
-	netmask 255.255.255.0
-	gateway 192.168.192.1
-	bridge_ports eth0
-	bridge_stp off
-	bridge_fd 0
-	bridge_maxwait 0
-	dns-nameservers 162.105.129.27
+[Quickly startup the docklet daemon on each machines]
+* sudo dl-join
 
 ==============================================================
 
-[Memory]
-echo 'GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1"' >> /etc/default/grub
-update-grub && reboot
+# Controlling API:
 
-[CPU-Speed]
---lxc-conf="lxc.cgroup.cpu.cfs_quota_us=50000"
+* /user/login, /portals, /images, /clusters, ..
 
-[Bandwidth]
+* Example: curl -H "Auth:{username}/{passwd}" http://${PORTAL_HTTP}:8000/user/login
 
+See more samples in test-docklet file from source code
 
 ==============================================================
 
-[VNC Server]
+# Inside Users Containers:
 
->>	echo "#!/bin/bash" > ${HOME}/.vnc/xstartup
->>	chmod a+x ${HOME}/.vnc/xstartup
->>	echo -e "openbox-session &" >> ${HOME}/.vnc/xstartup
->>	rm -rf /tmp/.X1-lock /tmp/.X11-unix/X1 /root/.vnc/*.log /root/.vnc/*.pid
+* docklet scaleup
 
-==============================================================
+* docklet scaledown
 
-[HOSTS]
+* docklet status
 
-* 192.168.4.12
-* 192.168.4.13
+* docklet clusterid
 
-* 192.168.192.11
-* 192.168.192.12
-* 192.168.192.13
+* docklet save {image-name}
 
-[docker.dep]
+* docklet remove
 
-btrfs-tools dh-golang dh-systemd go-md2man golang golang golang-context-dev golang-dbus-dev golang-go-patricia-dev golang-go-systemd-dev golang-go.net-dev golang-gocapability-dev golang-gosqlite-dev golang-mux-dev golang-pty-dev libapparmor-dev libdevmapper-dev
+* docklet restart
 
+* docklet hosts
 
-[Make and install]
+* docklet owner
 
-autoreconf -is
-./configure --prefix=/home/docklet
-make
-make install
-
+* ...

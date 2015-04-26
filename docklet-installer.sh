@@ -5,7 +5,7 @@
 set -e
 
 function wrong_arch {
-	echo "FAILED: Require Ubuntu x86_64 (>=14.04) !" > /dev/stderr
+	echo "FAILED: Require Ubuntu x86_64 (=14.04 | =15.04) !" > /dev/stderr
 	exit 1
 }
 
@@ -13,7 +13,7 @@ function wrong_arch {
 
 OS_VERSION=$(cat /etc/lsb-release | grep ^DISTRIB_RELEASE= | cut -b 17-)
 
-[[ "${OS_VERSION}" < "14.04" ]] && wrong_arch
+[[ "${OS_VERSION}" != "14.04" ]] && [[ "${OS_VERSION}" != "15.04" ]] && wrong_arch
 
 if [[ "`cat /proc/cmdline | grep 'cgroup_enable=memory'`" == "" ]]; then
 	echo "FAILED: CGroup memory limit option should be enabled in Linux Kernel! TRY:" > /dev/stderr
