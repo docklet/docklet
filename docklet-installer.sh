@@ -5,20 +5,15 @@
 set -e
 
 function wrong_arch {
-	echo "FAILED: Require one of Ubuntu x86_64 - 12.04.5/14.04/14.10/15.04 !" > /dev/stderr
+	echo "FAILED: Require Ubuntu x86_64 (>=14.04) !" > /dev/stderr
 	exit 1
 }
 
 [[ "`getconf LONG_BIT`" != "64" ]] && wrong_arch
 
 OS_VERSION=$(cat /etc/lsb-release | grep ^DISTRIB_RELEASE= | cut -b 17-)
-OS_CODENAME=$(cat /etc/lsb-release | grep ^DISTRIB_CODENAME= | cut -b 18-)
 
-[[ "${OS_VERSION}" != "Ubuntu 12.04.5 LTS" ]] && \
-	[[ "${OS_CODENAME}" != "trusty" ]] && \
-		[[ "${OS_CODENAME}" != "utopic" ]] && \
-			[[ "${OS_CODENAME}" != "vivid" ]] && \
-				wrong_arch
+[[ "${OS_VERSION}" < "14.04" ]] && wrong_arch
 
 if [[ "`cat /proc/cmdline | grep 'cgroup_enable=memory'`" == "" ]]; then
 	echo "FAILED: CGroup memory limit option should be enabled in Linux Kernel! TRY:" > /dev/stderr
@@ -27,7 +22,7 @@ if [[ "`cat /proc/cmdline | grep 'cgroup_enable=memory'`" == "" ]]; then
 fi
 
 if [[ "`whoami`" != "root" ]]; then
-	echo "FAILURE: Require root previledge !" > /dev/stderr
+	echo "FAILED: Require root previledge !" > /dev/stderr
 	exit 1
 fi
 
