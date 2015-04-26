@@ -75,7 +75,16 @@ log_msg "INFO" "Make sure all resources are released .."
 mkdir -p ${NFS_PREFIX}/global ${NFS_PREFIX}/local
 
 echo "${MY_IP}" > ${NFS_PREFIX}/local/network
-echo "`lsb_release -c -s`" > ${NFS_PREFIX}/local/lsb
+
+if [[ ! -e "${NFS_PREFIX}/local/filesystem" ]]; then
+	mkdir -p ${NFS_PREFIX}/local/filesystem ${NFS_PREFIX}/global/images
+	cd ${NFS_PREFIX}/local/filesystem
+	tar czvf ${NFS_PREFIX}/global/images/pub_root_base.tgz ./
+	
+	touch .dockerenv .dockerinit
+	tar xzvf /usr/share/docklet-rootfs/filesystem.tgz >/dev/null
+	mkdir ${NFS_PREFIX}/local/filesystem/nfs
+fi
 
 mkdir -p ${NFS_PREFIX}/local/volumes/ ${NFS_PREFIX}/local/mounts/
 

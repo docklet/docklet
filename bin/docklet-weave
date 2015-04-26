@@ -110,7 +110,7 @@ EOF
 	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/root/.ssh/authorized_keys
 	chmod go-rw ${TARGET}/root/.ssh/id_rsa
 	
-	if [[ "`cat ${NFS_PREFIX}/local/lsb`" != "trusty" ]]; then
+	if [[ "`lsb_release -c -s`" != "trusty" ]]; then
 		nohup lxc-execute -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init >/dev/null 2>&1 &
 	else
 		lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
@@ -220,7 +220,7 @@ EOF
         cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/root/.ssh/authorized_keys
         chmod go-rw ${TARGET}/root/.ssh/id_rsa
 
-	if [[ "`cat ${NFS_PREFIX}/local/lsb`" != "trusty" ]]; then
+	if [[ "`lsb_release -c -s`" != "trusty" ]]; then
 		nohup lxc-execute -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init >/dev/null 2>&1 &
 	else
 		lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
@@ -315,7 +315,7 @@ EOF
 	mkdir -p ${NFS_PREFIX}/local/filesystem/root/.ssh
 	touch ${NFS_PREFIX}/local/filesystem/root/.ssh/id_rsa ${NFS_PREFIX}/local/filesystem/root/.ssh/authorized_keys
 	
-	if [[ "`cat ${NFS_PREFIX}/local/lsb`" != "trusty" ]]; then
+	if [[ "`lsb_release -c -s`" != "trusty" ]]; then
 		nohup lxc-execute -n ${UUID} -f ${NFS_PREFIX}/global/core.lxc -- /.dockerinit -- bash -c "/usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}" > ${NFS_PREFIX}/dl-http.log 2>&1 &
 	else
 		nohup lxc-start -n ${UUID} -f ${NFS_PREFIX}/global/core.lxc -- /.dockerinit -- bash -c "/usr/local/lib/docklet-http/dl-httpinit ${HOST} ${NIS_SERVER}" > ${NFS_PREFIX}/dl-http.log 2>&1 &

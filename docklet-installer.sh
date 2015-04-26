@@ -33,18 +33,16 @@ apt-get install -y make cgroup-lite lxc ethtool bridge-utils libapparmor1 nmap c
 
 make install
 
-. /etc/docklet/docklet.conf
+mkdir -p /usr/share/docklet-rootfs
 
 curl -L "http://docklet.unias.org/dependency/docklet-bin-latest.tar.gz" | tar xzvf - -C /usr/local/bin >/dev/null
-
-if [[ ! -e "${NFS_PREFIX}/local/filesystem" ]]; then
-	mkdir -p ${NFS_PREFIX}/local/filesystem ${NFS_PREFIX}/global/images
-	cd ${NFS_PREFIX}/local/filesystem
-	tar czvf ${NFS_PREFIX}/global/images/pub_root_base.tgz ./
-	
-	touch .dockerenv .dockerinit
-	curl -L "http://docklet.unias.org/dependency/filesystem.tgz" | tar xzvf - >/dev/null
-	mkdir ${NFS_PREFIX}/local/filesystem/nfs
-fi
+curl -L "http://docklet.unias.org/dependency/filesystem.tgz" > /usr/share/docklet-rootfs/filesystem.tgz
 
 echo "SUCCEEDED: Finish installion, just run 'dl-join' to boot docklet!" > /dev/stderr
+
+echo "INFO: Current docklet configurations are: " > /dev/stderr
+
+cat /etc/docklet/docklet.conf > /dev/stderr
+
+
+
