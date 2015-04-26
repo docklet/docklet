@@ -23,20 +23,11 @@ log_msg "INFO" "Docklet Cluster for Ubuntu distribution x86_64."
 . /etc/docklet/docklet.conf
 
 if [[ "`which etcd 2>/dev/null`" == "" ]]; then
-	apt-get install -y cgroup-lite lxc ethtool bridge-utils libapparmor1 nmap curl sshfs netcat-openbsd net-tools openssh-server openvswitch-switch python
-	curl -L "${RES_URL}/dependency/docklet-bin-latest.tar.gz" > /tmp/docklet-bin.tgz
-	
-	cd /usr/local/bin
-	tar xvf /tmp/docklet-bin.tgz
-	rm -f /tmp/docklet-bin.tgz
+	log_msg "ERROR" "Third-party dependencies not found!"
 fi
 
 if [[ "`cat /proc/cmdline | grep cgroup`" == "" ]]; then
-	if [[ "`cat /etc/default/grub | grep cgroup`" == "" ]]; then
-		echo 'GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1"' >> /etc/default/grub
-		update-grub > /dev/stderr
-	fi
-	log_msg "ERROR" "###### PLEASE REBOOT YOUR SYSTEM AND RUN 'sudo dl-join' AGAIN! ######\n\nMemory limit will be enabled after your next reboot, you should reboot system and run dl-join again."
+	log_msg "ERROR" "Memory limit not enabled!"
 fi
 
 ip link delete lxcbr0 >/dev/null 2>&1 || true
@@ -84,6 +75,7 @@ log_msg "INFO" "Make sure all resources are released .."
 mkdir -p ${NFS_PREFIX}/global ${NFS_PREFIX}/local
 
 echo "${MY_IP}" > ${NFS_PREFIX}/local/network
+echo "`lsb_release -c -s`" > ${NFS_PREFIX}/local/lsb
 
 mkdir -p ${NFS_PREFIX}/local/volumes/ ${NFS_PREFIX}/local/mounts/
 
@@ -106,27 +98,6 @@ for MIP in $HOSTS; do
                 break
         fi
 done
-
-if [[ ! -e "${NFS_PREFIX}/local/filesystem" ]]; then
-	mkdir -p ${NFS_PREFIX}/local/filesystem ${NFS_PREFIX}/global/images
-	cd ${NFS_PREFIX}/local/filesystem
-	touch .dockerenv .dockerinit
-	tar czvf ${NFS_PREFIX}/global/images/pub_root_base.tgz ./
-	curl -L "${RES_URL}/dependency/filesystem.tgz" > /tmp/filesystem.tgz
-	tar xvf /tmp/filesystem.tgz
-	rm -f /tmp/filesystem.tgz
-	mkdir ${NFS_PREFIX}/local/filesystem/nfs
-	cd ${NFS_PREFIX}/local/filesystem/dev
-	
-	rm random urandom tty tty1 null ptmx zero null console -f
-	mknod -m 622 console c 5 1
-	mknod -m 666 null c 1 3
-	mknod -m 666 zero c 1 5
-	mknod -m 666 ptmx c 5 2
-	mknod -m 666 tty c 5 0
-	mknod -m 444 random c 1 8
-	mknod -m 444 urandom c 1 9
-fi
 
 cd ${NFS_PREFIX}/global
 echo '["HOME=/root","PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin","TERM=xterm"]' > ${NFS_PREFIX}/local/dockerenv
