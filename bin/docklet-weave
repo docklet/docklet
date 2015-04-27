@@ -94,10 +94,10 @@ EOF
 	LAYER="${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}"
 	mkdir -p ${TARGET} ${LAYER}
 	
-	dd if=/dev/zero of=${LAYER}.img bs=1M seek=4096 count=0
-	echo y | mkfs.ext4 ${LAYER}.img
-	mount ${LAYER}.img ${LAYER}
-	mount tmpfs ${LAYER} -t tmpfs -o size=4096m
+	dd if=/dev/zero of=${LAYER}.img bs=1M seek=4096 count=0 >/dev/null 2>&1
+	echo y | mkfs.ext4 ${LAYER}.img >/dev/null 2>&1
+	mount ${LAYER}.img ${LAYER} >/dev/null 2>&1
+	mount tmpfs ${LAYER} -t tmpfs -o size=4096m >/dev/null 2>&1
 	
 	[[ -e "${NFS_PREFIX}/global/images/pub_${IMAGE}.tgz" ]] && MOD="pub"
 	[[ -e "${NFS_PREFIX}/global/images/self_${IMAGE}.tgz" ]] && MOD="self"
@@ -149,9 +149,9 @@ elif [[ "${TYPE}" == "slave" ]]; then
 	umount -l ${LAYER}-${NODE_ID} >/dev/null 2>&1 || true
 	umount -l ${TARGET}-${NODE_ID} >/dev/null 2>&1 || true
 
-	dd if=/dev/zero of=${LAYER}-${NODE_ID}.img bs=1M seek=4096 count=0
-	echo y | mkfs.ext4 ${LAYER}-${NODE_ID}.img
-	mount ${LAYER}-${NODE_ID}.img ${LAYER}-${NODE_ID}
+	dd if=/dev/zero of=${LAYER}-${NODE_ID}.img bs=1M seek=4096 count=0 >/dev/null 2>&1
+	echo y | mkfs.ext4 ${LAYER}-${NODE_ID}.img >/dev/null 2>&1
+	mount ${LAYER}-${NODE_ID}.img ${LAYER}-${NODE_ID} >/dev/null 2>&1
 	#mount tmpfs ${LAYER}-${NODE_ID} -t tmpfs -o size=4096m
 	
 	IMAGE=${MASTER_LOC}
