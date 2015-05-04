@@ -254,9 +254,9 @@ elif [[ "${TYPE}" == "stop" ]]; then
 elif [[ "${TYPE}" == "purge" ]]; then
 	umount -l ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} || true
 	umount -l ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} || true
-	rm -rf ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID}
-	rm -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc
-	rm -f ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}.img
+	rm -rf ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} || true
+	rm -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc || true
+	rm -f ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}.img || true
 elif [[ "${TYPE}" == "commit" ]]; then
 	IMAGE_NAME=$1 ; shift
 	cd ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}
