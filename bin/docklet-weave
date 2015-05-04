@@ -93,6 +93,8 @@ lxc.mount.entry = ${NFS_PREFIX}/global/users/${USER_NAME}/hosts-${NAT_ID} ${TARG
 EOF
 	LAYER="${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}"
 	mkdir -p ${TARGET} ${LAYER}
+	umount -l ${TARGET} ${LAYER} || true
+	rm -rf ${LAYER}.img || true 
 	
 	dd if=/dev/zero of=${LAYER}.img bs=1M seek=4096 count=0 >/dev/null 2>&1
 	echo y | mkfs.ext4 ${LAYER}.img >/dev/null 2>&1
@@ -146,8 +148,8 @@ elif [[ "${TYPE}" == "slave" ]]; then
 	LAYER="${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}"
 	mkdir -p ${TARGET}-${NODE_ID} ${LAYER}-${NODE_ID}
 
-	umount -l ${LAYER}-${NODE_ID} >/dev/null 2>&1 || true
-	umount -l ${TARGET}-${NODE_ID} >/dev/null 2>&1 || true
+	umount -l ${LAYER}-${NODE_ID} ${TARGET}-${NODE_ID} || true
+	rm -rf ${LAYER}-${NODE_ID}.img || true
 
 	dd if=/dev/zero of=${LAYER}-${NODE_ID}.img bs=1M seek=4096 count=0 >/dev/null 2>&1
 	echo y | mkfs.ext4 ${LAYER}-${NODE_ID}.img >/dev/null 2>&1
