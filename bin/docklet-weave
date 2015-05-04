@@ -99,7 +99,7 @@ EOF
 	dd if=/dev/zero of=${LAYER}.img bs=1M seek=4096 count=0 >/dev/null 2>&1
 	echo y | mkfs.ext4 ${LAYER}.img >/dev/null 2>&1
 	mount ${LAYER}.img ${LAYER} >/dev/null 2>&1
-	mount tmpfs ${LAYER} -t tmpfs -o size=4096m >/dev/null 2>&1
+	#mount tmpfs ${LAYER} -t tmpfs -o size=4096m >/dev/null 2>&1
 	
 	[[ -e "${NFS_PREFIX}/global/images/pub_${IMAGE}.tgz" ]] && MOD="pub"
 	[[ -e "${NFS_PREFIX}/global/images/self_${IMAGE}.tgz" ]] && MOD="self"
