@@ -255,6 +255,7 @@ elif [[ "${TYPE}" == "stop" ]]; then
 	rm -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc
 elif [[ "${TYPE}" == "purge" ]]; then
 	umount -l ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} || true
+	sleep 1
 	umount -l ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} || true
 	rm -rf ${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID} ${NFS_PREFIX}/local/mounts/${USER_NAME}-${NAT_ID} || true
 	rm -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc || true
