@@ -6,7 +6,7 @@ import posixpath, BaseHTTPServer, urllib, cgi, shutil, mimetypes
 from StringIO import StringIO
 
 class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
-		
+
 	def execute(self, command, node = os.environ['WORK_ON']):
 		sys.stderr.write("[RPC] ssh %s %s 2>/dev/null\n" % (node, command))
 		(status, output) = commands.getstatusoutput("ssh %s %s 2>/dev/null" % (node, command))
