@@ -101,6 +101,9 @@ EOF
 	if ! mount ${LAYER}.img ${LAYER} >/dev/null 2>&1; then
 		mount tmpfs ${LAYER} -t tmpfs -o size=3200m >/dev/null 2>&1
 	fi
+
+	mkdir -p ${LAYER}/etc
+	for DNS in ${DNS_SERVERS}; do echo "nameserver $DNS" >> ${LAYER}/etc/resolv.conf; done
 	
 	[[ -e "${NFS_PREFIX}/global/images/pub_${IMAGE}.tgz" ]] && MOD="pub"
 	[[ -e "${NFS_PREFIX}/global/images/self_${IMAGE}.tgz" ]] && MOD="self"
