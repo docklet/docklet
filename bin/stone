@@ -18,6 +18,11 @@ if [[ ! -e "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa" ]] || [[ "$
 	which puttygen >/dev/null 2>&1 && puttygen "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa" -o "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa.ppk"
 fi
 
+if [[ -e "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/vnc_hash" ]]; then
+	DATA="`cat ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/vnc_hash`"
+	echo -e "${DATA}\n${DATA}\n" | vncpass ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/vnc_pass
+fi
+
 cat "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa"
 echo -n "========"
 cat "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa.ppk"

@@ -27,7 +27,7 @@ if [[ "`whoami`" != "root" ]]; then
 fi
 
 
-apt-get install -y make cgroup-lite lxc ethtool bridge-utils libapparmor1 nmap curl sshfs netcat-openbsd net-tools openssh-server openvswitch-switch python
+apt-get install -y make cgroup-lite lxc ethtool bridge-utils libapparmor1 nmap curl sshfs netcat-openbsd net-tools openssh-server openvswitch-switch python --no-install-recommends
 
 make install
 

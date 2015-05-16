@@ -19,9 +19,14 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		if username=='root':
 			loggedIn = self.ALLOW_ROOT
 		else:
-			loggedIn = (password == commands.getoutput("cat /mnt/global/users/%s/ssh_keys/id_rsa 2>/dev/null" % username).strip()) or pam.authenticate(username, password)
+			loggedIn = (password == commands.getoutput("cat /mnt/global/users/%s/ssh_keys/id_rsa 2>/dev/null" % username).strip())
+			if not loggedIn:
+				loggedIn = pam.authenticate(username, password)
+				if loggedIn:
+					commands.getoutput('echo "%s" | md5sum | cut -b 1-6 > /mnt/global/users/%s/ssh_keys/vnc_hash' % (password, username))
 		if not loggedIn:
 			raise Exception("authentication failed")
+		
 		return username
 
 	def do_PUT(self):
