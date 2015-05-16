@@ -20,7 +20,7 @@ fi
 
 if [[ -e "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/vnc_hash" ]]; then
 	DATA="`cat ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/vnc_hash`"
-	echo -e "${DATA}\n${DATA}\n" | vncpass ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/vnc_pass
+	echo -e "${DATA}\n${DATA}\n" | vncpasswd ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/vnc_pass >/dev/null 2>&1
 fi
 
 cat "${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa"
