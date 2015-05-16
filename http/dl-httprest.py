@@ -23,7 +23,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			if not loggedIn:
 				loggedIn = pam.authenticate(username, password)
 				if loggedIn:
-					commands.getoutput('echo "%s" | md5sum | cut -b 1-6 > /mnt/global/users/%s/ssh_keys/vnc_hash' % (password, username))
+					commands.getoutput('echo "%s" | md5sum | cut -b 1-8 > /mnt/global/users/%s/ssh_keys/vnc_hash' % (password, username))
 		if not loggedIn:
 			raise Exception("authentication failed")
 		
