@@ -336,8 +336,26 @@ lxc.mount.entry = /root/.ssh/authorized_keys ${NFS_PREFIX}/local/filesystem/root
 lxc.mount.entry = ${NFS_PREFIX} ${NFS_PREFIX}/local/filesystem/mnt none rbind,rw 0 0
 lxc.mount.entry = /usr/local/lib/docklet-http ${NFS_PREFIX}/local/filesystem/usr/local/lib/docklet-http none rbind,ro 0 0
 
+lxc.mount.entry = ${NFS_PREFIX}/global/nsswitch.conf ${NFS_PREFIX}/local/filesystem/etc/nsswitch.conf none rbind,ro 0 0
 EOF
 
+	cat <<EOF > ${NFS_PREFIX}/global/nsswitch.conf
+passwd:         compat nis
+group:          compat nis
+shadow:         compat nis
+gshadow:        files
+
+hosts:          files nis
+networks:       files
+
+protocols:      db files
+services:       db files
+ethers:         db files
+rpc:            db files
+
+netgroup:       nis
+EOF
+        
 # lxc.mount.entry = shm ${NFS_PREFIX}/local/filesystem/dev/shm tmpfs size=65536k,nosuid,nodev,noexec 0 0
 # lxc.mount.entry = /dev/random ${NFS_PREFIX}/local/filesystem/dev/random none bind,ro 0 0
 # lxc.mount.entry = /dev/urandom ${NFS_PREFIX}/local/filesystem/dev/urandom none bind,ro 0 0

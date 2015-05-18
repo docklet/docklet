@@ -4,10 +4,10 @@ set -e
 
 if [[ "$#" == "3" ]]; then
 	echo "$3" > /etc/defaultdomain
-	echo ypserver "$2" >> /etc/yp.conf
+	echo ypserver "$2" > /etc/yp.conf
 
-	sed -i 's/compat/compat\ nis/g' /etc/nsswitch.conf
-	sed -i 's/dns/nis\ dns/g' /etc/nsswitch.conf
+	#sed -i 's/compat/compat\ nis/g' /etc/nsswitch.conf
+	#sed -i 's/dns/nis\ dns/g' /etc/nsswitch.conf
 
 	mkdir -p /run/sendsigs.omit.d
 
