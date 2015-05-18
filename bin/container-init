@@ -19,6 +19,8 @@ function init {
 
 	while true; do ping docklet-cloud -c 1 -w 2 && break; done
 
+	cp ~/.ssh/id_rsa /nfs/$(docklet owner).key
+
 	LOGS="/nfs/.docklet/logs"
 	cd /root && mkdir -p ${LOGS}
 	PREFIX=${LOGS}/$(docklet clusterid)-$(hostname)
