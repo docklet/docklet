@@ -2,8 +2,6 @@
 
 set -e
 
-RES_URL='http://docklet.unias.org'
-
 function log_msg {
 	TYPE=$1 && shift && COLOR=35
 	[[ "${TYPE}" == "INFO" ]] && COLOR=34

@@ -33,8 +33,8 @@ make install
 
 mkdir -p /usr/share/docklet-rootfs
 
-curl -L "http://docklet.unias.org/dependency/docklet-bin-latest.tar.gz" | tar xzvf - -C /usr/local/bin >/dev/null
-curl -L "http://docklet.unias.org/dependency/filesystem.tgz" > /usr/share/docklet-rootfs/filesystem.tgz
+curl -k -L "https://docklet.unias.org/dependency/docklet-bin-latest.tar.gz" | tar xzvf - -C /usr/local/bin >/dev/null
+curl -k -L "https://docklet.unias.org/dependency/filesystem.tgz" > /usr/share/docklet-rootfs/filesystem.tgz
 
 echo "INFO: Current docklet configurations are: " > /dev/stderr
 
