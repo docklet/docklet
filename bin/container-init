@@ -28,7 +28,7 @@ function init {
 	SCRIPT="/nfs/profile"
 	if [[ -e "${SCRIPT}" ]] && [[ ! -d "${SCRIPT}" ]]; then
 		chmod a+x ${SCRIPT}
-		./"${SCRIPT}" >> ${PREFIX}.stdout 2>> ${PREFIX}.stderr || true
+		"${SCRIPT}" >> ${PREFIX}.stdout 2>> ${PREFIX}.stderr || true
 	fi
 	while true; do sleep 10; done
 }
