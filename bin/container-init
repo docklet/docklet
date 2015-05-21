@@ -24,8 +24,11 @@ function init {
 	LOGS="/nfs/.docklet/logs"
 	cd /root && mkdir -p ${LOGS}
 	PREFIX=${LOGS}/$(docklet clusterid)-$(hostname)
-	[[ -e "/etc/rc.local" ]] && /etc/rc.local >> ${PREFIX}.stdout 2>> ${PREFIX}.stderr || true
-
+	[[ -e "/etc/rc.local" ]] && /etc/rc.local >/dev/null 2>&1 || true
+	SCRIPT="/nfs/profile"
+	if [[ -e "${SCRIPT}" ]] && [[ ! -d "${SCRIPT}" ]]; then
+		bash "${SCRIPT}" >> ${PREFIX}.stdout 2>> ${PREFIX}.stderr || true
+	fi
 	while true; do sleep 10; done
 }
 
