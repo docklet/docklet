@@ -27,7 +27,8 @@ function init {
 	[[ -e "/etc/rc.local" ]] && /etc/rc.local >/dev/null 2>&1 || true
 	SCRIPT="/nfs/profile"
 	if [[ -e "${SCRIPT}" ]] && [[ ! -d "${SCRIPT}" ]]; then
-		bash "${SCRIPT}" >> ${PREFIX}.stdout 2>> ${PREFIX}.stderr || true
+		chmod a+x ${SCRIPT}
+		./"${SCRIPT}" >> ${PREFIX}.stdout 2>> ${PREFIX}.stderr || true
 	fi
 	while true; do sleep 10; done
 }
