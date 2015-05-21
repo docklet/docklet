@@ -245,7 +245,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				WORK_ON = obj['node']['value'].strip().split('|')[-1].strip().split()[-1].strip().split(':')[0]
 				if self.execute('USER_NAME=%s NAT_ID=%s %s pocket save' % (user, clusterInt, saveas), WORK_ON)==None:
 					raise Exception("exit operation failed")
-				return {'master': WORK_ON, 'natid': clusterInt}
+				return {'master': obj['node']['value'].strip().split('|')[2], 'natid': clusterInt}
 			else:
 				nodeRank = op
 				nodes = self.execute('KEY=/docklet/instances/%s etcdemu get' % clusterInt)
