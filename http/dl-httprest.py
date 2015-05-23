@@ -119,16 +119,16 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			raise Exception("etcd undetermized")
 		return obj
 
-	def etcd_get_clusters(self):
+	def etcd_get_machines(self):
 		obj = self.etcd_http_database('/_etcd/machines')
-		clusters = []
+		machines = []
 		for node in obj['node']['nodes']:
-			cluster = node['key'].split('/')[-1]
-			clusters.append(cluster)
-		return clusters
+			machine = node['key'].split('/')[-1]
+			machines.append(machine)
+		return machines
 
-	def etcd_get_random_cluster(self):
-		cl = self.etcd_get_clusters()
+	def etcd_get_random_machine(self):
+		cl = self.etcd_get_machines()
 		return cl[random.randint(0, len(cl)-1)]
 
 	def etcd_list_clusters(self, user):
@@ -189,7 +189,7 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 					raise Exception("illegal image format, should like: owner_abc123-def")
 				if re.match('^[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}$', portal)==None:
 					raise Exception("illegal portal format, should like: 1.2.3.4")
-				WORK_ON = self.etcd_get_random_cluster()
+				WORK_ON = self.etcd_get_random_machine()
 				NAT_ID = self.execute('THIS_HOST=%s BRIDGE_IP=%s USER_NAME=%s IMAGE=%s pocket create' % (WORK_ON, portal, user, image), WORK_ON)
 				if NAT_ID == None:
 					raise Exception("create operation failed")
@@ -214,12 +214,28 @@ class DockletHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 					nodes.append({'work_on':work_on, 'uuid':uuid, 'nat_id':nat_id, 'host_name':host_name})
 				return {'id': clusterInt, 'owner': owner, 'image': image, 'portal': portal, 'nodes': nodes}"""
 			elif op == "scaleup":
-				this_host = self.etcd_get_random_cluster()
+				[_owner, _image, _portal, _nodes] = self.etcd_http_database("/docklet/instances/%d" % clusterInt)['node']['value'].split('|')
+				if _owner != user:
+					raise Exception("permission denied")
+				usages = dict()
+				for node in _nodes.split():
+					usages[node.split(':')[0]] = True
+				for mac in self.etcd_get_machines():
+					if not mac in usages:
+						result = self.execute('USER_NAME=%s NAT_ID=%s CMD=push THIS_HOST=%s docklet-regen' % (user, clusterInt, mac), mac)
+						if result == None:
+							raise Exception("nodes number exceed the upbound limit")
+						[ipaddr, workon, uuid, host] = result.split()
+						return {'ip':ipaddr, 'uuid':uuid, 'host_name':host}
+				raise Exception("no more physical machines to allocate")
+				"""
+				this_host = self.etcd_get_random_machine()
 				result = self.execute('USER_NAME=%s NAT_ID=%s CMD=push THIS_HOST=%s docklet-regen' % (user, clusterInt, this_host), this_host)
 				if result==None:
 					raise Exception("nodes number exceed the upbound limit")
 				[ipaddr, workon, uuid, host] = result.split()
-				return {'ip':ipaddr, 'uuid':uuid, 'host_name':host}
+				return {'ip':ipaddr, 'uuid':uuid, 'host_name':host} """
+				
 			elif op == "scaledown":
 				result = self.execute('USER_NAME=%s NAT_ID=%s CMD=pop docklet-regen' % (user, clusterInt))
 				if result==None:
