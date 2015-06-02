@@ -97,11 +97,11 @@ EOF
 	umount -l ${TARGET} ${LAYER} || true
 	rm -rf ${LAYER}.img || true 
 	
-	dd if=/dev/zero of=${LAYER}.img bs=1M seek=4096 count=0 >/dev/null 2>&1
-	echo y | mkfs.ext4 ${LAYER}.img >/dev/null 2>&1
-	if ! mount ${LAYER}.img ${LAYER} >/dev/null 2>&1; then
-		mount tmpfs ${LAYER} -t tmpfs -o size=3200m >/dev/null 2>&1
-	fi
+	#dd if=/dev/zero of=${LAYER}.img bs=1M seek=4096 count=0 >/dev/null 2>&1
+	#echo y | mkfs.ext4 ${LAYER}.img >/dev/null 2>&1
+	#if ! mount ${LAYER}.img ${LAYER} >/dev/null 2>&1; then
+		mount tmpfs ${LAYER} -t tmpfs -o size=1024m >/dev/null 2>&1
+	#fi
 
 	mkdir -p ${LAYER}/etc
 	for DNS in ${DNS_SERVERS}; do echo "nameserver $DNS" >> ${LAYER}/etc/resolv.conf; done
@@ -164,11 +164,11 @@ elif [[ "${TYPE}" == "slave" ]]; then
 	umount -l ${LAYER}-${NODE_ID} ${TARGET}-${NODE_ID} || true
 	rm -rf ${LAYER}-${NODE_ID}.img || true
 
-	dd if=/dev/zero of=${LAYER}-${NODE_ID}.img bs=1M seek=4096 count=0 >/dev/null 2>&1
-	echo y | mkfs.ext4 ${LAYER}-${NODE_ID}.img >/dev/null 2>&1
-	if ! mount ${LAYER}-${NODE_ID}.img ${LAYER}-${NODE_ID} >/dev/null 2>&1; then
-		mount tmpfs ${LAYER}-${NODE_ID} -t tmpfs -o size=3200m
-	fi
+	#dd if=/dev/zero of=${LAYER}-${NODE_ID}.img bs=1M seek=4096 count=0 >/dev/null 2>&1
+	#echo y | mkfs.ext4 ${LAYER}-${NODE_ID}.img >/dev/null 2>&1
+	#if ! mount ${LAYER}-${NODE_ID}.img ${LAYER}-${NODE_ID} >/dev/null 2>&1; then
+		mount tmpfs ${LAYER}-${NODE_ID} -t tmpfs -o size=1024m >/dev/null 2>&1
+	#fi
 	
 	IMAGE=${MASTER_LOC}
 	[[ -e "${NFS_PREFIX}/global/images/pub_${IMAGE}.tgz" ]] && MOD="pub"
