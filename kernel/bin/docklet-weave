@@ -117,7 +117,7 @@ EOF
 	mount -t aufs -o br=${LAYER}=rw:${NFS_PREFIX}/local/filesystem=ro+wh none ${TARGET}/
 	
 	mkdir -p ${TARGET}/root/.ssh ${TARGET}/root/.vnc
-	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/vnc_pass ${TARGET}/root/.vnc/passwd >/dev/null 2>&1 || true
+	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/vnc_pass ${TARGET}/root/.vnc/passwd || true
 	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/root/.ssh/id_rsa
 	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/root/.ssh/authorized_keys
 	chmod go-rw ${TARGET}/root/.ssh/id_rsa
@@ -262,7 +262,12 @@ elif [[ "${TYPE}" == "restart" ]]; then
 	fi
 	umount -l ${TARGET} || true
 	mount -t aufs -o br=${LAYER}=rw:${NFS_PREFIX}/local/filesystem=ro+wh none ${TARGET}/ || true
-	
+	mkdir -p ${TARGET}/root/.ssh ${TARGET}/root/.vnc || true
+	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/vnc_pass ${TARGET}/root/.vnc/passwd || true
+	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/root/.ssh/id_rsa || true
+	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/authorized_keys ${TARGET}/root/.ssh/authorized_keys || true
+	chmod go-rw ${TARGET}/root/.ssh/id_rsa || true
+
 	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 elif [[ "${TYPE}" == "stop" ]]; then
 	lxc-stop -k -n ${UUID}
