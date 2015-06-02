@@ -120,13 +120,12 @@ done
 
 cd ${NFS_PREFIX}/global
 
-[[ "${PEERS}" == "" ]] && rm -rf ./etcd
+#[[ "${PEERS}" == "" ]] && rm -rf ./etcd
 
+#log_msg "WARN" "etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS}"
+#etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS} >/dev/null 2>&1 &
 
-log_msg "WARN" "etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS}"
-etcd -peer-addr ${MY_IP}:7001 -addr ${MY_IP}:4001 -data-dir etcd/${MY_IP} -name ${MY_IP} ${PEERS} >/dev/null 2>&1 &
-
-log_msg "INFO" "Waiting etcd to get ready .." && sleep 2
+#log_msg "INFO" "Waiting etcd to get ready .." && sleep 2
 
 domainname $(echo ${NIS_SERVER} | awk '{print $2}') >/dev/null 2>&1
 

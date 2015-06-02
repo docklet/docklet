@@ -255,10 +255,14 @@ elif [[ "${TYPE}" == "restart" ]]; then
 	NAT_ID=${NAT_ID} USER_NAME=${USER_NAME} stone >/dev/null 2>&1 || true
 
 	lxc-stop -k -n ${UUID} || true
-	if [[ "${NODE_ID}" == "0" ]]; then
-		umount -l ${TARGET} || true
-		mount -t aufs -o br=${LAYER}=rw:${NFS_PREFIX}/local/filesystem=ro+wh none ${TARGET}/ || true
+	
+	if [[ "${NODE_ID}" != "0" ]]; then
+		TARGET=${TARGET}-${NODE_ID}
+		LAYER=${LAYER}-${NODE_ID}
 	fi
+	umount -l ${TARGET} || true
+	mount -t aufs -o br=${LAYER}=rw:${NFS_PREFIX}/local/filesystem=ro+wh none ${TARGET}/ || true
+	
 	lxc-start -d -n ${UUID} -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc -- /.dockerinit -- /init
 elif [[ "${TYPE}" == "stop" ]]; then
 	lxc-stop -k -n ${UUID}
