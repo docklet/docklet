@@ -66,7 +66,7 @@ log_msg "INFO" "IP of this host is ${MY_IP}."
 lxc-stop -n core-service -k >/dev/null 2>&1 || true
 
 killall lxc-start >/dev/null 2>&1 || true
-killall etcd >/dev/null 2>&1 || true
+#killall etcd >/dev/null 2>&1 || true
 
 log_msg "INFO" "Make sure all resources are released .."
 
