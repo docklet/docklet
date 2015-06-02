@@ -100,7 +100,7 @@ EOF
 	#dd if=/dev/zero of=${LAYER}.img bs=1M seek=4096 count=0 >/dev/null 2>&1
 	#echo y | mkfs.ext4 ${LAYER}.img >/dev/null 2>&1
 	#if ! mount ${LAYER}.img ${LAYER} >/dev/null 2>&1; then
-		mount tmpfs ${LAYER} -t tmpfs -o size=1024m >/dev/null 2>&1
+		mount tmpfs ${LAYER} -t tmpfs -o size=1024m
 	#fi
 
 	mkdir -p ${LAYER}/etc
@@ -167,7 +167,7 @@ elif [[ "${TYPE}" == "slave" ]]; then
 	#dd if=/dev/zero of=${LAYER}-${NODE_ID}.img bs=1M seek=4096 count=0 >/dev/null 2>&1
 	#echo y | mkfs.ext4 ${LAYER}-${NODE_ID}.img >/dev/null 2>&1
 	#if ! mount ${LAYER}-${NODE_ID}.img ${LAYER}-${NODE_ID} >/dev/null 2>&1; then
-		mount tmpfs ${LAYER}-${NODE_ID} -t tmpfs -o size=1024m >/dev/null 2>&1
+		mount tmpfs ${LAYER}-${NODE_ID} -t tmpfs -o size=1024m
 	#fi
 	
 	IMAGE=${MASTER_LOC}
@@ -260,8 +260,10 @@ elif [[ "${TYPE}" == "restart" ]]; then
 		TARGET=${TARGET}-${NODE_ID}
 		LAYER=${LAYER}-${NODE_ID}
 	fi
-	umount -l ${TARGET} || true
-	mount -t aufs -o br=${LAYER}=rw:${NFS_PREFIX}/local/filesystem=ro+wh none ${TARGET}/ || true
+	if ! mountpoint -q ${TARGET}; then
+		mount tmpfs ${LAYER}-${NODE_ID} -t tmpfs -o size=1024m
+	fi
+	#mount -t aufs -o br=${LAYER}=rw:${NFS_PREFIX}/local/filesystem=ro+wh none ${TARGET}/ || true
 	mkdir -p ${TARGET}/root/.ssh ${TARGET}/root/.vnc || true
 	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/vnc_pass ${TARGET}/root/.vnc/passwd || true
 	cp ${NFS_PREFIX}/global/users/${USER_NAME}/ssh_keys/id_rsa ${TARGET}/root/.ssh/id_rsa || true
@@ -273,10 +275,10 @@ elif [[ "${TYPE}" == "stop" ]]; then
 	lxc-stop -k -n ${UUID}
 	if [[ "${NODE_ID}" != "0" ]]; then
 		umount -l ${TARGET}-${NODE_ID} || true
-		rmdir ${TARGET}-${NODE_ID} || true
+		rm -rf ${TARGET}-${NODE_ID} || true
 		LAYER="${NFS_PREFIX}/local/volumes/${USER_NAME}-${NAT_ID}"
 		umount -l ${LAYER}-${NODE_ID} || true
-		rmdir ${LAYER}-${NODE_ID} || true
+		rm -rf ${LAYER}-${NODE_ID} || true
 		rm -f ${LAYER}-${NODE_ID}.img || true
 	fi
 	rm -f ${NFS_PREFIX}/global/users/${USER_NAME}/${UUID}.lxc
