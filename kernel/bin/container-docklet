@@ -4,7 +4,7 @@ set -e
 
 if [[ "$@" == "" ]]; then
 	echo -e "\033[34mUsage for lookup info:\033[0m docklet [clusterid|owner|info|hosts|portal|status|meter|sshkey]\n" > /dev/stderr
-	echo -e "\033[34mUsage for control cluster:\033[0m docklet [nfs|scaleup|scaledown|restart|remove|commit]\n" > /dev/stderr
+	echo -e "\033[34mUsage for control cluster:\033[0m docklet [nfs|scaleout|scalein|restart|remove|commit]\n" > /dev/stderr
 	true
 elif [[ "$@" == "clusterid" ]]; then
 	cat /etc/hosts | grep \ host- | awk -F\- '{print $2}' | awk -F\_ '{print $1}'
@@ -22,9 +22,9 @@ elif [[ "$@" == "status" ]]; then
 	done
 elif [[ "$@" == "info" ]]; then
 	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid) 2>/dev/null | python -m json.tool
-elif [[ "$@" == "scaleup" ]]; then
+elif [[ "$@" == "scaleout" ]]; then
 	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/scaleup 2>/dev/null | python -m json.tool && sleep 2
-elif [[ "$@" == "scaledown" ]]; then
+elif [[ "$@" == "scalein" ]]; then
 	curl -F user=$(docklet owner) -F key=@${HOME}/.ssh/id_rsa http://docklet-cloud:8000/clusters/$(docklet clusterid)/scaledown 2>/dev/null | python -m json.tool
 elif [[ "$1" == "commit" ]]; then
 	shift; if [[ "$@" == "" ]]; then exit 1; fi

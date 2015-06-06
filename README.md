@@ -54,9 +54,9 @@ See more samples in test-docklet file from source code
 
 # Inside Users Containers:
 
-* docklet scaleup
+* docklet scaleout
 
-* docklet scaledown
+* docklet scalein
 
 * docklet status
 
