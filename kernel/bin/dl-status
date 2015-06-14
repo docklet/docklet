@@ -4,6 +4,14 @@
 
 [[ "`whoami`" != "root" ]] && echo "Root previledge required!" && exit 1
 
+if [[ "$@" == "local" ]]; then
+	echo "[Host: `cat /home/docklet/local/network`]"
+	for LXC in `lxc-ls`; do
+		echo -e "* lxc: '${LXC}', using cpu - `cat /sys/fs/cgroup/cpuacct/lxc/${LXC}/cpuacct.usage` ns, memory - `cat /sys/fs/cgroup/memory/lxc/${LXC}/memory.usage_in_bytes` Byte"
+	done
+	exit 0
+fi
+
 echo "=============================================="
 
 echo "[Docklet Physical Hosts]"
